@@ -40,15 +40,32 @@ class _MusicVisualizerPlayerState extends State<MusicVisualizerPlayer> {
     return "$twoDigitMinutes:$twoDigitSeconds";
   }
   
+  // 切换到下一首歌曲
+  void _playNextSong() async {
+    final success = await _audioPlayerManager.playNext();
+    if (!success && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('没有下一首歌曲')),
+      );
+    }
+  }
+  
+  // 切换到上一首歌曲
+  void _playPreviousSong() async {
+    final success = await _audioPlayerManager.playPrevious();
+    if (!success && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('没有上一首歌曲')),
+      );
+    }
+  }
+  
   @override
   Widget build(BuildContext context) {
-    // Check if there is a currently playing music
-    if (_audioPlayerManager.currentMusicId == null) {
-      return const SizedBox.shrink(); // No music playing, do not show the player
-    }
-    
-    // Get the currently playing music
+    // 只检查 currentMusic 而不是 currentMusicId，因为我们需要显示播放器，即使音乐已经播放完成
     final currentMusic = _audioPlayerManager.currentMusic;
+    
+    // 如果没有当前音乐信息，则不显示播放器
     if (currentMusic == null) {
       return const SizedBox.shrink();
     }
@@ -282,7 +299,8 @@ class _MusicVisualizerPlayerState extends State<MusicVisualizerPlayer> {
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
                   iconSize: 24,
-                  onPressed: null, 
+                  color: _audioPlayerManager.hasPrevious ? Colors.purple : Colors.grey,
+                  onPressed: _audioPlayerManager.hasPrevious ? _playPreviousSong : null, 
                 ),
                 const SizedBox(width: 16),
                 StreamBuilder<PlayerState>(
@@ -319,7 +337,8 @@ class _MusicVisualizerPlayerState extends State<MusicVisualizerPlayer> {
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
                   iconSize: 24,
-                  onPressed: null,
+                  color: _audioPlayerManager.hasNext ? Colors.purple : Colors.grey,
+                  onPressed: _audioPlayerManager.hasNext ? _playNextSong : null,
                 ),
               ],
             ),

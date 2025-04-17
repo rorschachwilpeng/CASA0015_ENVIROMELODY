@@ -47,7 +47,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
   // Add new state variable
   bool _showMusicPlayer = false;
   
-  // 多选相关状态变量
+  // Multi-select related state variables
   bool _isMultiSelectMode = false;
   Set<String> _selectedMusicIds = <String>{};
   
@@ -56,13 +56,13 @@ class _LibraryScreenState extends State<LibraryScreen> {
     super.initState();
     _loadLibrary();
     
-    // 确保添加了正确的监听器
+    // Ensure the correct listeners are added
     _audioPlayerManager.addListener(_onAudioPlayerChanged);
     _libraryManager.addListener(_refreshLibrary);
     
     print("LibraryScreen: Initialization completed");
     
-    // 设置文本输入监听器
+    // Set the text input listener
     _searchController.addListener(_onSearchChanged);
   }
   
@@ -86,10 +86,11 @@ class _LibraryScreenState extends State<LibraryScreen> {
   void _onAudioPlayerChanged() {
     if (mounted) {
       setState(() {
-        // When the playback state changes, automatically show the player
+        /*
         if (_audioPlayerManager.isPlaying && !_showMusicPlayer) {
           _showMusicPlayer = true;
         }
+        */
       });
       //print("LibraryScreen: Playback state updated: Playing=${_audioPlayerManager.isPlaying}, Music ID=${_audioPlayerManager.currentMusicId}");
     }
@@ -242,22 +243,35 @@ class _LibraryScreenState extends State<LibraryScreen> {
   // Play music
   Future<void> _playMusic(MusicItem music) async {
     try {
+      print("开始播放音乐: ${music.title}, ID: ${music.id}");
+      
       // 获取当前所有音乐列表
       final List<MusicItem> allMusic = _filteredMusicList;
       
       // 找到当前选择的音乐在列表中的索引
       final int currentIndex = allMusic.indexWhere((item) => item.id == music.id);
+      print("当前歌曲索引: $currentIndex, 列表长度: ${allMusic.length}");
       
-      // 设置播放列表，并从当前选择的歌曲开始播放
-      _playlistManager.setPlaylist(allMusic, initialIndex: currentIndex > -1 ? currentIndex : 0);
+      if (currentIndex >= 0) {
+        // 直接使用 AudioPlayerManager 设置播放列表并播放当前歌曲
+        print("设置播放列表并开始播放");
+        _audioPlayerManager.setPlaylist(allMusic, initialIndex: currentIndex);
+      } else {
+        print("未找到歌曲在列表中的位置");
+        // 如果找不到歌曲索引，直接播放当前歌曲
+        await _audioPlayerManager.playMusic(music.id, music.audioUrl, musicItem: music);
+      }
       
       // 如果播放器不可见，则显示它
+      // 这一行代码实际上已经不再有效，因为我们移除了相关播放器，依赖的是底部的MusicVisualizerPlayer
+      // 但保留它以保持代码一致性
       if (!_showMusicPlayer) {
         setState(() {
           _showMusicPlayer = true;
         });
       }
     } catch (e) {
+      print("播放音乐失败: $e");
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('播放音乐失败: ${e.toString()}')),
@@ -364,157 +378,204 @@ class _LibraryScreenState extends State<LibraryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final musicList = _filteredMusicList;
-    final hasSearchResults = _searchQuery.isNotEmpty && musicList.isNotEmpty;
-    final noSearchResults = _searchQuery.isNotEmpty && musicList.isEmpty;
-    
     return Scaffold(
       appBar: AppBar(
-        title: _isSearching 
-            ? _buildSearchBar() 
-            : Text(_isMultiSelectMode 
-                ? 'Selected ${_selectedMusicIds.length} items' 
-                : 'My music library'),
+        title: _isSearching
+            ? _buildSearchBar()
+            : Text(
+                'My music library',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.grey[800],
+                ),
+              ),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        centerTitle: false,
+        leading: _isSearching
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () {
+                  setState(() {
+                    _isSearching = false;
+                    _searchController.clear();
+                    _filterAndSortMusic();
+                  });
+                },
+              )
+            : null,
         actions: [
-          // Display the multi-select button (when not in search mode and not in multi-select mode)
-          if (!_isSearching && !_isMultiSelectMode)
-            IconButton(
-              icon: const Icon(Icons.select_all),
-              onPressed: _toggleMultiSelectMode,
-              tooltip: 'Multi-select mode',
-            ),
-          
-          // When not in multi-select mode, display the search button
-          if (!_isSearching && !_isMultiSelectMode)
+          // Search button
+          if (!_isSearching)
             IconButton(
               icon: const Icon(Icons.search),
-              onPressed: _toggleSearch,
-              tooltip: 'Search',
+              onPressed: () {
+                setState(() {
+                  _isSearching = true;
+                  // Focus the search field
+                  Future.delayed(
+                    const Duration(milliseconds: 100),
+                    () => _searchFocusNode.requestFocus(),
+                  );
+                });
+              },
             ),
-        
-          // When not in multi-select mode and not in search mode, display the refresh button
-          if (!_isSearching && !_isMultiSelectMode)
+          // Sort button
+          if (!_isSearching)
+            IconButton(
+              icon: Row(
+                children: [
+                  const Icon(Icons.sort),
+                  const SizedBox(width: 4),
+                  Transform.rotate(
+                    angle: 90 * 3.1415926 / 180, // 90 degrees
+                    child: const Icon(Icons.chevron_right, size: 16),
+                  ),
+                ],
+                mainAxisSize: MainAxisSize.min,
+              ),
+              onPressed: _showSortOptionsDialog,
+            ),
+          // Refresh button
+          if (!_isSearching)
             IconButton(
               icon: const Icon(Icons.refresh),
               onPressed: _loadLibrary,
-              tooltip: 'Refresh',
             ),
-        
-          // When in multi-select mode, display the select/deselect all button
+          // More options
+          if (!_isSearching && !_isMultiSelectMode)
+            IconButton(
+              icon: const Icon(Icons.more_vert),
+              onPressed: () {
+                _showBottomSheet(context);
+              },
+            ),
+          // Multi-select mode exit
           if (_isMultiSelectMode)
             IconButton(
-              icon: Icon(
-                _selectedMusicIds.length == musicList.length 
-                    ? Icons.deselect
-                    : Icons.select_all,
-              ),
-              onPressed: () {
-                setState(() {
-                  if (_selectedMusicIds.length == musicList.length) {
-                    // Deselect all
-                    _selectedMusicIds.clear();
-                  } else {
-                    // Select all
-                    _selectedMusicIds = musicList.map((music) => music.id).toSet();
-                  }
-                });
-              },
-              tooltip: _selectedMusicIds.length == musicList.length 
-                  ? 'Deselect all' 
-                  : 'Select all',
+              icon: const Icon(Icons.close),
+              onPressed: _toggleMultiSelectMode,
+            ),
+          // Delete selected
+          if (_isMultiSelectMode && _selectedMusicIds.isNotEmpty)
+            IconButton(
+              icon: const Icon(Icons.delete),
+              onPressed: _deleteSelectedMusic,
             ),
         ],
-        // When in search mode, adjust titleSpacing
-        titleSpacing: _isSearching ? 0 : null,
-        // When in search mode, display the back button
-        leading: _isSearching 
-            ? IconButton(
-                icon: const Icon(Icons.arrow_back),
-                onPressed: _toggleSearch,
-              )
-            : (_isMultiSelectMode 
-                ? IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: _toggleMultiSelectMode,
-                  )
-                : null),
       ),
-      body: Column(
+      body: Stack(
         children: [
-          Expanded(
-            child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : Column(
-                    children: [
-                      // Only display the sort control when not in search mode and not in multi-select mode
-                      if (!_isSearching && !_isMultiSelectMode)
-                        _buildSortControls(),
-                      
-                      // Display the current search status information
-                      if (_isSearching && _searchQuery.isNotEmpty)
-                        _buildSearchStatusBar(),
-                      
-                      // Main content area
-                      Expanded(
-                        child: musicList.isEmpty && !_searchQuery.isNotEmpty
-                            ? _buildEmptyView() // Empty library view
-                            : noSearchResults
-                                ? _buildEmptySearchResultView() // Empty search result view
-                                : RefreshIndicator(
-                                    onRefresh: _loadLibrary,
-                                    child: ListView.builder(
-                                      itemCount: musicList.length,
-                                      itemBuilder: (context, index) {
-                                        final music = musicList[index];
-                                        final bool isPlaying = _audioPlayerManager.currentMusicId == music.id && 
-                                                            _audioPlayerManager.isPlaying;
-                                        final bool isSelected = _selectedMusicIds.contains(music.id);
-                                        
-                                        return _isMultiSelectMode
-                                            ? _buildMultiSelectListItem(music, isPlaying, isSelected)
-                                            : _buildRegularListItem(music, isPlaying, index);
-                                      },
-                                    ),
-                                  ),
+          // Show sorting method
+          if (!_isSearching)
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                color: Colors.grey[100],
+                child: Row(
+                  children: [
+                    Icon(Icons.sort, size: 16, color: Colors.grey[600]),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Sorting method:',
+                      style: TextStyle(
+                        color: Colors.grey[600],
+                        fontSize: 12,
                       ),
-                    ],
-                  ),
-          ),
-          
-          // 如果当前有音乐在播放，显示音乐播放器卡片
-          if (_audioPlayerManager.currentMusic != null)
-            _buildMusicPlayer(),
-        ],
-      ),
-      // Bottom delete button (displayed when in multi-select mode and there are selected items)
-      bottomNavigationBar: _isMultiSelectMode && _selectedMusicIds.isNotEmpty
-          ? BottomAppBar(
-              color: Colors.red,
-              child: InkWell(
-                onTap: _deleteSelectedMusic,
-                child: Container(
-                  height: 56.0,
-                  alignment: Alignment.center,
-                  child: Text(
-                    'Delete selected (${_selectedMusicIds.length})',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
                     ),
-                  ),
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[200],
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            _currentSortOption == SortOption.newest || _currentSortOption == SortOption.oldest
+                                ? Icons.access_time
+                                : Icons.timer,
+                            size: 14,
+                            color: Colors.grey[600],
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            _getSortOptionLabel(_currentSortOption),
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.grey[800],
+                            ),
+                          ),
+                          const Icon(Icons.arrow_drop_down, size: 16),
+                        ],
+                      ),
+                    ),
+                    Expanded(child: Container()),
+                    Text(
+                      'Count: ${_filteredMusicList.length}',
+                      style: TextStyle(
+                        color: Colors.grey[600],
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            )
-          : null,
-      // Add sort button (when in search mode)
-      floatingActionButton: _isSearching
-          ? FloatingActionButton(
-              onPressed: _showSortOptionsDialog,
-              child: const Icon(Icons.sort),
-              tooltip: 'Sort',
-            )
-          : null,
+            ),
+          
+          // Show search status bar
+          if (_isSearching && _searchQuery.isNotEmpty)
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: _buildSearchStatusBar(),
+            ),
+          
+          // Main content
+          Positioned(
+            top: _isSearching && _searchQuery.isNotEmpty
+                ? 40 // Search status bar shown
+                : (_isSearching ? 0 : 40), // Show sorting bar or not
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : _filteredMusicList.isEmpty
+                    ? _searchQuery.isNotEmpty
+                        ? _buildEmptySearchResultView()
+                        : _buildEmptyLibraryView()
+                    : ListView.separated(
+                        padding: EdgeInsets.only(
+                          bottom: 70, // Leave space for the music player at the bottom
+                        ),
+                        itemCount: _filteredMusicList.length,
+                        separatorBuilder: (context, index) => const Divider(height: 1),
+                        itemBuilder: (context, index) {
+                          final music = _filteredMusicList[index];
+                          final isPlaying = _audioPlayerManager.currentMusicId == music.id && 
+                                          _audioPlayerManager.isPlaying;
+                          
+                          return _isMultiSelectMode
+                              ? _buildMultiSelectListItem(
+                                  music, 
+                                  isPlaying, 
+                                  _selectedMusicIds.contains(music.id),
+                                )
+                              : _buildRegularListItem(music, isPlaying, index);
+                        },
+                      ),
+          ),
+          
+        ],
+      ),
     );
   }
   
@@ -544,17 +605,6 @@ class _LibraryScreenState extends State<LibraryScreen> {
             style: TextStyle(
               color: Colors.grey[600],
             ),
-          ),
-          const SizedBox(height: 24),
-          ElevatedButton.icon(
-            icon: const Icon(Icons.add),
-            label: const Text('Create new music'),
-            onPressed: () {
-              // Use pushNamed instead of pop
-              Navigator.of(context).pushNamed('/create');
-              // Or use your application navigation logic, for example:
-              // context.read<NavigationCubit>().navigateToCreate();
-            },
           ),
         ],
       ),
@@ -989,7 +1039,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
           },
         ),
         onTap: () {
-          // 可以导航到详情页
+          // You can navigate to the details page
         },
         onLongPress: () => _showMusicOptions(music),
       ),
@@ -1068,38 +1118,71 @@ class _LibraryScreenState extends State<LibraryScreen> {
     );
   }
 
-  // 在 LibraryScreen 中添加显示音乐播放器的方法
-  Widget _buildMusicPlayer() {
-    // 确保有当前播放的音乐
-    if (_audioPlayerManager.currentMusic == null) return const SizedBox.shrink();
-    
-    return MusicPlayerCard(
-      musicItem: _audioPlayerManager.currentMusic!,
-      audioPlayer: _audioPlayerManager.audioPlayer,
-      onClose: () {
-        setState(() {
-          _showMusicPlayer = false;
-        });
-        _audioPlayerManager.pauseMusic();
-      },
-      hasPrevious: _playlistManager.hasPrevious,
-      hasNext: _playlistManager.hasNext,
-      onPrevious: () async {
-        bool success = await _playlistManager.playPrevious();
-        if (!success && mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('没有上一首歌曲')),
-          );
-        }
-      },
-      onNext: () async {
-        bool success = await _playlistManager.playNext();
-        if (!success && mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('没有下一首歌曲')),
-          );
-        }
-      },
+  // Add bottom sheet dialog method
+  void _showBottomSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ListTile(
+            leading: const Icon(Icons.select_all),
+            title: const Text('Multi-select mode'),
+            onTap: () {
+              Navigator.pop(context);
+              _toggleMultiSelectMode();
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.sort),
+            title: const Text('Sort options'),
+            onTap: () {
+              Navigator.pop(context);
+              _showSortOptionsDialog();
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.refresh),
+            title: const Text('Refresh list'),
+            onTap: () {
+              Navigator.pop(context);
+              _loadLibrary();
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Build the empty library view
+  Widget _buildEmptyLibraryView() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.music_off,
+            size: 80,
+            color: Colors.grey[400],
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Your music library is empty',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Colors.grey[600],
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'After generating music, they will be automatically added here',
+            style: TextStyle(
+              color: Colors.grey[600],
+            ),
+          ),
+        ],
+      ),
     );
   }
 } 
