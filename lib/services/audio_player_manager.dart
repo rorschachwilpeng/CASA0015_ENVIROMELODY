@@ -21,141 +21,141 @@ class AudioPlayerManager extends ChangeNotifier {
   // Storage current music information
   MusicItem? _currentMusic;
   
-  // 播放列表
+  // Playlist
   List<MusicItem> _playlist = [];
   
-  // 当前播放索引
+  // Current playing index
   int _currentIndex = -1;
   
-  // 是否启用自动播放下一首
+  // Whether auto play next song is enabled
   bool _autoPlayEnabled = true;
   
-  // 获取当前播放列表
+  // Get current playlist
   List<MusicItem> get playlist => List.unmodifiable(_playlist);
   
-  // 获取当前播放索引
+  // Get current playing index
   int get currentIndex => _currentIndex;
   
-  // 判断是否有下一首歌曲
+  // Check if there is a next song
   bool get hasNext => _playlist.isNotEmpty && _currentIndex < _playlist.length - 1;
   
-  // 判断是否有上一首歌曲
+  // Check if there is a previous song
   bool get hasPrevious => _playlist.isNotEmpty && _currentIndex > 0;
   
-  // 获取/设置自动播放下一首功能
+  // Get/set auto play next song feature
   bool get autoPlayEnabled => _autoPlayEnabled;
   set autoPlayEnabled(bool value) {
     _autoPlayEnabled = value;
     notifyListeners();
   }
   
-  // 添加一个唯一的监听器使播放结束后直接执行回调
+  // Add a unique listener to execute the callback after playback ends
   StreamSubscription<Duration>? _durationSubscription;
   
-  // 互斥锁变量，防止playNext被多次同时调用
+  // Mutex variable to prevent playNext from being called multiple times simultaneously
   bool _isPlayNextExecuting = false;
   
   // Internal constructor
   AudioPlayerManager._internal() {
-    // 配置播放器
+    // Configure the player
     _configurePlayer();
     
-    // 方法1：通过processingStateStream监听
+    // Method 1: Listen to processingStateStream
     _player.processingStateStream.listen((state) {
-      print("处理状态变化: $state");
+      print("ProcessingState: $state");
       if (state == ProcessingState.completed) {
-        print("方法1检测到播放完成");
+        print("Method 1 detected playback completion");
         _handlePlaybackCompletion();
       }
     });
     
-    // 方法2：通过playerStateStream监听
+    // Method 2: Listen to playerStateStream
     _player.playerStateStream.listen((state) {
-      print("播放状态变化: playing=${state.playing}, state=${state.processingState}");
+      print("PlayerState: playing=${state.playing}, state=${state.processingState}");
       if (state.processingState == ProcessingState.completed) {
-        print("方法2检测到播放完成");
+        print("Method 2 detected playback completion");
         _handlePlaybackCompletion();
       }
       notifyListeners();
     });
     
-    // 方法3：直接使用onPlayerComplete回调
+    // Method 3: Use onPlayerComplete callback directly
     _player.playbackEventStream.listen((event) {
-      print("播放事件: ${event.processingState}");
+      print("PlaybackEvent: ${event.processingState}");
       if (event.processingState == ProcessingState.completed) {
-        print("方法3检测到播放完成");
+        print("Method 3 detected playback completion");
         _handlePlaybackCompletion();
       }
     });
     
-    // 位置监听，用于更新进度条
+    // Position listener, used to update the progress bar
     _player.positionStream.listen((position) {
-      // 检查是否接近结束
+      // Check if it is approaching the end
       Duration? duration = _player.duration;
       if (duration != null && position >= duration - const Duration(milliseconds: 500)) {
-        print("检测到接近结束位置: $position / $duration");
+        print("Detected approaching end position: $position / $duration");
       }
       notifyListeners();
     });
   }
   
-  // 统一处理播放完成
+  // Handle playback completion
   void _handlePlaybackCompletion() {
-    print("开始处理播放完成事件");
+    print("Begin to handle playback completion event");
     
-    // 确保在主线程中执行，并添加短延迟
+    // Ensure execution in the main thread and add a short delay
     Future.delayed(const Duration(milliseconds: 500), () {
       if (_autoPlayEnabled && hasNext) {
-        print("自动播放下一首: 当前索引=$_currentIndex, 列表长度=${_playlist.length}");
+        print("Auto play next song: current index=$_currentIndex, list length=${_playlist.length}");
         playNext().then((success) {
-          print("播放下一首结果: $success");
+          print("Play next song result: $success");
         }).catchError((error) {
-          print("播放下一首出错: $error");
+          print("Play next song error: $error");
         });
       } else {
-        print("自动播放已禁用或没有下一首: autoPlay=$_autoPlayEnabled, hasNext=$hasNext");
+        print("Auto play is disabled or there is no next song: autoPlay=$_autoPlayEnabled, hasNext=$hasNext");
       }
     });
   }
   
-  // 配置播放器设置
+  // Configure player settings
   void _configurePlayer() {
-    // 设置音频会话配置
+    // Set audio session configuration
     try {
-      _player.setLoopMode(LoopMode.off); // 关闭循环播放单曲
-      _player.setAutomaticallyWaitsToMinimizeStalling(true); // 减少卡顿
+      _player.setLoopMode(LoopMode.off); // Disable loop playback of a single song
+      _player.setAutomaticallyWaitsToMinimizeStalling(true); // Minimize stalling
       
-      // 添加播放器错误监听
+      // Add player error listener
       _player.playbackEventStream.listen((event) {}, 
         onError: (Object e, StackTrace st) {
-          print('播放器错误: $e');
-          print('错误堆栈: $st');
+          print('Player error: $e');
+          print('Error stack: $st');
         }
       );
       
-      // 确保设置了监听器
+      // Ensure the listener is set
       _setupCompletionHandler();
       
-      print("播放器配置完成");
+      print("Player configuration completed");
     } catch (e) {
-      print("播放器配置失败: $e");
+      print("Player configuration failed: $e");
     }
   }
   
-  // 设置播放完成处理器
+  // Set playback completion handler
   void _setupCompletionHandler() {
-    // 取消之前的订阅
+    // Cancel previous subscription
     _durationSubscription?.cancel();
     
-    // 创建新的订阅
+    // Create a new subscription
     _durationSubscription = _player.positionStream.listen((position) {
       Duration? totalDuration = _player.duration;
       if (totalDuration != null) {
-        // 检查是否达到结束位置（接近总时长）
+        // Check if it has reached the end position (close to total duration)
         if (position >= totalDuration - const Duration(milliseconds: 200) && position > Duration.zero) {
-          print("通过位置检测到歌曲播放完成: $position / $totalDuration");
+          print("Detected song playback completion through position: $position / $totalDuration");
           
-          // 直接尝试播放下一首（延迟执行以避免状态冲突）
+          // Try to play the next song directly (delayed execution to avoid state conflicts)
           if (_player.processingState != ProcessingState.loading && 
               _player.processingState != ProcessingState.buffering) {
             _handlePlaybackCompletion();
@@ -176,61 +176,61 @@ class AudioPlayerManager extends ChangeNotifier {
   
   // Play music
   Future<void> playMusic(String musicId, String audioUrl, {MusicItem? musicItem}) async {
-    print("开始播放音乐: ID=$musicId");
+    print("Start playing music: ID=$musicId");
     
     try {
-      // 保存音乐信息
+      // Save music information
       if (musicItem != null) {
         _currentMusic = musicItem;
-        print("已保存当前播放音乐信息: ${musicItem.title}");
+        print("Current playing music information saved: ${musicItem.title}");
         
-        // 更新播放列表和当前索引
+        // Update playlist and current index
         int existingIndex = _playlist.indexWhere((item) => item.id == musicId);
         if (existingIndex >= 0) {
-          // 如果歌曲已在播放列表中，直接设置当前索引
+          // If the song is already in the playlist, set the current index directly
           _currentIndex = existingIndex;
-          print("歌曲已在播放列表中，索引: $_currentIndex");
+          print("Song already in playlist, index: $_currentIndex");
         } else {
-          // 否则，添加到播放列表并设置为当前歌曲
+          // Otherwise, add to playlist and set as current song
           _playlist.add(musicItem);
           _currentIndex = _playlist.length - 1;
-          print("歌曲已添加到播放列表，索引: $_currentIndex");
+          print("Song added to playlist, index: $_currentIndex");
         }
       }
       
-      // 如果同一首歌曲已经在播放，则不做任何事
+      // If the same song is already playing, do nothing
       if (_currentMusicId == musicId && _player.playing) {
-        print("相同歌曲已在播放中，不重新播放");
+        print("Same song is already playing, do not replay");
         return;
       }
       
-      // 设置当前音乐ID（播放操作前）
+      // Set current music ID (before playback operation)
       _currentMusicId = musicId;
       
-      // 播放前通知监听器更新UI
+      // Notify listeners before playback
       notifyListeners();
       
-      // 如果另一首歌曲正在播放，先停止它
+      // If another song is playing, stop it first
       if (_player.playing) {
-        print("停止当前播放的音乐");
+        print("Stop current playing music");
         await _player.stop();
       }
       
-      // 尝试设置音频源并播放
-      print("设置音频URL: ${audioUrl.substring(0, math.min(50, audioUrl.length))}...");
+      // Try to set the audio source and play
+      print("Setting audio URL: ${audioUrl.substring(0, math.min(50, audioUrl.length))}...");
       await _player.setUrl(audioUrl);
       
-      // 重新设置完成处理器
+      // Reset completion handler
       _setupCompletionHandler();
       
-      print("开始播放");
+      print("Start playing");
       await _player.play();
       
-      // 播放后通知监听器更新UI
+      // Notify listeners after playback
       notifyListeners();
-      print("播放开始成功");
+      print("Playback started successfully");
     } catch (e) {
-      print('播放音乐失败: $e');
+      print('Failed to play music: $e');
       notifyListeners();
       rethrow;
     }
@@ -260,59 +260,59 @@ class AudioPlayerManager extends ChangeNotifier {
   // Stop playback
   Future<void> stopMusic() async {
     await _player.stop();
-    // 不再清除 _currentMusicId，只暂停播放
-    // _currentMusicId = null; // 移除此行
+    // Do not clear _currentMusicId, only pause playback
+    // _currentMusicId = null; // Remove this line
     notifyListeners();
   }
   
   // Play next song
   Future<bool> playNext() async {
-    // 如果正在执行，则返回
+    // If it is executing, return
     if (_isPlayNextExecuting) {
-      print("playNext 正在执行中，跳过重复调用");
+      print("playNext is executing, skip duplicate call");
       return false;
     }
     
-    // 设置互斥锁
+    // Set mutex lock
     _isPlayNextExecuting = true;
     
     try {
-      // 检查是否有下一首
+      // Check if there is a next song
       if (!hasNext) {
-        print("没有下一首歌曲可播放");
+        print("No next song to play");
         return false;
       }
       
-      // 检查列表是否为空
+      // Check if the playlist is empty
       if (_playlist.isEmpty) {
-        print("播放列表为空");
+        print("Playlist is empty");
         return false;
       }
       
-      // 确保索引在有效范围内
+      // Ensure the index is within the valid range
       int nextIndex = _currentIndex + 1;
       if (nextIndex >= _playlist.length) {
-        print("已到达播放列表末尾");
+        print("Reached the end of the playlist");
         return false;
       }
       
-      // 更新索引
+      // Update index
       _currentIndex = nextIndex;
-      print("切换到下一首歌曲，索引: $_currentIndex / ${_playlist.length}");
+      print("Switch to next song, index: $_currentIndex / ${_playlist.length}");
       
-      // 获取下一首歌曲
+      // Get next song
       MusicItem nextMusic = _playlist[_currentIndex];
-      print("即将播放: ${nextMusic.title}");
+      print("Next song: ${nextMusic.title}");
       
-      // 播放下一首
+      // Play next song
       await playMusic(nextMusic.id, nextMusic.audioUrl, musicItem: nextMusic);
-      print("成功开始播放下一首歌曲");
+      print("Successfully started playing next song");
       return true;
     } catch (e) {
-      print('播放下一首歌曲失败: $e');
+      print('Failed to play next song: $e');
       return false;
     } finally {
-      // 释放互斥锁
+      // Release mutex lock
       _isPlayNextExecuting = false;
     }
   }
@@ -320,22 +320,22 @@ class AudioPlayerManager extends ChangeNotifier {
   // Play previous song
   Future<bool> playPrevious() async {
     if (!hasPrevious) {
-      print("没有上一首歌曲");
+      print("No previous song");
       return false;
     }
     
     try {
       // Move to previous index
       _currentIndex--;
-      print("移动到上一首歌曲，索引: $_currentIndex");
+      print("Move to previous song, index: $_currentIndex");
       MusicItem prevMusic = _playlist[_currentIndex];
       
       // Play previous song
-      print("播放上一首: ${prevMusic.title}, ID: ${prevMusic.id}");
+      print("Previous song: ${prevMusic.title}, ID: ${prevMusic.id}");
       await playMusic(prevMusic.id, prevMusic.audioUrl, musicItem: prevMusic);
       return true;
     } catch (e) {
-      print('播放上一首失败: $e');
+      print('Failed to play previous song: $e');
       return false;
     }
   }
@@ -343,19 +343,19 @@ class AudioPlayerManager extends ChangeNotifier {
   // Set playlist
   void setPlaylist(List<MusicItem> songs, {int initialIndex = 0}) {
     if (songs.isEmpty) {
-      print("播放列表为空，不设置");
+      print("Playlist is empty, do not set");
       return;
     }
     
     _playlist = List.from(songs);
     _currentIndex = initialIndex.clamp(0, _playlist.length - 1);
     
-    print("设置播放列表: ${_playlist.length}首歌, 起始索引: $_currentIndex");
+    print("Set playlist: ${_playlist.length} songs, starting index: $_currentIndex");
     
     // If initial index is provided, immediately play that song
     if (_playlist.isNotEmpty) {
       final initialSong = _playlist[_currentIndex];
-      print("开始播放列表中的歌曲: ${initialSong.title}, ID: ${initialSong.id}");
+      print("Start playing the song in the playlist: ${initialSong.title}, ID: ${initialSong.id}");
       playMusic(initialSong.id, initialSong.audioUrl, musicItem: initialSong);
     }
   }
@@ -381,7 +381,7 @@ class AudioPlayerManager extends ChangeNotifier {
   // Clean up resources
   @override
   void dispose() {
-    // 取消订阅
+    // Cancel subscription
     _durationSubscription?.cancel();
     _player.dispose();
     super.dispose();

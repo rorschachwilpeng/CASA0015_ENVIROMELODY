@@ -40,32 +40,32 @@ class _MusicVisualizerPlayerState extends State<MusicVisualizerPlayer> {
     return "$twoDigitMinutes:$twoDigitSeconds";
   }
   
-  // 切换到下一首歌曲
+  // Switch to next song
   void _playNextSong() async {
     final success = await _audioPlayerManager.playNext();
     if (!success && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('没有下一首歌曲')),
+        const SnackBar(content: Text('No next song')),
       );
     }
   }
   
-  // 切换到上一首歌曲
+  // Switch to previous song
   void _playPreviousSong() async {
     final success = await _audioPlayerManager.playPrevious();
     if (!success && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('没有上一首歌曲')),
+        const SnackBar(content: Text('No previous song')),
       );
     }
   }
   
   @override
   Widget build(BuildContext context) {
-    // 只检查 currentMusic 而不是 currentMusicId，因为我们需要显示播放器，即使音乐已经播放完成
+    // Only check currentMusic instead of currentMusicId, because we need to display the player even if the music has been played
     final currentMusic = _audioPlayerManager.currentMusic;
     
-    // 如果没有当前音乐信息，则不显示播放器
+    // If there is no current music information, do not display the player
     if (currentMusic == null) {
       return const SizedBox.shrink();
     }
