@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'weather_service.dart';
 
 class MusicItem {
   final String id;
@@ -11,6 +12,14 @@ class MusicItem {
   // Optional: Add a field to represent the music source/API
   final String source;
   
+  // 新增位置相关字段
+  final double? latitude;
+  final double? longitude;
+  final String? locationName;
+  
+  // 新增天气数据字段
+  final Map<String, dynamic>? weatherData;
+  
   MusicItem({
     required this.id,
     required this.title,
@@ -19,6 +28,11 @@ class MusicItem {
     required this.status,
     required this.createdAt,
     this.source = 'stability', // Default source is stability
+    // 新增字段初始化
+    this.latitude,
+    this.longitude,
+    this.locationName,
+    this.weatherData,
   });
   
   // From JSON constructor
@@ -48,6 +62,11 @@ class MusicItem {
           ? DateTime.parse(json['created_at']) 
           : DateTime.now(),
       source: json['source'] ?? 'stability',
+      // 添加新字段的解析
+      latitude: json['latitude']?.toDouble(),
+      longitude: json['longitude']?.toDouble(),
+      locationName: json['location_name'],
+      weatherData: json['weather_data'],
     );
   }
   
@@ -61,6 +80,11 @@ class MusicItem {
       'status': status,
       'created_at': createdAt.toIso8601String(),
       'source': source,
+      // 添加新字段
+      'latitude': latitude,
+      'longitude': longitude,
+      'location_name': locationName,
+      'weather_data': weatherData,
     };
   }
   
@@ -76,6 +100,10 @@ class MusicItem {
       status: sunoMusic.status,
       createdAt: sunoMusic.createdAt,
       source: 'stability',
+      latitude: sunoMusic.latitude,
+      longitude: sunoMusic.longitude,
+      locationName: sunoMusic.locationName,
+      weatherData: sunoMusic.weatherData,
     );
   }
   
@@ -88,6 +116,7 @@ class MusicItem {
       audioUrl: '',
       status: 'empty',
       createdAt: DateTime.now(),
+      source: 'stability',
     );
   }
   
@@ -100,6 +129,11 @@ class MusicItem {
     String? status,
     DateTime? createdAt,
     String? source,
+    // 添加新字段
+    double? latitude,
+    double? longitude,
+    String? locationName,
+    Map<String, dynamic>? weatherData,
   }) {
     return MusicItem(
       id: id ?? this.id,
@@ -109,11 +143,49 @@ class MusicItem {
       status: status ?? this.status,
       createdAt: createdAt ?? this.createdAt,
       source: source ?? this.source,
+      // 添加新字段
+      latitude: latitude ?? this.latitude,
+      longitude: longitude ?? this.longitude,
+      locationName: locationName ?? this.locationName,
+      weatherData: weatherData ?? this.weatherData,
     );
   }
   
   @override
   String toString() {
     return 'MusicItem{id: $id, title: $title, prompt: $prompt, status: $status}';
+  }
+  
+  // 从 MusicItem 获取 WeatherData 对象
+  WeatherData? getWeatherData() {
+    if (weatherData == null) return null;
+    return WeatherData.fromJsonMap(weatherData!);
+  }
+  
+  // 静态方法：创建带有天气数据的 MusicItem
+  static MusicItem createWithWeather({
+    required String id,
+    required String title,
+    required String prompt,
+    required String audioUrl,
+    required String status,
+    required DateTime createdAt,
+    String source = 'stability',
+    WeatherData? weatherData,
+    LocationData? locationData,
+  }) {
+    return MusicItem(
+      id: id,
+      title: title,
+      prompt: prompt,
+      audioUrl: audioUrl,
+      status: status,
+      createdAt: createdAt,
+      source: source,
+      latitude: locationData?.latitude,
+      longitude: locationData?.longitude,
+      locationName: locationData?.getFormattedLocation(),
+      weatherData: weatherData?.toJson(),
+    );
   }
 } 

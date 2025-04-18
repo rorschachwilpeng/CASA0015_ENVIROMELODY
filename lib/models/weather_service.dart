@@ -301,6 +301,66 @@ The mood is ${temperatureMoods[0]} and ${weatherMoods[0]}.
   String getIconUrl() {
     return 'https://openweathermap.org/img/wn/$weatherIcon@2x.png';
   }
+  
+  /// Convert to JSON
+  Map<String, dynamic> toJson() {
+    return {
+      'city_name': cityName,
+      'country_code': countryCode,
+      'temperature': temperature,
+      'feels_like': feelsLike,
+      'temp_min': tempMin,
+      'temp_max': tempMax,
+      'humidity': humidity,
+      'wind_speed': windSpeed,
+      'wind_degree': windDegree,
+      'wind_gust': windGust,
+      'pressure': pressure,
+      'weather_main': weatherMain,
+      'weather_description': weatherDescription,
+      'weather_icon': weatherIcon,
+      'clouds_percent': cloudsPercent,
+      'visibility': visibility,
+      'sunrise': sunrise.millisecondsSinceEpoch,
+      'sunset': sunset.millisecondsSinceEpoch,
+      'timestamp': timestamp.millisecondsSinceEpoch,
+      'timezone': timezone,
+      'location': location?.toJson(),
+    };
+  }
+
+  static WeatherData? fromJsonMap(Map<String, dynamic>? json) {
+    if (json == null) return null;
+    
+    LocationData? locationData;
+    if (json['location'] != null) {
+      locationData = LocationData.fromJsonMap(json['location']);
+    }
+    
+    return WeatherData(
+      cityName: json['city_name'] ?? 'Unknown',
+      countryCode: json['country_code'] ?? '',
+      temperature: (json['temperature'] ?? 0).toDouble(),
+      feelsLike: (json['feels_like'] ?? 0).toDouble(),
+      tempMin: (json['temp_min'] ?? 0).toDouble(),
+      tempMax: (json['temp_max'] ?? 0).toDouble(),
+      humidity: json['humidity'] ?? 0,
+      windSpeed: (json['wind_speed'] ?? 0).toDouble(),
+      windDegree: json['wind_degree'] ?? 0,
+      windGust: json['wind_gust']?.toDouble(),
+      pressure: json['pressure'] ?? 0,
+      weatherMain: json['weather_main'] ?? '',
+      weatherDescription: json['weather_description'] ?? '',
+      weatherIcon: json['weather_icon'] ?? '',
+      cloudsPercent: json['clouds_percent'] ?? 0,
+      visibility: json['visibility'] ?? 0,
+      sunrise: DateTime.fromMillisecondsSinceEpoch(json['sunrise'] ?? 0),
+      sunset: DateTime.fromMillisecondsSinceEpoch(json['sunset'] ?? 0),
+      timestamp: DateTime.fromMillisecondsSinceEpoch(json['timestamp'] ?? 0),
+      timezone: json['timezone'] ?? 0,
+      location: locationData,
+    );
+  }
 }
 
 /// Forecast data model
@@ -435,5 +495,32 @@ class LocationData {
   /// Convert to LatLng object (for map)
   LatLng toLatLng() {
     return LatLng(latitude, longitude);
+  }
+  
+  /// Convert to JSON
+  Map<String, dynamic> toJson() {
+    return {
+      'name': name,
+      'country': country,
+      'state': state,
+      'local_names': localNames,
+      'latitude': latitude,
+      'longitude': longitude,
+    };
+  }
+
+  static LocationData? fromJsonMap(Map<String, dynamic>? json) {
+    if (json == null) return null;
+    
+    return LocationData(
+      name: json['name'] ?? 'Unknown',
+      country: json['country'] ?? '',
+      state: json['state'] ?? '',
+      localNames: json['local_names'] != null 
+          ? Map<String, String>.from(json['local_names']) 
+          : null,
+      latitude: (json['latitude'] ?? 0).toDouble(),
+      longitude: (json['longitude'] ?? 0).toDouble(),
+    );
   }
 }
