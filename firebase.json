@@ -1,0 +1,45 @@
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "casa0015-b3b86",
+          "appId": "1:909938235003:android:58cd1e02477bd3fb3a74de",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "ios": {
+        "default": {
+          "projectId": "casa0015-b3b86",
+          "appId": "1:909938235003:ios:ad76415b06ad507c3a74de",
+          "uploadDebugSymbols": false,
+          "fileOutput": "ios/Runner/GoogleService-Info.plist"
+        }
+      },
+      "macos": {
+        "default": {
+          "projectId": "casa0015-b3b86",
+          "appId": "1:909938235003:ios:ad76415b06ad507c3a74de",
+          "uploadDebugSymbols": false,
+          "fileOutput": "macos/Runner/GoogleService-Info.plist"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "casa0015-b3b86",
+          "configurations": {
+            "android": "1:909938235003:android:58cd1e02477bd3fb3a74de",
+            "ios": "1:909938235003:ios:ad76415b06ad507c3a74de",
+            "macos": "1:909938235003:ios:ad76415b06ad507c3a74de",
+            "web": "1:909938235003:web:965d23db98faee343a74de",
+            "windows": "1:909938235003:web:a372da4ac3f20b2f3a74de"
+          }
+        }
+      }
+    }
+  },
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  }
+}

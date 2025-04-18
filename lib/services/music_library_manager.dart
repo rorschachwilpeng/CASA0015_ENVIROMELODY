@@ -1,8 +1,14 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/foundation.dart';
 import '../models/music_item.dart';
 import 'dart:developer' as developer;
+import 'firebase_service.dart';
+import 'package:uuid/uuid.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as path;
+import 'package:http/http.dart' as http;
 
 class MusicLibraryManager extends ChangeNotifier {
   // Singleton instance
@@ -11,8 +17,8 @@ class MusicLibraryManager extends ChangeNotifier {
   // Factory constructor to get the singleton instance
   factory MusicLibraryManager() => _instance;
   
-  // Internal constructor
-  MusicLibraryManager._internal();
+  // Firebase 服务
+  final FirebaseService _firebaseService = FirebaseService();
   
   // Music library list
   List<MusicItem> _musicLibrary = [];
@@ -23,6 +29,21 @@ class MusicLibraryManager extends ChangeNotifier {
   // SharedPreferences的key
   final String _storageKey = 'music_library';
   
+  // 是否使用 Firebase
+  bool _useFirebase = true;
+  
+  // 获取是否使用 Firebase
+  bool get useFirebase => _useFirebase;
+  
+  // 设置是否使用 Firebase
+  set useFirebase(bool value) {
+    _useFirebase = value;
+    notifyListeners();
+  }
+  
+  // Internal constructor
+  MusicLibraryManager._internal();
+  
   // Get all music
   List<MusicItem> get allMusic => List.unmodifiable(_musicLibrary);
   
@@ -30,47 +51,159 @@ class MusicLibraryManager extends ChangeNotifier {
   Future<void> initialize() async {
     if (_initialized) return;
     
-    await loadFromStorage();
-    
-    // Fix invalid URLs
-    await fixInvalidUrls();
-    
-    _initialized = true;
-    notifyListeners();
+    try {
+      // 初始化 Firebase
+      if (_useFirebase) {
+        await _firebaseService.initialize();
+        print('Firebase 服务初始化成功');
+        
+        // 从 Firebase 加载音乐
+        await _loadFromFirebase();
+      } else {
+        // 从本地存储加载
+        await loadFromStorage();
+      }
+      
+      // Fix invalid URLs
+      await fixInvalidUrls();
+      
+      _initialized = true;
+      notifyListeners();
+      print('音乐库初始化完成: ${_musicLibrary.length} 首音乐');
+    } catch (e) {
+      print('音乐库初始化失败: $e');
+    }
+  }
+  
+  // 从 Firebase 加载音乐
+  Future<void> _loadFromFirebase() async {
+    try {
+      _musicLibrary = await _firebaseService.getAllMusic();
+      print('从 Firebase 加载音乐库: ${_musicLibrary.length} 首音乐');
+    } catch (e) {
+      print('从 Firebase 加载音乐库失败: $e');
+      // 失败时回退到本地存储
+      await loadFromStorage();
+    }
+  }
+  
+  // 监听 Firebase 音乐变更
+  Stream<List<MusicItem>> get musicListStream {
+    if (_useFirebase) {
+      return _firebaseService.musicListStream();
+    } else {
+      // 如果不使用 Firebase，返回一个空流
+      return Stream.value(_musicLibrary);
+    }
   }
   
   // Add music
   Future<void> addMusic(MusicItem music) async {
-    // Check if the music with the same ID already exists
-    final existingIndex = _musicLibrary.indexWhere((item) => item.id == music.id);
+    // 检查音乐是否有有效的 ID
+    final String id = music.id.isEmpty ? const Uuid().v4() : music.id;
+    final musicWithId = music.id.isEmpty ? music.copyWith(id: id) : music;
+    
+    // 检查是否已经存在相同 ID 的音乐
+    final existingIndex = _musicLibrary.indexWhere((item) => item.id == musicWithId.id);
     
     if (existingIndex >= 0) {
       // Update existing music
-      _musicLibrary[existingIndex] = music;
+      _musicLibrary[existingIndex] = musicWithId;
     } else {
       // Add new music
-      _musicLibrary.add(music);
+      _musicLibrary.add(musicWithId);
     }
     
-    // Save to storage
-    await saveToStorage();
+    if (_useFirebase) {
+      // 检查音频是否是本地文件，如果是则上传到 Firebase Storage
+      if (musicWithId.audioUrl.startsWith('file://')) {
+        await _uploadAudioToFirebase(musicWithId);
+      } else {
+        // 直接添加到 Firestore
+        await _firebaseService.addMusic(musicWithId);
+      }
+    } else {
+      // Save to local storage
+      await saveToStorage();
+    }
     
-    // Add notification mechanism, for example using ValueNotifier or Stream
-    debugPrint('Music added to library: ${music.title}');
+    debugPrint('音乐已添加到库: ${musicWithId.title}');
     notifyListeners();
+  }
+  
+  // 上传音频到 Firebase Storage
+  Future<void> _uploadAudioToFirebase(MusicItem music) async {
+    try {
+      // 检查 URL 是否是本地文件
+      if (!music.audioUrl.startsWith('file://')) {
+        await _firebaseService.addMusic(music);
+        return;
+      }
+      
+      // 提取文件路径
+      final filePath = music.audioUrl.replaceFirst('file://', '');
+      final file = File(filePath);
+      
+      if (await file.exists()) {
+        // 生成文件名
+        final fileName = '${music.id}${path.extension(filePath)}';
+        
+        // 上传文件
+        final downloadUrl = await _firebaseService.uploadAudioFile(file, fileName);
+        
+        // 创建带有新 URL 的音乐对象
+        final updatedMusic = music.copyWith(audioUrl: downloadUrl);
+        
+        // 更新本地列表
+        final index = _musicLibrary.indexWhere((item) => item.id == music.id);
+        if (index >= 0) {
+          _musicLibrary[index] = updatedMusic;
+        }
+        
+        // 保存到 Firestore
+        await _firebaseService.addMusic(updatedMusic);
+        print('音频文件已上传并保存到 Firestore: ${updatedMusic.id}');
+      } else {
+        print('文件不存在: $filePath');
+        // 仍然保存元数据
+        await _firebaseService.addMusic(music);
+      }
+    } catch (e) {
+      print('上传音频到 Firebase 失败: $e');
+      throw Exception('上传音频到 Firebase 失败: $e');
+    }
   }
   
   // Remove music
   Future<bool> removeMusic(String id) async {
     final previousLength = _musicLibrary.length;
+    
+    // 找到要删除的音乐
+    final musicToDelete = _musicLibrary.firstWhere(
+      (music) => music.id == id,
+      orElse: () => MusicItem.empty(),
+    );
+    
     _musicLibrary.removeWhere((music) => music.id == id);
     
     // Check if the removal is successful
     final removed = previousLength > _musicLibrary.length;
     
     if (removed) {
-      await saveToStorage();
-      debugPrint('Music removed from library: $id');
+      if (_useFirebase && musicToDelete.id.isNotEmpty) {
+        // 从 Firebase 删除
+        await _firebaseService.deleteMusic(id);
+        
+        // 如果是 Firebase Storage URL，也删除文件
+        if (musicToDelete.audioUrl.startsWith('https://firebasestorage.googleapis.com')) {
+          await _firebaseService.deleteAudioFile(musicToDelete.audioUrl);
+        }
+      } else {
+        // 仅保存到本地存储
+        await saveToStorage();
+      }
+      
+      debugPrint('音乐已从库中删除: $id');
       notifyListeners();
     }
     
@@ -97,9 +230,9 @@ class MusicLibraryManager extends ChangeNotifier {
       // Save the string list
       await prefs.setStringList(_storageKey, jsonList);
       
-      debugPrint('Music library saved to storage: ${_musicLibrary.length} items');
+      debugPrint('音乐库已保存到本地存储: ${_musicLibrary.length} 首音乐');
     } catch (e) {
-      debugPrint('Error saving music library: $e');
+      debugPrint('保存音乐库失败: $e');
     }
   }
   
@@ -117,14 +250,14 @@ class MusicLibraryManager extends ChangeNotifier {
           final json = jsonDecode(jsonStr);
           return MusicItem.fromJson(json);
         } catch (e) {
-          debugPrint('Error parsing music item: $e');
+          debugPrint('解析音乐项失败: $e');
           return null;
         }
       }).whereType<MusicItem>().toList();
       
-      debugPrint('Music library loaded from storage: ${_musicLibrary.length} items');
+      debugPrint('从本地存储加载音乐库: ${_musicLibrary.length} 首音乐');
     } catch (e) {
-      debugPrint('Error loading music library: $e');
+      debugPrint('加载音乐库失败: $e');
       _musicLibrary = [];
     }
   }
@@ -132,8 +265,15 @@ class MusicLibraryManager extends ChangeNotifier {
   // Clear the library
   Future<void> clearLibrary() async {
     _musicLibrary.clear();
-    await saveToStorage();
-    debugPrint('Music library cleared');
+    
+    if (_useFirebase) {
+      // Firebase 清除库的功能需谨慎实现
+      print('警告: 不支持从 Firebase 批量清除所有音乐');
+    } else {
+      await saveToStorage();
+    }
+    
+    debugPrint('音乐库已清空');
     notifyListeners();
   }
   
@@ -163,14 +303,24 @@ class MusicLibraryManager extends ChangeNotifier {
           _musicLibrary[i] = music.copyWith(audioUrl: newUrl);
           hasChanges = true;
           
-          developer.log('Fixed audio URL: $originalUrl -> $newUrl', name: 'MusicLibraryManager');
+          developer.log('已修复音频 URL: $originalUrl -> $newUrl', name: 'MusicLibraryManager');
         }
       }
     }
     
     if (hasChanges) {
-      await saveToStorage();
-      developer.log('Fixed invalid audio URLs', name: 'MusicLibraryManager');
+      if (_useFirebase) {
+        // 为每个修复的项更新 Firebase
+        for (final music in _musicLibrary) {
+          if (music.audioUrl.startsWith('file://')) {
+            await _uploadAudioToFirebase(music);
+          }
+        }
+      } else {
+        await saveToStorage();
+      }
+      
+      developer.log('已修复无效的音频 URL', name: 'MusicLibraryManager');
       notifyListeners();
     }
   }
@@ -179,23 +329,83 @@ class MusicLibraryManager extends ChangeNotifier {
   Future<int> removeMultipleMusic(List<String> ids) async {
     int removedCount = 0;
     
-    // Remove music with specified IDs
-    for (String id in ids) {
-      final previousLength = _musicLibrary.length;
-      _musicLibrary.removeWhere((music) => music.id == id);
+    if (_useFirebase) {
+      // 使用 Firebase 批量删除
+      removedCount = await _firebaseService.deleteMultipleMusic(ids);
       
-      // Check if removal is successful
-      if (previousLength > _musicLibrary.length) {
-        removedCount++;
+      // 同步删除本地列表中的音乐
+      _musicLibrary.removeWhere((music) => ids.contains(music.id));
+    } else {
+      // 从本地列表删除
+      for (String id in ids) {
+        final previousLength = _musicLibrary.length;
+        _musicLibrary.removeWhere((music) => music.id == id);
+        
+        // 检查是否删除成功
+        if (previousLength > _musicLibrary.length) {
+          removedCount++;
+        }
       }
+      
+      // 保存到本地存储
+      await saveToStorage();
     }
     
     if (removedCount > 0) {
-      await saveToStorage();
-      debugPrint('Removed $removedCount music items from library');
+      debugPrint('已从库中删除 $removedCount 首音乐');
       notifyListeners();
     }
     
     return removedCount;
+  }
+  
+  // 从远程 URL 下载音频并上传到 Firebase
+  Future<MusicItem> downloadAndUploadAudio(MusicItem music) async {
+    if (!_useFirebase) {
+      return music; // 如果不使用 Firebase，直接返回
+    }
+    
+    try {
+      // 检查 URL 是否已经是 Firebase URL
+      if (music.audioUrl.startsWith('https://firebasestorage.googleapis.com')) {
+        return music;
+      }
+      
+      // 确保 URL 有效
+      if (!music.audioUrl.startsWith('http')) {
+        print('无效的音频 URL: ${music.audioUrl}');
+        return music;
+      }
+      
+      // 从远程下载文件
+      final response = await http.get(Uri.parse(music.audioUrl));
+      if (response.statusCode != 200) {
+        throw Exception('下载音频文件失败: ${response.statusCode}');
+      }
+      
+      // 创建临时文件
+      final tempDir = await getTemporaryDirectory();
+      final tempFile = File('${tempDir.path}/${music.id}.mp3');
+      await tempFile.writeAsBytes(response.bodyBytes);
+      
+      // 上传到 Firebase Storage
+      final fileName = '${music.id}.mp3';
+      final downloadUrl = await _firebaseService.uploadAudioFile(tempFile, fileName);
+      
+      // 更新音乐项
+      final updatedMusic = music.copyWith(audioUrl: downloadUrl);
+      
+      // 保存到 Firestore
+      await _firebaseService.addMusic(updatedMusic);
+      
+      // 删除临时文件
+      await tempFile.delete();
+      
+      print('已下载并上传音频到 Firebase: ${music.id}');
+      return updatedMusic;
+    } catch (e) {
+      print('下载并上传音频失败: $e');
+      return music; // 出错时返回原始音乐项
+    }
   }
 } 

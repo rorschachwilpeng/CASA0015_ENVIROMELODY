@@ -10,11 +10,11 @@
 		</data>
 		<key>flutter_assets/AssetManifest.bin</key>
 		<data>
-		yBKa76yKHsjKsbPqrZk0rblYsC4=
+		IApSpt7NNkUQkfUiyjMaTXn9M3E=
 		</data>
 		<key>flutter_assets/AssetManifest.json</key>
 		<data>
-		5WbB0dQ3+tqgXjRPxrFOjq8tuCE=
+		vWokA3SbvdI+EXwCjoSq9ocHUfY=
 		</data>
 		<key>flutter_assets/FontManifest.json</key>
 		<data>
@@ -28,6 +28,14 @@
 		<data>
 		re4p7E8rPLLsN+wzaPN/+AVpXTY=
 		</data>
+		<key>flutter_assets/assets/icons/.gitkeep</key>
+		<data>
+		mO7mda9Ck64+VF5butqZxUgcQlE=
+		</data>
+		<key>flutter_assets/assets/images/.gitkeep</key>
+		<data>
+		mO7mda9Ck64+VF5butqZxUgcQlE=
+		</data>
 		<key>flutter_assets/fonts/MaterialIcons-Regular.otf</key>
 		<data>
 		/CUoTuPQqqdexfyOT9lpJhV+2MQ=
@@ -38,7 +46,7 @@
 		</data>
 		<key>flutter_assets/kernel_blob.bin</key>
 		<data>
-		pOB3GdF/QAhzNvBH1GSkBXwyAQY=
+		grUaX6bOK+cgkuDfbAPojaS8ajA=
 		</data>
 		<key>flutter_assets/packages/cupertino_icons/assets/CupertinoIcons.ttf</key>
 		<data>
@@ -63,14 +71,14 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			0g4fk58UvtMABh3ZfS4OTRXdb4+EJbGgylW5e+z+2no=
+			VxfOPT0hZ3hfZU05TAOTES5I73DDvN4PrgewDA3NIxs=
 			</data>
 		</dict>
 		<key>flutter_assets/AssetManifest.json</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			dmvOavY8AMGMzpeAZFd/PyAIgDpo14SE2KNuyHPJQiY=
+			C8bNVdDr+fprpQ2iHF3rDmR4YpBXhwFXCt2d9S27u18=
 			</data>
 		</dict>
 		<key>flutter_assets/FontManifest.json</key>
@@ -94,6 +102,20 @@
 			lUijHkoEgTXB2U+Rkyi/tirix7s8q5ZVfHlB2ql3dss=
 			</data>
 		</dict>
+		<key>flutter_assets/assets/icons/.gitkeep</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			+GVTwpQWHYLv8j7K0nMuoZ1KCTtfwaJO597ptrwxVPU=
+			</data>
+		</dict>
+		<key>flutter_assets/assets/images/.gitkeep</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			+GVTwpQWHYLv8j7K0nMuoZ1KCTtfwaJO597ptrwxVPU=
+			</data>
+		</dict>
 		<key>flutter_assets/fonts/MaterialIcons-Regular.otf</key>
 		<dict>
 			<key>hash2</key>
@@ -112,7 +134,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			Dt5DRbWZ+HoPiuCl3Pzd93+pbL/uvTMbzmSWdZu3OQQ=
+			V+MKHrMrs21cvsG80QsJGp3lWpeXVfrZpnv6y9fhnVs=
 			</data>
 		</dict>
 		<key>flutter_assets/packages/cupertino_icons/assets/CupertinoIcons.ttf</key>

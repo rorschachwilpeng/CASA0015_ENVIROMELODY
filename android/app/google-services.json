@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "909938235003",
+    "project_id": "casa0015-b3b86",
+    "storage_bucket": "casa0015-b3b86.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:909938235003:android:58cd1e02477bd3fb3a74de",
+        "android_client_info": {
+          "package_name": "com.soundscape.soundscape_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDNUbqYk825evVUzPcBXFDkjMSDo2Ynl04"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -7,9 +7,28 @@ import 'services/music_library_manager.dart';
 import 'services/audio_player_manager.dart';
 import 'widgets/mini_player.dart';
 import 'widgets/music_visualizer_player.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // 使用生成的配置初始化 Firebase
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    print('Firebase 初始化成功!');
+  } catch (e) {
+    print('Firebase 初始化失败: $e');
+    // 尝试不带选项初始化
+    try {
+      await Firebase.initializeApp();
+      print('Firebase 默认初始化成功!');
+    } catch (e) {
+      print('Firebase 默认初始化也失败: $e');
+    }
+  }
   
   // Initialization of services
   await MusicLibraryManager().initialize();
