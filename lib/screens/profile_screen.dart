@@ -3,6 +3,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import '../firebase_options.dart';
 import 'dart:async';
+import '../models/music_item.dart';
+import '../services/firebase_service.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({Key? key}) : super(key: key);
@@ -84,9 +86,9 @@ class ProfileScreen extends StatelessWidget {
             const Divider(),
             ListTile(
               leading: const Icon(Icons.cloud_upload),
-              title: const Text('测试 Firebase 连接'),
+              title: const Text('测试保存音乐到 Firebase'),
               onTap: () {
-                _testFirebaseConnection(context);
+                testAddMusicToFirestore();
               },
             ),
             const Divider(),
@@ -292,5 +294,29 @@ class ProfileScreen extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  // 添加测试方法
+  Future<void> testAddMusicToFirestore() async {
+    try {
+      final testMusic = MusicItem(
+        id: 'test_${DateTime.now().millisecondsSinceEpoch}',
+        title: '测试音乐',
+        prompt: '测试提示词',
+        audioUrl: 'https://example.com/test.mp3',
+        status: 'complete',
+        createdAt: DateTime.now(),
+        latitude: 39.9042,
+        longitude: 116.4074,
+        locationName: '测试位置',
+        weatherData: {'temperature': 25, 'weather': 'sunny'},
+      );
+      
+      print('正在尝试保存测试音乐到Firestore...');
+      await FirebaseService().addMusic(testMusic);
+      print('测试音乐保存成功!');
+    } catch (e) {
+      print('测试音乐保存失败: $e');
+    }
   }
 } 

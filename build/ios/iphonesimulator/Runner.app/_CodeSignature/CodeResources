@@ -46,7 +46,7 @@
 		</data>
 		<key>Frameworks/App.framework/App</key>
 		<data>
-		dV288LhcDOV6C/zcatJRX25cATE=
+		n726gKKgH9yFmuM+26tKYcxwd1s=
 		</data>
 		<key>Frameworks/App.framework/Info.plist</key>
 		<data>
@@ -54,7 +54,7 @@
 		</data>
 		<key>Frameworks/App.framework/_CodeSignature/CodeResources</key>
 		<data>
-		QZnPKsZY557S8tuXOZ/aeE60Yro=
+		Qy6KItZFotUSMLqwTCO+MpdXIzo=
 		</data>
 		<key>Frameworks/App.framework/flutter_assets/AssetManifest.bin</key>
 		<data>
@@ -70,7 +70,7 @@
 		</data>
 		<key>Frameworks/App.framework/flutter_assets/NOTICES.Z</key>
 		<data>
-		FeFBWcoGn1ZRjAfQ0Ova7gpvDA0=
+		tAQWR8vMtVags9vA++ZCGMBZ4y8=
 		</data>
 		<key>Frameworks/App.framework/flutter_assets/NativeAssetsManifest.json</key>
 		<data>
@@ -94,7 +94,7 @@
 		</data>
 		<key>Frameworks/App.framework/flutter_assets/kernel_blob.bin</key>
 		<data>
-		grUaX6bOK+cgkuDfbAPojaS8ajA=
+		pKiEG6f9TYwgp9z4nwWHZf43hi8=
 		</data>
 		<key>Frameworks/App.framework/flutter_assets/packages/cupertino_icons/assets/CupertinoIcons.ttf</key>
 		<data>
@@ -475,6 +475,18 @@
 		<key>Frameworks/audio_session.framework/audio_session</key>
 		<data>
 		NKOSls/MDU1jjXl4ys9HjxBlFDw=
+		</data>
+		<key>Frameworks/device_info_plus.framework/Info.plist</key>
+		<data>
+		9TrpEFvqn/rCuqQzZNBmFEuFZ4I=
+		</data>
+		<key>Frameworks/device_info_plus.framework/_CodeSignature/CodeResources</key>
+		<data>
+		GIYRgC/qNgFyLvqvCwtPeT9wSsk=
+		</data>
+		<key>Frameworks/device_info_plus.framework/device_info_plus</key>
+		<data>
+		Zx0XuXE7L2Z3p25bRuxOyhShADM=
 		</data>
 		<key>Frameworks/geolocator_apple.framework/Info.plist</key>
 		<data>
@@ -1522,7 +1534,7 @@
 		</data>
 		<key>Runner.debug.dylib</key>
 		<data>
-		RXh1envPQ/3MsF9UJKlwoVRwMmk=
+		GThSw/7LhhSPjX4jJO4qczZr3tk=
 		</data>
 		<key>__preview.dylib</key>
 		<data>
@@ -1621,7 +1633,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			nL6v0MCa4RB3Ma8wQrbyIRftUPr9qNxK84mzWlddKd8=
+			U59ylnbN/MqQSg4Va15DBELXOvGIfPJTSkz9V+QmEwQ=
 			</data>
 		</dict>
 		<key>Frameworks/App.framework/Info.plist</key>
@@ -1635,7 +1647,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			4/l+MI2+kGI2nOdt4wqgfSWMWJq2gNbfMjos3vcHXNE=
+			AK5jpggRylsPRLLyYRUiN0VUnjvPbSPmN9pJpzQpvZs=
 			</data>
 		</dict>
 		<key>Frameworks/App.framework/flutter_assets/AssetManifest.bin</key>
@@ -1663,7 +1675,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			iN/wYlUEqCchAmgv7TlWB+xhSngoBAVo940qU1nLLHM=
+			E9YWH/6Zk/2RxiNC5QXm4f5w2u/5kPm+ReMafFiJ8Rc=
 			</data>
 		</dict>
 		<key>Frameworks/App.framework/flutter_assets/NativeAssetsManifest.json</key>
@@ -1705,7 +1717,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			V+MKHrMrs21cvsG80QsJGp3lWpeXVfrZpnv6y9fhnVs=
+			CJnPLRDZZJl1icX/wDVel+T+wNItv1j1Bmpj5rbBtH0=
 			</data>
 		</dict>
 		<key>Frameworks/App.framework/flutter_assets/packages/cupertino_icons/assets/CupertinoIcons.ttf</key>
@@ -2371,6 +2383,27 @@
 			<key>hash2</key>
 			<data>
 			iAnEjXuiteWUl1Us2cCR9hcfwPz4K57wm7ApbyuLG/k=
+			</data>
+		</dict>
+		<key>Frameworks/device_info_plus.framework/Info.plist</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			QiDWVpUFbr8n8hEyzgXE2pmk1d3BIcN/jakI6Kp41Ac=
+			</data>
+		</dict>
+		<key>Frameworks/device_info_plus.framework/_CodeSignature/CodeResources</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			39hMr8TE+GJ9xsXgnToVuQKFsdnjJ3rkIU8BKPA3ZeA=
+			</data>
+		</dict>
+		<key>Frameworks/device_info_plus.framework/device_info_plus</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			cZyWjwcLVXr/lt59APuU8P/xSHDFRIIFyFoS9yjjIA8=
 			</data>
 		</dict>
 		<key>Frameworks/geolocator_apple.framework/Info.plist</key>
@@ -3839,7 +3872,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			5n7dG7I+atmW+ICkN803P+lL/GhFKptnvNo8/oUDWCs=
+			wtd7ZQbu6uo7rxCTCvzrdFfKXpgXjnGIkqaRCBrj94E=
 			</data>
 		</dict>
 		<key>__preview.dylib</key>

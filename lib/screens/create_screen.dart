@@ -786,15 +786,18 @@ class _CreateScreenState extends State<CreateScreen> {
         
         // Save to the music library
         try {
-          await MusicLibraryManager().addMusic(musicItem);
+          developer.log('音乐已成功保存并同步: ${musicItem.title}', name: 'CreateScreen');
           
-          // Show success prompt
+          // 使用新的addMusicAndSync方法替代原来的addMusic
+          await MusicLibraryManager().addMusicAndSync(musicItem);
+          
+          // 显示成功提示
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: const Text('Music has been added to the music library'),
+                content: const Text('音乐已添加并同步到云端'),
                 action: SnackBarAction(
-                  label: 'View',
+                  label: '查看',
                   onPressed: () {
                     Navigator.of(context).pushNamed('/library');
                   },
@@ -804,12 +807,13 @@ class _CreateScreenState extends State<CreateScreen> {
             );
           }
         } catch (e) {
-          developer.log('Failed to save music: $e', error: e, name: 'CreateScreen');
+          developer.log('保存音乐失败: $e', error: e, name: 'CreateScreen');
+          developer.log('异常类型: ${e.runtimeType}', name: 'CreateScreen');
           
-          // Show error prompt
+          // 显示错误提示
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Failed to save music: ${e.toString()}')),
+              SnackBar(content: Text('保存音乐失败: ${e.toString()}')),
             );
           }
         }

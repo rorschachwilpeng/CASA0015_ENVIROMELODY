@@ -9,6 +9,7 @@ import 'widgets/mini_player.dart';
 import 'widgets/music_visualizer_player.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
+import 'services/firebase_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -29,6 +30,11 @@ void main() async {
       print('Firebase 默认初始化也失败: $e');
     }
   }
+  
+  // 测试Storage连接
+  final firebaseService = FirebaseService();
+  await firebaseService.initialize();
+  await firebaseService.testStorageConnection();
   
   // Initialization of services
   await MusicLibraryManager().initialize();

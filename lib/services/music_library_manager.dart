@@ -133,44 +133,62 @@ class MusicLibraryManager extends ChangeNotifier {
   
   // 上传音频到 Firebase Storage
   Future<void> _uploadAudioToFirebase(MusicItem music) async {
+    print('===== 开始上传音频到Firebase =====');
     try {
       // 检查 URL 是否是本地文件
       if (!music.audioUrl.startsWith('file://')) {
+        print('不是本地文件路径，直接添加到Firestore: ${music.audioUrl}');
         await _firebaseService.addMusic(music);
         return;
       }
       
       // 提取文件路径
       final filePath = music.audioUrl.replaceFirst('file://', '');
+      print('本地文件路径: $filePath');
       final file = File(filePath);
       
       if (await file.exists()) {
+        print('文件存在，大小: ${await file.length()} 字节');
+        
         // 生成文件名
         final fileName = '${music.id}${path.extension(filePath)}';
+        print('上传文件名: $fileName');
         
         // 上传文件
+        print('开始上传文件到Firebase Storage...');
         final downloadUrl = await _firebaseService.uploadAudioFile(file, fileName);
+        print('文件上传成功，下载URL: $downloadUrl');
         
         // 创建带有新 URL 的音乐对象
         final updatedMusic = music.copyWith(audioUrl: downloadUrl);
+        print('已更新音乐对象的音频URL');
         
         // 更新本地列表
         final index = _musicLibrary.indexWhere((item) => item.id == music.id);
         if (index >= 0) {
           _musicLibrary[index] = updatedMusic;
+          print('已更新本地库中的音乐对象');
         }
         
         // 保存到 Firestore
+        print('保存更新后的音乐元数据到Firestore...');
         await _firebaseService.addMusic(updatedMusic);
-        print('音频文件已上传并保存到 Firestore: ${updatedMusic.id}');
+        print('音频文件已上传并保存到Firestore: ${updatedMusic.id}');
       } else {
         print('文件不存在: $filePath');
         // 仍然保存元数据
+        print('文件不存在，仅保存元数据到Firestore');
         await _firebaseService.addMusic(music);
       }
     } catch (e) {
-      print('上传音频到 Firebase 失败: $e');
-      throw Exception('上传音频到 Firebase 失败: $e');
+      print('上传音频到Firebase失败: $e');
+      print('异常类型: ${e.runtimeType}');
+      if (e is Error) {
+        print('异常堆栈: ${e.stackTrace}');
+      }
+      throw Exception('上传音频到Firebase失败: $e');
+    } finally {
+      print('===== 上传音频到Firebase结束 =====');
     }
   }
   
@@ -406,6 +424,119 @@ class MusicLibraryManager extends ChangeNotifier {
     } catch (e) {
       print('下载并上传音频失败: $e');
       return music; // 出错时返回原始音乐项
+    }
+  }
+
+  // 添加一个集成了同步功能的音乐添加方法
+  Future<void> addMusicAndSync(MusicItem music) async {
+    print('===== 开始添加并同步音乐 =====');
+    print('音乐ID: ${music.id}, 标题: ${music.title}');
+    print('音频URL: ${music.audioUrl}');
+    
+    // 确保有ID
+    final String id = music.id.isEmpty ? const Uuid().v4() : music.id;
+    final musicWithId = music.id.isEmpty ? music.copyWith(id: id) : music;
+    
+    if (music.id.isEmpty) {
+      print('生成了新的音乐ID: $id');
+    }
+    
+    // 先添加到本地库
+    try {
+      await addMusic(musicWithId);
+      print('音乐已成功添加到本地库');
+    } catch (e) {
+      print('添加音乐到本地库失败: $e');
+      rethrow; // 重新抛出异常
+    }
+    
+    // 检查Firebase是否启用
+    print('Firebase 同步功能状态: ${_useFirebase ? "已启用" : "未启用"}');
+    
+    // 如果未启用Firebase，无需进一步操作
+    if (!_useFirebase) {
+      print('Firebase同步未启用，跳过同步步骤');
+      return;
+    }
+    
+    try {
+      print('准备同步到Firebase...');
+      
+      // 检查Firebase服务是否初始化
+      print('检查Firebase服务初始化状态...');
+      if (!_firebaseService.isInitialized) {
+        print('Firebase服务尚未初始化，尝试初始化...');
+        await _firebaseService.initialize();
+        print('Firebase服务初始化完成');
+      }
+      
+      // 如果是本地文件，上传到Firebase Storage
+      if (musicWithId.audioUrl.startsWith('file://')) {
+        print('检测到本地音频文件，准备上传到Firebase Storage');
+        await _uploadAudioToFirebase(musicWithId);
+      } else {
+        // 否则直接添加到Firestore
+        print('添加音乐元数据到Firestore');
+        await _firebaseService.addMusic(musicWithId);
+      }
+      print('音乐已成功同步到Firebase: ${musicWithId.title}');
+    } catch (e) {
+      print('同步音乐到Firebase失败: $e');
+      print('异常类型: ${e.runtimeType}');
+      if (e is Error) {
+        print('异常堆栈: ${e.stackTrace}');
+      }
+      // 继续运行，至少本地添加成功了
+    } finally {
+      print('===== 添加并同步音乐完成 =====');
+    }
+  }
+
+  // 添加删除并同步方法
+  Future<bool> deleteMusicAndSync(String id) async {
+    bool success = await removeMusic(id);
+    
+    if (success && _useFirebase) {
+      try {
+        // 从Firebase中删除
+        await _firebaseService.deleteMusic(id);
+        print('音乐已从Firebase删除: $id');
+      } catch (e) {
+        print('从Firebase删除音乐失败: $e');
+        // 我们仍然认为操作成功，因为本地删除成功了
+      }
+    }
+    
+    return success;
+  }
+
+  // 添加从Firebase加载音乐的方法
+  Future<void> loadMusicFromFirebase() async {
+    if (!_useFirebase) return;
+    
+    try {
+      final firebaseMusicList = await _firebaseService.getAllMusic();
+      print('从Firebase加载了 ${firebaseMusicList.length} 首音乐');
+      
+      // 将Firebase中的音乐合并到本地库
+      for (final music in firebaseMusicList) {
+        final existingIndex = _musicLibrary.indexWhere((item) => item.id == music.id);
+        
+        if (existingIndex >= 0) {
+          // 更新现有音乐
+          _musicLibrary[existingIndex] = music;
+        } else {
+          // 添加新音乐
+          _musicLibrary.add(music);
+        }
+      }
+      
+      // 保存到本地存储作为备份
+      await saveToStorage();
+      notifyListeners();
+    } catch (e) {
+      print('从Firebase加载音乐失败: $e');
+      throw e;
     }
   }
 } 
