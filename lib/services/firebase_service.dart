@@ -9,111 +9,111 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 class FirebaseService {
-  // 单例模式
+  // Singleton pattern
   static final FirebaseService _instance = FirebaseService._internal();
   
   factory FirebaseService() => _instance;
   
   FirebaseService._internal();
   
-  // Firebase 实例
+  // Firebase instance
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseStorage _storage = FirebaseStorage.instance;
   
-  // 设备ID管理器
+  // Device ID manager
   final DeviceIdManager _deviceIdManager = DeviceIdManager();
   
-  // 设备ID缓存
+  // Device ID cache
   String? _deviceId;
   
-  // 获取当前用户ID，如果未登录则使用匿名ID
+  // Get current user ID, use anonymous ID if not logged in
   String get userId => _auth.currentUser?.uid ?? 'anonymous';
   
-  // 获取设备ID
+  // Get device ID
   Future<String> get deviceId async => _deviceId ??= await _deviceIdManager.getDeviceId();
   
-  // 检查用户是否已登录
+  // Check if user is logged in
   bool get isLoggedIn => _auth.currentUser != null;
   
-  // 获取音乐集合引用 - 修改为使用设备ID
+  // Get music collection reference - modified to use device ID
   Future<CollectionReference> get musicCollection async => 
       _firestore.collection('devices').doc(await deviceId).collection('musicItems');
   
-  // 添加到 FirebaseService 类中
+  // Add to FirebaseService class
   bool _isInitialized = false;
   bool get isInitialized => _isInitialized;
   
-  // 初始化 - 确保用户已登录（如果没有则匿名登录）
-  // 并加载设备ID
+  // Initialize - ensure user is logged in (if not, anonymous login)
+  // and load device ID
   Future<void> initialize() async {
     if (_isInitialized) return;
     
     try {
-      print('Firebase服务开始初始化...');
-      // 初始化设备ID
+      print('Firebase service starting initialization...');
+      // Initialize device ID
       _deviceId = await _deviceIdManager.getDeviceId();
-      print('设备ID: $_deviceId');
+      print('Device ID: $_deviceId');
       
-      // 仍然保留匿名登录，用于Firebase Storage权限
+      // Still keep anonymous login for Firebase Storage permissions
       if (_auth.currentUser == null) {
         try {
           await _auth.signInAnonymously();
-          print('已创建匿名账户');
+          print('Anonymous account created');
         } catch (e) {
-          print('匿名登录失败: $e');
+          print('Anonymous login failed: $e');
         }
       }
       
-      // 确保设备数据存在
+      // Ensure device data exists
       await _ensureDeviceDocument();
       
       _isInitialized = true;
-      print('Firebase服务初始化成功');
+      print('Firebase service initialized successfully');
     } catch (e) {
-      print('Firebase服务初始化失败: $e');
+      print('Firebase service initialization failed: $e');
       rethrow;
     }
   }
   
-  // 确保设备文档存在
+  // Ensure device document exists
   Future<void> _ensureDeviceDocument() async {
     try {
       final docRef = _firestore.collection('devices').doc(await deviceId);
       final docSnapshot = await docRef.get();
       
       if (!docSnapshot.exists) {
-        // 创建设备数据文档
+        // Create device data document
         await docRef.set({
           'created_at': FieldValue.serverTimestamp(),
           'last_seen': FieldValue.serverTimestamp(),
           'device_id': await deviceId,
         });
-        print('创建设备文档: ${await deviceId}');
+        print('Create device document: ${await deviceId}');
       } else {
-        // 更新设备最后活动时间
+        // Update device last activity time
         await docRef.update({
           'last_seen': FieldValue.serverTimestamp(),
         });
       }
     } catch (e) {
-      print('确保设备文档存在失败: $e');
+      print('Failed to ensure device document exists: $e');
     }
   }
   
-  // 添加音乐到 Firestore - 修改为使用设备ID
+  // Add music to Firestore - modified to use device ID
   Future<void> addMusic(MusicItem music) async {
     try {
       final collection = await musicCollection;
       await collection.doc(music.id).set(music.toJson());
-      print('音乐已添加到 Firestore: ${music.id}');
+      print('Music added to Firestore: ${music.id}');
     } catch (e) {
-      print('添加音乐到 Firestore 失败: $e');
+      print('Failed to add music to Firestore: $e');
       rethrow;
     }
   }
   
-  // 获取所有音乐列表 - 修改为使用设备ID
+  // Get all music list - modified to use device ID
   Future<List<MusicItem>> getAllMusic() async {
     try {
       final collection = await musicCollection;
@@ -126,12 +126,12 @@ class FirebaseService {
         return MusicItem.fromJson(data);
       }).toList();
     } catch (e) {
-      print('获取音乐列表失败: $e');
+      print('Failed to get all music list: $e');
       return [];
     }
   }
   
-  // 监听音乐列表变化 - 修改为使用设备ID
+  // Listen to music list changes - modified to use device ID
   Stream<List<MusicItem>> musicListStream() async* {
     try {
       final collection = await musicCollection;
@@ -144,103 +144,103 @@ class FirebaseService {
         }).toList();
       }
     } catch (e) {
-      print('监听音乐列表失败: $e');
+      print('Failed to listen to music list changes: $e');
       yield [];
     }
   }
   
-  // 删除音乐 - 修改为使用设备ID
+  // Delete music - modified to use device ID
   Future<bool> deleteMusic(String musicId) async {
     try {
       final collection = await musicCollection;
       await collection.doc(musicId).delete();
-      print('音乐已从 Firestore 删除: $musicId');
+      print('Music deleted from Firestore: $musicId');
       return true;
     } catch (e) {
-      print('删除音乐失败: $e');
+      print('Failed to delete music: $e');
       return false;
     }
   }
   
-  // 上传音频文件到 Storage - 修改路径包含设备ID
+  // Upload audio file to Storage - modified to include device ID
   Future<String> uploadAudioFile(File file, String fileName) async {
     try {
-      print('准备上传文件到 Firebase Storage...');
-      print('文件路径: ${file.path}');
-      print('目标文件名: $fileName');
+      print('Preparing to upload file to Firebase Storage...');
+      print('File path: ${file.path}');
+      print('Target file name: $fileName');
       
-      // 读取文件数据
+      // Read file data
       final Uint8List fileData = await file.readAsBytes();
-      print('读取文件数据成功，大小: ${fileData.length} 字节');
+      print('Read file data successfully, size: ${fileData.length} bytes');
       
-      // 确保 Firebase Storage 已初始化
+      // Ensure Firebase Storage is initialized
       final FirebaseStorage storage = FirebaseStorage.instance;
-      print('Firebase Storage 实例已获取');
+      print('Firebase Storage instance obtained');
       
-      // 创建存储引用路径 - 使用与测试相同的方式
-      // 不使用嵌套目录，直接使用根路径或简单路径
+      // Create storage reference path - use the same way as testing
+      // Do not use nested directories, use the root path or simple path directly
       final storageRef = storage.ref().child(fileName);
-      print('创建存储引用: $fileName');
+      print('Create storage reference: $fileName');
       
-      // 上传文件数据而不是文件对象
-      print('开始上传文件数据...');
+      // Upload file data instead of file object
+      print('Starting to upload file data...');
       final uploadTask = storageRef.putData(
         fileData,
-        SettableMetadata(contentType: 'audio/mp3') // 添加元数据
+        SettableMetadata(contentType: 'audio/mp3') // Add metadata
       );
       
-      // 监听上传进度
+      // Listen to upload progress
       uploadTask.snapshotEvents.listen((TaskSnapshot snapshot) {
         final progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-        print('上传进度: ${progress.toStringAsFixed(2)}%');
+        print('Upload progress: ${progress.toStringAsFixed(2)}%');
       });
       
-      // 等待上传完成
+      // Wait for upload to complete
       final TaskSnapshot snapshot = await uploadTask;
-      print('文件上传成功');
+      print('File uploaded successfully');
       
-      // 获取下载URL
+      // Get download URL
       final downloadUrl = await snapshot.ref.getDownloadURL();
-      print('获取到下载URL: $downloadUrl');
+      print('Download URL obtained: $downloadUrl');
       
       return downloadUrl;
     } on FirebaseException catch (e) {
-      print('Firebase Storage 错误: [${e.code}] ${e.message}');
+      print('Firebase Storage error: [${e.code}] ${e.message}');
       
-      // 更多的错误处理...
+      // More error handling...
       rethrow;
     }
   }
   
-  // 删除 Storage 中的音频文件
+  // Delete audio file in Storage
   Future<void> deleteAudioFile(String audioUrl) async {
     try {
-      // 从 URL 中提取文件路径
+      // Extract file path from URL
       final ref = _storage.refFromURL(audioUrl);
       await ref.delete();
-      print('音频文件已从 Storage 删除');
+      print('Audio file deleted from Storage');
     } catch (e) {
-      print('删除音频文件失败: $e');
+      print('Failed to delete audio file: $e');
     }
   }
   
-  // 批量删除音乐 - 修改为使用设备ID
+  // Batch delete music - modified to use device ID
   Future<int> deleteMultipleMusic(List<String> musicIds) async {
     int successCount = 0;
     final collection = await musicCollection;
     
     for (final id in musicIds) {
       try {
-        // 先获取音乐数据以获取音频URL
+        // Get music data to get audio URL first
         final docSnap = await collection.doc(id).get();
         if (docSnap.exists) {
           final data = docSnap.data() as Map<String, dynamic>;
           final audioUrl = data['audio_url'] as String?;
           
-          // 删除 Firestore 文档
+          // Delete Firestore document
           await collection.doc(id).delete();
           
-          // 如果有音频URL并且是 Storage URL，则删除文件
+          // If there is an audio URL and it is a Storage URL, delete the file
           if (audioUrl != null && audioUrl.startsWith('https://firebasestorage.googleapis.com')) {
             await deleteAudioFile(audioUrl);
           }
@@ -248,64 +248,64 @@ class FirebaseService {
           successCount++;
         }
       } catch (e) {
-        print('删除音乐 $id 失败: $e');
+        print('Failed to delete music $id: $e');
       }
     }
     
     return successCount;
   }
   
-  // 添加这个测试方法到 FirebaseService 类中
+  // Add this test method to the FirebaseService class
   Future<bool> testStorageConnection() async {
     try {
-      print('===== 测试 Firebase Storage 连接 =====');
+      print('===== Testing Firebase Storage connection =====');
       
-      // 获取存储引用信息
+      // Get storage reference information
       final storageRef = _storage.ref();
-      print('存储桶名称: ${storageRef.bucket}');
+      print('Bucket name: ${storageRef.bucket}');
       
-      // 创建测试引用路径
+      // Create a test reference path
       final testRef = storageRef.child('test-connection');
-      print('测试引用路径: ${testRef.fullPath}');
+      print('Test reference path: ${testRef.fullPath}');
       
-      // 创建一个小的测试文件
+      // Create a small test file
       final testContent = 'Test content ${DateTime.now()}';
       final testBytes = utf8.encode(testContent);
       
-      // 尝试上传
-      print('尝试上传测试数据...');
+      // Try to upload
+      print('Trying to upload test data...');
       await testRef.putData(Uint8List.fromList(testBytes));
-      print('测试数据上传成功');
+      print('Test data uploaded successfully');
       
-      // 尝试下载
+      // Try to download
       final url = await testRef.getDownloadURL();
-      print('获取测试数据URL成功: $url');
+      print('Test data URL obtained: $url');
       
-      // 可选：删除测试文件
+      // Optional: delete test file
       await testRef.delete();
-      print('测试数据已清理');
+      print('Test data cleaned up');
       
-      print('✓ Storage连接测试成功');
-      print('===== 测试完成 =====');
+      print('✓ Storage connection test successful');
+      print('===== Testing completed =====');
       return true;
     } on FirebaseException catch (e) {
-      print('✗ Storage连接测试失败: [${e.code}] ${e.message}');
+      print('✗ Storage connection test failed: [${e.code}] ${e.message}');
       
-      // 详细诊断信息
+      // Detailed diagnostic information
       if (e.code == 'object-not-found') {
-        print('提示: Storage可能未正确配置或路径不存在');
+        print('Warning: Storage may not be properly configured or the path does not exist');
       } else if (e.code == 'unauthorized') {
-        print('提示: 权限不足，请检查Storage安全规则');
-        print('建议临时设置为: allow read, write: if true');
+        print('Warning: Insufficient permissions, please check Storage security rules');
+        print('Suggestion: Temporarily set to: allow read, write: if true');
       } else if (e.code == 'storage/bucket-not-found') {
-        print('提示: 存储桶不存在，请在Firebase控制台创建Storage');
+        print('Warning: Storage bucket does not exist, please create Storage in Firebase console');
       }
       
-      print('===== 测试完成 =====');
+      print('===== Testing completed =====');
       return false;
     } catch (e) {
-      print('✗ Storage连接测试发生未知错误: $e');
-      print('===== 测试完成 =====');
+      print('✗ Storage connection test unknown error: $e');
+      print('===== Testing completed =====');
       return false;
     }
   }

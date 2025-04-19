@@ -16,8 +16,9 @@ import 'package:flutter/services.dart';
 import '../services/audio_player_manager.dart';
 import '../models/music_preference.dart';
 import '../widgets/music_preference_selector.dart';
-import '../services/deepseek_api_service.dart';  // 添加这一行
+import '../services/deepseek_api_service.dart';
 import '../services/event_bus.dart';
+import '../services/geocoding_service.dart';
 
 // Define FlagInfo class (put at the top of the file, all classes outside)
 class FlagInfo {
@@ -118,8 +119,14 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     apiKey: AppConfig.deepSeekApiKey,
   );
   
-  // 在 _HomeScreenState 类中添加 StreamSubscription
+  // Add a new property in _HomeScreenState class
   StreamSubscription? _musicDeletedSubscription;
+  
+  // Add a new property in _HomeScreenState class
+  final TextEditingController _searchController = TextEditingController();
+  final GeocodingService _geocodingService = GeocodingService();
+  List<GeocodingResult> _searchResults = [];
+  bool _isSearching = false;
   
   @override
   void initState() {
@@ -160,10 +167,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       }
     });
     
-    // 添加音乐删除回调
+    // Add music deleted callback
     final libraryManager = MusicLibraryManager();
     libraryManager.addMusicDeletedCallback(_handleMusicDeleted);
-    print('HomeScreen 已注册音乐删除回调');
+    print('HomeScreen has registered music deleted callback');
+    
+    _searchController.addListener(_onSearchChanged);
   }
   
   @override
@@ -179,45 +188,45 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      // 当应用从后台恢复时
+      // When the application resumes from the background
       _selectedVibe = null;
       _selectedGenre = null;
       
       if (_hasInitializedOnce) {
-        // 如果之前已经初始化过，只重新创建控制器但不移动到当前位置
+        // If it has been initialized before, only recreate the controller but do not move to the current location
         _mapController = MapController();
         _initMapService();
         
-        // 在下一帧绘制后，恢复地图位置和缩放级别
+        // Restore map position and zoom level after the next frame is drawn
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (_isMapReady && mounted) {
             try {
               if (_mapController != null) {
-                // 添加安全检查，确保地图控制器已准备好
+                // Add a safety check to ensure the map controller is ready
                 if (isMapControllerReady()) {
                   _mapController.move(_lastMapCenter, _lastMapZoom);
-                  // 重新加载所有标记
+                  // Reload all markers
                   _loadPersistentFlags();
-                  print('成功恢复地图位置：中心=${_lastMapCenter}，缩放=${_lastMapZoom}');
+                  print('Successfully restored map position: center=${_lastMapCenter}, zoom=${_lastMapZoom}');
                 } else {
-                  print('地图控制器尚未准备好，无法移动地图');
-                  // 设置一个延迟，稍后再尝试
+                  print('Map controller is not ready, cannot move map');
+                  // Set a delay, try again later
                   Future.delayed(Duration(milliseconds: 500), () {
                     if (mounted && isMapControllerReady()) {
                       _mapController.move(_lastMapCenter, _lastMapZoom);
-                      print('延迟后成功恢复地图位置');
+                      print('Successfully restored map position after delay');
                     }
                   });
                 }
               }
             } catch (e) {
-              print('恢复地图位置时出错: $e');
+              print('Error restoring map position: $e');
             }
           }
         });
       }
     } else if (state == AppLifecycleState.paused) {
-      // 应用进入后台时，保存当前地图状态
+      // When the application enters the background, save the current map state
       try {
         _lastMapCenter = _mapController.center;
         _lastMapZoom = _mapController.zoom;
@@ -256,26 +265,28 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   
   @override
   void dispose() {
-    // 添加这行代码以确保所有异步操作都被取消
-    print('HomeScreen 销毁：取消所有订阅和异步操作');
+    print('HomeScreen destroyed: cancel all subscriptions and asynchronous operations');
     
-    // 移除音乐删除回调
+    // Remove music deleted callback
     final libraryManager = MusicLibraryManager();
     libraryManager.removeMusicDeletedCallback(_handleMusicDeleted);
     
-    // 保存当前状态
+    // Save current state
     try {
       _lastMapCenter = _mapController.center;
       _lastMapZoom = _mapController.zoom;
-      print('保存地图状态：中心=${_lastMapCenter}，缩放=${_lastMapZoom}');
+      print('Save map state: center=${_lastMapCenter}, zoom=${_lastMapZoom}');
     } catch (e) {
-      print('保存地图状态失败: $e');
+      print('Error saving map state: $e');
     }
     
-    // 清理地图组件
+    // Clean up map components
     _mapService.clearMarkers();
     WidgetsBinding.instance.removeObserver(this);
     _mapService.dispose();
+    
+    _searchController.removeListener(_onSearchChanged);
+    _searchController.dispose();
     
     super.dispose();
   }
@@ -553,16 +564,16 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   void _placeFlagAndGetWeather(LatLng location) {
     print('Getting weather at: ${location.latitude}, ${location.longitude}');
     
-    // 生成唯一标识符，但不立即添加标记
+    // Generate a unique identifier, but do not add the marker immediately
     String flagId = 'flag_${DateTime.now().millisecondsSinceEpoch}';
     
-    // 移动到选定位置
+    // Move to the selected location
     _safelyMoveMap(location, _mapController.zoom);
     
-    // 获取天气数据，但不保存到持久化存储中
-    _getWeatherForLocation(location, flagId, false); // 添加参数表示不添加标记
+    // Get weather data, but do not save to persistent storage
+    _getWeatherForLocation(location, flagId, false); // Add parameter to indicate not to add marker
     
-    // 刷新UI以显示天气数据，但不显示标记
+    // Refresh UI to display weather data, but do not show the marker
     setState(() {});
   }
   
@@ -594,7 +605,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             onPressed: () {
               Navigator.pop(context);
             },
-            child: const Text('取消'),
+            child: const Text('Cancel'),
           ),
           TextButton(
             onPressed: () {
@@ -781,6 +792,103 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 ),
               ),
             ),
+          
+          // Add search bar
+          Positioned(
+            top: 10,
+            left: 10,
+            right: 10,
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: TextField(
+                controller: _searchController,
+                decoration: InputDecoration(
+                  hintText: 'Search location...',
+                  prefixIcon: const Icon(Icons.search),
+                  suffixIcon: _searchController.text.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear),
+                        onPressed: () {
+                          _searchController.clear();
+                          setState(() {
+                            _searchResults = [];
+                          });
+                        },
+                      )
+                    : _isSearching 
+                      ? const SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: Padding(
+                            padding: EdgeInsets.all(6.0),
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        )
+                      : null,
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                ),
+                onSubmitted: _searchPlaces,
+              ),
+            ),
+          ),
+          
+          // Search results list
+          if (_searchResults.isNotEmpty)
+            Positioned(
+              top: 60,
+              left: 10,
+              right: 10,
+              child: Container(
+                constraints: BoxConstraints(
+                  maxHeight: MediaQuery.of(context).size.height * 0.4,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(8),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: _searchResults.length,
+                  itemBuilder: (context, index) {
+                    final result = _searchResults[index];
+                    return ListTile(
+                      title: Text(
+                        result.name.split(',').first,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      subtitle: Text(
+                        result.address?.toString() ?? result.name,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      leading: Icon(
+                        result.type == 'city' ? Icons.location_city :
+                        result.type == 'country' ? Icons.public :
+                        Icons.location_on,
+                      ),
+                      onTap: () => _selectSearchResult(result),
+                    );
+                  },
+                ),
+              ),
+            ),
         ],
       ),
     );
@@ -919,10 +1027,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 icon: const Icon(Icons.music_note),
                 label: const Text('Generate music based on weather'),
                 onPressed: () {
-                  // 创建一个临时标记ID
+                  // Create a temporary flag ID
                   String tempFlagId = 'flag_temp_${DateTime.now().millisecondsSinceEpoch}';
                   
-                  // 保存天气信息但不添加标记
+                  // Save weather information but do not add a marker
                   _flagInfoMap[tempFlagId] = FlagInfo(
                     position: LatLng(weatherData.location?.latitude ?? 0, 
                                     weatherData.location?.longitude ?? 0),
@@ -963,7 +1071,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     );
   }
   
-  // 替换原有的 _showGenerateMusicDialog 方法
+  // Replace the original _showGenerateMusicDialog method
   void _showGenerateMusicDialog(WeatherData weatherData, String flagId) {
     // Reset selection state each time dialog is opened
     _selectedVibe = null;
@@ -1097,9 +1205,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     );
   }
   
-  // 修改 _generateMusicAndUpdateFlag 方法
+  // Modify the _generateMusicAndUpdateFlag method
   Future<void> _generateMusicAndUpdateFlag(WeatherData weatherData, String flagId, [String? customPrompt]) async {
-    // 显示加载对话框
+    // Show loading dialog
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -1125,11 +1233,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     try {
       String prompt;
       
-      // 如果提供了自定义提示，则使用它，否则用DeepSeek生成
+      // If a custom prompt is provided, use it, otherwise use DeepSeek to generate
       if (customPrompt != null && customPrompt.isNotEmpty) {
         prompt = customPrompt;
       } else {
-        // 使用DeepSeek生成优化的提示
+        // Use DeepSeek to generate an optimized prompt
         try {
           prompt = await _deepSeekApiService.generateMusicPrompt(
             weatherDescription: weatherData.weatherDescription,
@@ -1142,10 +1250,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           );
         } catch (e) {
           print('Failed to generate prompt with DeepSeek: $e');
-          // 回退到天气服务提示
+          // Fallback to weather service prompt
           prompt = weatherData.buildMusicPrompt();
           
-          // 添加音乐偏好
+          // Add music preferences
           if (_selectedVibe != null || _selectedGenre != null) {
             prompt += '\n\nMusic preferences: ';
             if (_selectedVibe != null) {
@@ -1158,7 +1266,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         }
       }
       
-      // 构建音乐标题，包括偏好
+      // Build music title, including preferences
       String musicTitle = '${weatherData.cityName} ${weatherData.weatherDescription} music';
       if (_selectedVibe != null || _selectedGenre != null) {
         musicTitle += ' - ';
@@ -1170,7 +1278,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         }
       }
       
-      // 使用StabilityAudioService生成音乐
+      // Use StabilityAudioService to generate music
       final StabilityAudioService audioService = StabilityAudioService(
         apiKey: AppConfig.stabilityApiKey
       );
@@ -1183,17 +1291,17 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         saveLocally: true,
       );
       
-      // 从结果中获取音频URL
+      // Get audio URL from result
       final audioUrl = result['audio_url'];
-      // 确保audioUrl以file://开头
+      // Ensure audioUrl starts with file://
       final String finalAudioUrl = audioUrl.startsWith('file://') 
           ? audioUrl 
           : 'file://$audioUrl';
       
-      // 创建唯一音乐ID
+      // Create a unique music ID
       final musicId = 'music_${DateTime.now().millisecondsSinceEpoch}';
       
-      // 创建MusicItem对象
+      // Create MusicItem object
       final musicItem = MusicItem(
         id: musicId,
         title: musicTitle,
@@ -1203,12 +1311,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         createdAt: DateTime.now(),
       );
       
-      // 添加到MusicLibraryManager
+      // Add to MusicLibraryManager
       final MusicLibraryManager libraryManager = MusicLibraryManager();
       await libraryManager.addMusic(musicItem);
       
       if (mounted) {
-        // 更新本地状态
+        // Update local state
         if (_flagInfoMap.containsKey(flagId)) {
           setState(() {
             final flagInfo = _flagInfoMap[flagId]!;
@@ -1221,7 +1329,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             
             _flagInfoMap[flagId] = updatedInfo;
             
-            // 音乐生成成功后，才添加标记到地图上
+            // Add marker to map after music generation
             _mapService.addMarker(
               id: flagId,
               position: flagInfo.position,
@@ -1245,14 +1353,14 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               },
             );
             
-            // 保存到持久化服务
+            // Save to persistent service
             _mapService.saveFlagInfo(flagId, updatedInfo);
           });
         }
         
-        // 安全关闭对话框
+        // Close the loading dialog safely
         if (Navigator.canPop(context)) {
-          Navigator.of(context).pop(); // 关闭加载对话框
+          Navigator.of(context).pop(); // Close the loading dialog
         }
         
         ScaffoldMessenger.of(context).showSnackBar(
@@ -1264,7 +1372,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       print('Error generating music: $e');
       
       if (mounted && Navigator.canPop(context)) {
-        Navigator.of(context).pop(); // 关闭加载对话框
+        Navigator.of(context).pop(); // Close the loading dialog
         
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Failed to generate music: $e')),
@@ -1840,29 +1948,29 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     }
   }
 
-  // 处理音乐删除的回调
+  // Handle music deletion callback
   void _handleMusicDeleted(String musicId) {
     if (!mounted) {
-      print('HomeScreen 已销毁，忽略音乐删除通知');
+      print('HomeScreen has been destroyed, ignoring music deletion notification');
       return;
     }
     
-    print('HomeScreen 收到音乐删除通知，musicId: $musicId');
+    print('HomeScreen received music deletion notification, musicId: $musicId');
     
-    // 获取音乐库
+    // Get music library
     final libraryManager = MusicLibraryManager();
     
-    // 查找所有与该音乐关联的标记
+    // Find all flags associated with the deleted music
     List<String> flagsToDelete = [];
     
     _flagInfoMap.forEach((flagId, flagInfo) {
-      print('检查标记 $flagId，musicTitle: ${flagInfo.musicTitle}');
+      print('Checking flag $flagId, musicTitle: ${flagInfo.musicTitle}');
       
       if (flagInfo.musicTitle != null) {
-        // 直接检查是否与被删除的音乐ID关联
+        // Check directly if it is associated with the deleted music
         final allMusic = libraryManager.allMusic;
         
-        // 由于我们没有直接存储音乐ID和标记的映射关系，我们需要通过标题来查找
+        // Since we do not directly store the mapping between music ID and flag, we need to find it through the title
         bool musicFound = false;
         for (var music in allMusic) {
           if (music.title == flagInfo.musicTitle) {
@@ -1871,25 +1979,71 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           }
         }
         
-        // 如果没有找到匹配的音乐，则删除这个标记
+        // If no matching music is found, delete this flag
         if (!musicFound) {
-          print('标记 $flagId 关联的音乐 "${flagInfo.musicTitle}" 已被删除，准备删除标记');
+          print('Flag $flagId associated with music "${flagInfo.musicTitle}" has been deleted, preparing to delete flag');
           flagsToDelete.add(flagId);
         }
       }
     });
     
-    // 删除找到的所有标记
+    // Delete all found flags
     if (flagsToDelete.isNotEmpty) {
-      print('需要删除 ${flagsToDelete.length} 个标记');
+      print('Need to delete ${flagsToDelete.length} flags');
       setState(() {
         for (String flagId in flagsToDelete) {
           _deleteFlag(flagId);
-          print('已删除标记 $flagId');
+          print('Deleted flag $flagId');
         }
       });
     } else {
-      print('没有找到需要删除的标记');
+      print('No flags to delete found');
     }
+  }
+
+  // Add search method
+  void _onSearchChanged() {
+    if (_searchController.text.isEmpty) {
+      setState(() {
+        _searchResults = [];
+      });
+    }
+  }
+
+  Future<void> _searchPlaces(String query) async {
+    if (query.isEmpty) return;
+    
+    setState(() {
+      _isSearching = true;
+    });
+    
+    try {
+      final results = await _geocodingService.searchPlaces(query);
+      
+      setState(() {
+        _searchResults = results;
+        _isSearching = false;
+      });
+    } catch (e) {
+      print('Error searching for location: $e');
+      setState(() {
+        _isSearching = false;
+      });
+    }
+  }
+
+  void _selectSearchResult(GeocodingResult result) {
+    // Move map to selected location
+    _safelyMoveMap(result.latLng, 13.0); // Use appropriate zoom level
+    
+    // Clear search results
+    setState(() {
+      _searchResults = [];
+      _searchController.clear();
+    });
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Moved to: ${result.name}')),
+    );
   }
 } 

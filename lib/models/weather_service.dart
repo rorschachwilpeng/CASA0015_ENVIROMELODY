@@ -370,15 +370,15 @@ class ForecastData {
   final double feelsLike;      // Feels like temperature
   final double tempMin;        // Minimum temperature
   final double tempMax;        // Maximum temperature
-  final int humidity;          // 湿度 (%)
-  final double windSpeed;      // 风速 (米/秒)
-  final int windDegree;        // 风向 (度)
-  final String weatherMain;    // 天气主要状况
-  final String weatherDescription; // 天气详细描述
-  final String weatherIcon;    // 天气图标代码
-  final int cloudsPercent;     // 云量 (%)
-  final int visibility;        // 能见度 (米)
-  final double pop;            // 降水概率 (0-1)
+  final int humidity;          // Humidity (%)
+  final double windSpeed;      // Wind speed (m/s)
+  final int windDegree;        // Wind direction (degrees)
+  final String weatherMain;    // Weather main condition
+  final String weatherDescription; // Weather detailed description
+  final String weatherIcon;    // Weather icon code
+  final int cloudsPercent;     // Cloud cover (%)
+  final int visibility;        // Visibility (meters)
+  final double pop;            // Precipitation probability (0-1)
   
   ForecastData({
     required this.timestamp,

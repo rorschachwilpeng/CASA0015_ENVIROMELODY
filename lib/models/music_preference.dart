@@ -21,13 +21,13 @@ extension MusicVibeExtension on MusicVibe {
   String get name {
     switch (this) {
       case MusicVibe.calm:
-        return '平静';
+        return 'Calm';
       case MusicVibe.energetic:
-        return '活力';
+        return 'Energetic';
       case MusicVibe.cozy:
-        return '舒适';
+        return 'Cozy';
       case MusicVibe.chill:
-        return '放松';
+        return 'Chill';
       default:
         return '';
     }
@@ -53,13 +53,13 @@ extension MusicGenreExtension on MusicGenre {
   String get name {
     switch (this) {
       case MusicGenre.jazz:
-        return '爵士';
+        return 'Jazz';
       case MusicGenre.lofi:
-        return '低保真';
+        return 'Lofi';
       case MusicGenre.ambient:
-        return '环境音';
+        return 'Ambient';
       case MusicGenre.environmentAmbient:
-        return '自然环境';
+        return 'Environment Ambient';
       default:
         return '';
     }

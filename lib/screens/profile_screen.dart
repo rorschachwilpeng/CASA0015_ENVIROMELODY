@@ -87,7 +87,7 @@ class ProfileScreen extends StatelessWidget {
             const Divider(),
             ListTile(
               leading: const Icon(Icons.cloud_upload),
-              title: const Text('测试保存音乐到 Firebase'),
+              title: const Text('Test saving music to Firebase'),
               onTap: () {
                 testAddMusicToFirestore();
               },
@@ -95,23 +95,23 @@ class ProfileScreen extends StatelessWidget {
             const Divider(),
             ListTile(
               leading: Icon(Icons.sync),
-              title: Text('同步音乐库'),
-              subtitle: Text('手动同步本地音乐到云端'),
+              title: Text('Sync music library'),
+              subtitle: Text('Manually sync local music to the cloud'),
               trailing: MusicLibraryManager().isSyncing 
                   ? CircularProgressIndicator() 
                   : Icon(Icons.arrow_forward_ios),
               onTap: () async {
-                // 显示同步开始的提示
+                // Show the prompt for starting the sync
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('开始同步...'), duration: Duration(seconds: 1))
+                  SnackBar(content: Text('Starting sync...'), duration: Duration(seconds: 1))
                 );
                 
-                // 调用同步方法
+                // Call the sync method
                 await MusicLibraryManager().forceSyncWithFirebase();
                 
-                // 显示同步完成的提示
+                // Show the prompt for completing the sync
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('同步完成！上次同步时间: ${_formatTime(MusicLibraryManager().lastSyncTime)}'))
+                  SnackBar(content: Text('Sync completed! Last sync time: ${_formatTime(MusicLibraryManager().lastSyncTime)}'))
                 );
               },
             ),
@@ -133,15 +133,15 @@ class ProfileScreen extends StatelessWidget {
     );
   }
   
-  // 测试 Firebase 连接的方法
+  // Test Firebase connection method
   void _testFirebaseConnection(BuildContext context) async {
-    // 显示加载对话框
+    // Show the loading dialog
     BuildContext? dialogContext;
     
-    // 设置超时
+    // Set timeout
     Timer? timeoutTimer;
     
-    // 显示加载对话框的函数
+    // Function to show the loading dialog
     void showLoadingDialog() {
       showDialog(
         context: context,
@@ -158,7 +158,7 @@ class ProfileScreen extends StatelessWidget {
       );
     }
     
-    // 安全关闭对话框的函数
+    // Function to safely close the dialog
     void closeLoadingDialog() {
       if (dialogContext != null) {
         if (Navigator.of(context).canPop()) {
@@ -168,135 +168,135 @@ class ProfileScreen extends StatelessWidget {
       }
     }
     
-    // 显示加载对话框
+    // Show the loading dialog
     showLoadingDialog();
     
-    // 设置超时
+    // Set timeout
     timeoutTimer = Timer(const Duration(seconds: 15), () {
-      print('Firebase 连接测试超时');
+      print('Firebase connection test timeout');
       timeoutTimer = null;
       closeLoadingDialog();
       
       if (context.mounted) {
         _showResultDialog(
           context,
-          '连接超时',
-          'Firebase 操作超时，请检查网络连接并重试。',
+          'Connection timeout',
+          'Firebase operation timeout, please check the network connection and try again.',
           false
         );
       }
     });
     
     try {
-      // 检查 Firebase 是否初始化
-      print('开始测试 Firebase 连接...');
+      // Check if Firebase is initialized
+      print('Starting to test Firebase connection...');
       final apps = Firebase.apps;
-      print('Firebase 应用数量: ${apps.length}');
+      print('Firebase app count: ${apps.length}');
       if (apps.isEmpty) {
-        print('没有 Firebase 应用被初始化');
+        print('No Firebase apps are initialized');
         try {
           await Firebase.initializeApp(
             options: DefaultFirebaseOptions.currentPlatform,
           );
-          print('在 Profile 页面中成功初始化 Firebase');
+          print('Successfully initialized Firebase in the Profile page');
         } catch (e) {
-          print('在 Profile 页面中初始化 Firebase 失败: $e');
-          throw Exception('Firebase 未初始化: $e');
+          print('Failed to initialize Firebase in the Profile page: $e');
+          throw Exception('Firebase not initialized: $e');
         }
       } else {
         for (var app in apps) {
-          print('Firebase 应用名称: ${app.name}, 选项: ${app.options.projectId}');
+          print('Firebase app name: ${app.name}, options: ${app.options.projectId}');
         }
       }
       
-      // 获取 Firestore 实例
+      // Get Firestore instance
       final firestore = FirebaseFirestore.instance;
-      print('获取到 Firestore 实例');
+      print('Got the Firestore instance');
       
       try {
-        // 创建测试文档
-        print('尝试写入测试文档...');
+        // Create a test document
+        print('Attempting to write a test document...');
         await firestore.collection('test').doc('connection-test').set({
           'timestamp': DateTime.now().toIso8601String(),
-          'message': '连接测试成功',
+          'message': 'Connection test successful',
           'device': '${MediaQuery.of(context).size.width.toInt()}x${MediaQuery.of(context).size.height.toInt()}'
         }, SetOptions(merge: true));
-        print('测试文档写入成功');
+        print('Test document written successfully');
         
-        // 读取测试文档
-        print('尝试读取测试文档...');
+        // Read the test document
+        print('Attempting to read the test document...');
         final doc = await firestore.collection('test').doc('connection-test').get();
-        print('测试文档读取成功: ${doc.exists}');
+        print('Test document read successfully: ${doc.exists}');
         
-        // 取消超时定时器
+        // Cancel the timeout timer
         timeoutTimer?.cancel();
         timeoutTimer = null;
         
-        // 关闭加载对话框
+        // Close the loading dialog
         closeLoadingDialog();
         
         if (doc.exists) {
-          // 显示成功消息
+          // Show the success message
           if (context.mounted) {
             _showResultDialog(
               context, 
-              '连接成功', 
-              'Firebase 连接正常！\n\n数据: ${doc.data()}',
+              'Connection successful', 
+              'Firebase connection is normal!\n\nData: ${doc.data()}',
               true
             );
           }
-          print('Firebase 连接测试成功: ${doc.data()}');
+          print('Firebase connection test successful: ${doc.data()}');
         } else {
           if (context.mounted) {
             _showResultDialog(
               context, 
-              '连接异常', 
-              '文档存在但数据为空',
+              'Connection exception', 
+              'Document exists but data is empty',
               false
             );
           }
         }
       } catch (firestoreError) {
-        print('Firestore 操作失败: $firestoreError');
+        print('Firestore operation failed: $firestoreError');
         
-        // 取消超时定时器
+        // Cancel the timeout timer
         timeoutTimer?.cancel();
         timeoutTimer = null;
         
-        // 关闭加载对话框
+        // Close the loading dialog
         closeLoadingDialog();
         
         if (context.mounted) {
           _showResultDialog(
             context, 
-            'Firestore 错误', 
-            '无法写入或读取测试数据，请检查 Firestore 规则设置。\n\n错误信息: $firestoreError',
+            'Firestore error', 
+            'Failed to write or read test data, please check the Firestore rules settings.\n\nError information: $firestoreError',
             false
           );
         }
       }
     } catch (e) {
-      // 取消超时定时器
+      // Cancel the timeout timer
       timeoutTimer?.cancel();
       timeoutTimer = null;
       
-      // 关闭加载对话框
+      // Close the loading dialog
       closeLoadingDialog();
       
-      // 显示错误消息
+      // Show the error message
       if (context.mounted) {
         _showResultDialog(
           context, 
-          '连接失败', 
-          'Firebase 连接出错: $e\n\nFirebase 应用数量: ${Firebase.apps.length}',
+          'Connection failed', 
+          'Firebase connection error: $e\n\nFirebase app count: ${Firebase.apps.length}',
           false
         );
       }
-      print('Firebase 连接测试失败: $e');
+      print('Firebase connection test failed: $e');
     }
   }
   
-  // 显示结果对话框
+  // Show the result dialog
   void _showResultDialog(BuildContext context, String title, String message, bool success) {
     showDialog(
       context: context,
@@ -313,40 +313,40 @@ class ProfileScreen extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('确定'),
+            child: const Text('OK'),
           ),
         ],
       ),
     );
   }
 
-  // 添加测试方法
+  // Add test method
   Future<void> testAddMusicToFirestore() async {
     try {
       final testMusic = MusicItem(
         id: 'test_${DateTime.now().millisecondsSinceEpoch}',
-        title: '测试音乐',
-        prompt: '测试提示词',
+        title: 'Test music',
+        prompt: 'Test prompt',
         audioUrl: 'https://example.com/test.mp3',
         status: 'complete',
         createdAt: DateTime.now(),
         latitude: 39.9042,
         longitude: 116.4074,
-        locationName: '测试位置',
+        locationName: 'Test location',
         weatherData: {'temperature': 25, 'weather': 'sunny'},
       );
       
-      print('正在尝试保存测试音乐到Firestore...');
+      print('Attempting to save test music to Firestore...');
       await FirebaseService().addMusic(testMusic);
-      print('测试音乐保存成功!');
+      print('Test music saved successfully!');
     } catch (e) {
-      print('测试音乐保存失败: $e');
+      print('Test music save failed: $e');
     }
   }
 
-  // 添加这个辅助方法来格式化时间
+  // Add this helper method to format time
   String _formatTime(DateTime time) {
-    if (time.millisecondsSinceEpoch == 0) return '从未同步';
+    if (time.millisecondsSinceEpoch == 0) return 'Never synced';
     return '${time.hour}:${time.minute.toString().padLeft(2, '0')}:${time.second.toString().padLeft(2, '0')}';
   }
 } 

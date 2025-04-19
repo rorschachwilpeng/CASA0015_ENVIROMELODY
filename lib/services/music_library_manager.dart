@@ -14,7 +14,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'event_bus.dart';
 import 'flutter_map_service.dart';
 
-// 添加到文件顶部，类定义之前
+// Add to the top of the file, before the class definition
 typedef MusicDeletedCallback = void Function(String musicId);
 
 class MusicLibraryManager extends ChangeNotifier {
@@ -24,7 +24,7 @@ class MusicLibraryManager extends ChangeNotifier {
   // Factory constructor to get the singleton instance
   factory MusicLibraryManager() => _instance;
   
-  // Firebase 服务
+  // Firebase service
   final FirebaseService _firebaseService = FirebaseService();
   
   // Music library list
@@ -33,16 +33,16 @@ class MusicLibraryManager extends ChangeNotifier {
   // Whether it has been initialized
   bool _initialized = false;
   
-  // SharedPreferences的key
+  // SharedPreferences key
   final String _storageKey = 'music_library';
   
-  // 是否使用 Firebase
+  // Whether to use Firebase
   bool _useFirebase = true;
   
-  // 获取是否使用 Firebase
+  // Get whether to use Firebase
   bool get useFirebase => _useFirebase;
   
-  // 设置是否使用 Firebase
+  // Set whether to use Firebase
   set useFirebase(bool value) {
     _useFirebase = value;
     notifyListeners();
@@ -54,31 +54,31 @@ class MusicLibraryManager extends ChangeNotifier {
   // Get all music
   List<MusicItem> get allMusic => List.unmodifiable(_musicLibrary);
   
-  // 新增变量
+  // New variables
   Timer? _syncTimer;
   bool _isSyncing = false;
   DateTime _lastSyncTime = DateTime.fromMillisecondsSinceEpoch(0);
-  final Duration _syncInterval = const Duration(minutes: 5); // 自动同步间隔
+  final Duration _syncInterval = const Duration(minutes: 5); // Automatic sync interval
   
-  // 记录本地修改的音乐ID
+  // Record locally modified music IDs
   Set<String> _locallyModifiedMusicIds = {};
   
-  // 连接状态
+  // Connection status
   bool _isOnline = true;
   
-  // 添加回调列表
+  // Add callback list
   final List<MusicDeletedCallback> _musicDeletedCallbacks = [];
 
-  // 添加注册回调的方法
+  // Add a method to register callbacks
   void addMusicDeletedCallback(MusicDeletedCallback callback) {
     _musicDeletedCallbacks.add(callback);
-    print('音乐删除回调已注册，当前回调数量: ${_musicDeletedCallbacks.length}');
+    print('Music deletion callback registered, current callback count: ${_musicDeletedCallbacks.length}');
   }
 
-  // 添加移除回调的方法
+  // Add a method to remove callbacks
   void removeMusicDeletedCallback(MusicDeletedCallback callback) {
     _musicDeletedCallbacks.remove(callback);
-    print('音乐删除回调已移除，当前回调数量: ${_musicDeletedCallbacks.length}');
+    print('Music deletion callback removed, current callback count: ${_musicDeletedCallbacks.length}');
   }
   
   // Initialize and load from storage
@@ -86,21 +86,21 @@ class MusicLibraryManager extends ChangeNotifier {
     if (_initialized) return;
     
     try {
-      // 初始化 Firebase
+      // Initialize Firebase
       if (_useFirebase) {
         await _firebaseService.initialize();
-        print('Firebase 服务初始化成功');
+        print('Firebase service initialized successfully');
         
-        // 从 Firebase 加载音乐
+        // Load music from Firebase
         await _loadFromFirebase();
         
-        // 启动定期同步
+        // Start periodic sync
         _startPeriodicSync();
         
-        // 监听网络状态
+        // Monitor network status
         _monitorConnectivity();
       } else {
-        // 从本地存储加载
+        // Load from local storage
         await loadFromStorage();
       }
       
@@ -109,41 +109,41 @@ class MusicLibraryManager extends ChangeNotifier {
       
       _initialized = true;
       notifyListeners();
-      print('音乐库初始化完成: ${_musicLibrary.length} 首音乐');
+      print('Music library initialized: ${_musicLibrary.length} songs');
     } catch (e) {
-      print('音乐库初始化失败: $e');
+      print('Music library initialization failed: $e');
     }
   }
   
-  // 从 Firebase 加载音乐
+  // Load music from Firebase
   Future<void> _loadFromFirebase() async {
     try {
       _musicLibrary = await _firebaseService.getAllMusic();
-      print('从 Firebase 加载音乐库: ${_musicLibrary.length} 首音乐');
+      print('Loaded music library from Firebase: ${_musicLibrary.length} songs');
     } catch (e) {
-      print('从 Firebase 加载音乐库失败: $e');
-      // 失败时回退到本地存储
+      print('Failed to load music library from Firebase: $e');
+      // Fallback to local storage
       await loadFromStorage();
     }
   }
   
-  // 监听 Firebase 音乐变更
+  // Monitor Firebase music changes
   Stream<List<MusicItem>> get musicListStream {
     if (_useFirebase) {
       return _firebaseService.musicListStream();
     } else {
-      // 如果不使用 Firebase，返回一个空流
+      // If not using Firebase, return an empty stream
       return Stream.value(_musicLibrary);
     }
   }
   
   // Add music
   Future<void> addMusic(MusicItem music) async {
-    // 检查音乐是否有有效的 ID
+    // Check if the music has a valid ID
     final String id = music.id.isEmpty ? const Uuid().v4() : music.id;
     final musicWithId = music.id.isEmpty ? music.copyWith(id: id) : music;
     
-    // 检查是否已经存在相同 ID 的音乐
+    // Check if the music already exists with the same ID
     final existingIndex = _musicLibrary.indexWhere((item) => item.id == musicWithId.id);
     
     if (existingIndex >= 0) {
@@ -155,11 +155,11 @@ class MusicLibraryManager extends ChangeNotifier {
     }
     
     if (_useFirebase) {
-      // 检查音频是否是本地文件，如果是则上传到 Firebase Storage
+      // Check if the audio is a local file, if so, upload to Firebase Storage
       if (musicWithId.audioUrl.startsWith('file://')) {
         await _uploadAudioToFirebase(musicWithId);
       } else {
-        // 直接添加到 Firestore
+        // Add directly to Firestore
         await _firebaseService.addMusic(musicWithId);
       }
     } else {
@@ -167,125 +167,125 @@ class MusicLibraryManager extends ChangeNotifier {
       await saveToStorage();
     }
     
-    debugPrint('音乐已添加到库: ${musicWithId.title}');
+    debugPrint('Music added to library: ${musicWithId.title}');
     notifyListeners();
     
-    // 在完成后，将这个ID添加到本地修改列表
+    // After completion, add this ID to the locally modified list
     _locallyModifiedMusicIds.add(music.id);
   }
   
-  // 上传音频到 Firebase Storage
+  // Upload audio to Firebase Storage
   Future<void> _uploadAudioToFirebase(MusicItem music) async {
-    print('===== 开始上传音频到Firebase =====');
+    print('===== Start uploading audio to Firebase =====');
     try {
-      // 检查 URL 是否是本地文件
+      // Check if the URL is a local file
       if (!music.audioUrl.startsWith('file://')) {
-        print('不是本地文件路径，直接添加到Firestore: ${music.audioUrl}');
+        print('Not a local file path, add directly to Firestore: ${music.audioUrl}');
         await _firebaseService.addMusic(music);
         return;
       }
       
-      // 提取文件路径
+      // Extract file path
       final filePath = music.audioUrl.replaceFirst('file://', '');
-      print('本地文件路径: $filePath');
+      print('Local file path: $filePath');
       final file = File(filePath);
       
       if (await file.exists()) {
-        print('文件存在，大小: ${await file.length()} 字节');
+        print('File exists, size: ${await file.length()} bytes');
         
-        // 生成文件名
+        // Generate file name
         final fileName = '${music.id}${path.extension(filePath)}';
-        print('上传文件名: $fileName');
+        print('Upload file name: $fileName');
         
-        // 上传文件
-        print('开始上传文件到Firebase Storage...');
+        // Upload file
+        print('Start uploading file to Firebase Storage...');
         final downloadUrl = await _firebaseService.uploadAudioFile(file, fileName);
-        print('文件上传成功，下载URL: $downloadUrl');
+        print('File uploaded successfully, download URL: $downloadUrl');
         
-        // 创建带有新 URL 的音乐对象
+        // Create a music object with the new URL
         final updatedMusic = music.copyWith(audioUrl: downloadUrl);
-        print('已更新音乐对象的音频URL');
+        print('Updated music object audio URL');
         
-        // 更新本地列表
+        // Update local list
         final index = _musicLibrary.indexWhere((item) => item.id == music.id);
         if (index >= 0) {
           _musicLibrary[index] = updatedMusic;
-          print('已更新本地库中的音乐对象');
+          print('Updated music object in local list');
         }
         
-        // 保存到 Firestore
-        print('保存更新后的音乐元数据到Firestore...');
+        // Save to Firestore
+        print('Save updated music metadata to Firestore...');
         await _firebaseService.addMusic(updatedMusic);
-        print('音频文件已上传并保存到Firestore: ${updatedMusic.id}');
+        print('Audio file uploaded and saved to Firestore: ${updatedMusic.id}');
       } else {
-        print('文件不存在: $filePath');
-        // 仍然保存元数据
-        print('文件不存在，仅保存元数据到Firestore');
+        print('File does not exist: $filePath');
+        // Still save metadata
+        print('File does not exist, only save metadata to Firestore');
         await _firebaseService.addMusic(music);
       }
     } catch (e) {
-      print('上传音频到Firebase失败: $e');
-      print('异常类型: ${e.runtimeType}');
+      print('Failed to upload audio to Firebase: $e');
+      print('Exception type: ${e.runtimeType}');
       if (e is Error) {
-        print('异常堆栈: ${e.stackTrace}');
+        print('Exception stack trace: ${e.stackTrace}');
       }
-      throw Exception('上传音频到Firebase失败: $e');
+      throw Exception('Failed to upload audio to Firebase: $e');
     } finally {
-      print('===== 上传音频到Firebase结束 =====');
+      print('===== Upload audio to Firebase completed =====');
     }
   }
   
   // Remove music
   Future<bool> removeMusic(String id) async {
-    // 保存要删除的音乐信息，用于后续清理标记
+    // Save the music information to be deleted, for later cleanup of flags
     String? musicTitle;
-    MusicItem? musicToDelete;  // 在 try 块外部声明
+    MusicItem? musicToDelete;  // Declare outside the try block
     try {
       musicToDelete = _musicLibrary.firstWhere((music) => music.id == id);
       musicTitle = musicToDelete.title;
     } catch (e) {
-      // 音乐可能不存在，继续处理
+      // The music may not exist, continue processing
     }
     
     final previousLength = _musicLibrary.length;
     
-    // 找到要删除的音乐
+    // Find the music to delete
     _musicLibrary.removeWhere((music) => music.id == id);
     
     // Check if the removal is successful
     final removed = previousLength > _musicLibrary.length;
     
     if (removed) {
-      if (_useFirebase && musicToDelete != null && musicToDelete.id.isNotEmpty) {  // 添加 null 检查
-        // 从 Firebase 删除
+      if (_useFirebase && musicToDelete != null && musicToDelete.id.isNotEmpty) {  // Add null check
+        // Delete from Firebase
         await _firebaseService.deleteMusic(id);
         
-        // 如果是 Firebase Storage URL，也删除文件
+        // If it is a Firebase Storage URL, also delete the file
         if (musicToDelete.audioUrl.startsWith('https://firebasestorage.googleapis.com')) {
           await _firebaseService.deleteAudioFile(musicToDelete.audioUrl);
         }
       } else {
-        // 仅保存到本地存储
+        // Save to local storage
         await saveToStorage();
       }
       
-      debugPrint('音乐已从库中删除: $id');
+      debugPrint('Music removed from library: $id');
       
-      // 添加的代码: 通知所有注册的回调
-      print('触发音乐删除回调，音乐ID: $id，回调数量: ${_musicDeletedCallbacks.length}');
+      // Add code: Notify all registered callbacks
+      print('Trigger music deletion callback, music ID: $id, callback count: ${_musicDeletedCallbacks.length}');
       for (var callback in _musicDeletedCallbacks) {
         callback(id);
       }
       
       notifyListeners();
       
-      // 添加清理地图标记的逻辑
+      // Add logic to clean up map markers
       try {
-        print('尝试清理地图标记，音乐ID: $id, 标题: $musicTitle');
+        print('Attempt to clean up map markers, music ID: $id, title: $musicTitle');
         final mapService = FlutterMapService();
         mapService.cleanupFlagsByMusicInfo(id, musicTitle);
       } catch (e) {
-        print('清理地图标记时出错: $e');
+        print('Error cleaning up map markers: $e');
       }
     }
     
@@ -312,9 +312,9 @@ class MusicLibraryManager extends ChangeNotifier {
       // Save the string list
       await prefs.setStringList(_storageKey, jsonList);
       
-      debugPrint('音乐库已保存到本地存储: ${_musicLibrary.length} 首音乐');
+      debugPrint('Music library saved to local storage: ${_musicLibrary.length} songs');
     } catch (e) {
-      debugPrint('保存音乐库失败: $e');
+      debugPrint('Failed to save music library: $e');
     }
   }
   
@@ -332,14 +332,14 @@ class MusicLibraryManager extends ChangeNotifier {
           final json = jsonDecode(jsonStr);
           return MusicItem.fromJson(json);
         } catch (e) {
-          debugPrint('解析音乐项失败: $e');
+          debugPrint('Failed to parse music item: $e');
           return null;
         }
       }).whereType<MusicItem>().toList();
       
-      debugPrint('从本地存储加载音乐库: ${_musicLibrary.length} 首音乐');
+      debugPrint('Load music library from local storage: ${_musicLibrary.length} songs');
     } catch (e) {
-      debugPrint('加载音乐库失败: $e');
+      debugPrint('Failed to load music library: $e');
       _musicLibrary = [];
     }
   }
@@ -349,13 +349,13 @@ class MusicLibraryManager extends ChangeNotifier {
     _musicLibrary.clear();
     
     if (_useFirebase) {
-      // Firebase 清除库的功能需谨慎实现
-      print('警告: 不支持从 Firebase 批量清除所有音乐');
+      // The function to clear the library from Firebase needs to be implemented carefully
+      print('Warning: Not supported to clear all music from Firebase in bulk');
     } else {
       await saveToStorage();
     }
     
-    debugPrint('音乐库已清空');
+    debugPrint('Music library cleared');
     notifyListeners();
   }
   
@@ -385,14 +385,14 @@ class MusicLibraryManager extends ChangeNotifier {
           _musicLibrary[i] = music.copyWith(audioUrl: newUrl);
           hasChanges = true;
           
-          developer.log('已修复音频 URL: $originalUrl -> $newUrl', name: 'MusicLibraryManager');
+          developer.log('Fixed audio URL: $originalUrl -> $newUrl', name: 'MusicLibraryManager');
         }
       }
     }
     
     if (hasChanges) {
       if (_useFirebase) {
-        // 为每个修复的项更新 Firebase
+        // Update Firebase for each fixed item
         for (final music in _musicLibrary) {
           if (music.audioUrl.startsWith('file://')) {
             await _uploadAudioToFirebase(music);
@@ -402,7 +402,7 @@ class MusicLibraryManager extends ChangeNotifier {
         await saveToStorage();
       }
       
-      developer.log('已修复无效的音频 URL', name: 'MusicLibraryManager');
+      developer.log('Fixed invalid audio URL', name: 'MusicLibraryManager');
       notifyListeners();
     }
   }
@@ -412,119 +412,119 @@ class MusicLibraryManager extends ChangeNotifier {
     int removedCount = 0;
     
     if (_useFirebase) {
-      // 使用 Firebase 批量删除
+      // Use Firebase to delete multiple music
       removedCount = await _firebaseService.deleteMultipleMusic(ids);
       
-      // 同步删除本地列表中的音乐
+      // Sync delete music from local list
       _musicLibrary.removeWhere((music) => ids.contains(music.id));
       
-      // 通知所有回调
-      print('批量删除触发回调，音乐ID数量: ${ids.length}');
+      // Notify all callbacks
+      print('Batch delete triggered callback, music ID count: ${ids.length}');
       for (String id in ids) {
         for (var callback in _musicDeletedCallbacks) {
           callback(id);
         }
       }
     } else {
-      // 从本地列表删除
+      // Delete from local list
       for (String id in ids) {
         final previousLength = _musicLibrary.length;
         _musicLibrary.removeWhere((music) => music.id == id);
         
-        // 检查是否删除成功
+        // Check if the deletion is successful
         if (previousLength > _musicLibrary.length) {
           removedCount++;
           
-          // 通知所有回调
-          print('单个删除触发回调，音乐ID: $id');
+          // Notify all callbacks
+          print('Single delete triggered callback, music ID: $id');
           for (var callback in _musicDeletedCallbacks) {
             callback(id);
           }
         }
       }
       
-      // 保存到本地存储
+      // Save to local storage
       await saveToStorage();
     }
     
     if (removedCount > 0) {
-      debugPrint('已从库中删除 $removedCount 首音乐');
+      debugPrint('Removed $removedCount songs from library');
       notifyListeners();
     }
     
     return removedCount;
   }
   
-  // 从远程 URL 下载音频并上传到 Firebase
+  // Download audio from remote URL and upload to Firebase
   Future<MusicItem> downloadAndUploadAudio(MusicItem music) async {
     if (!_useFirebase) {
-      return music; // 如果不使用 Firebase，直接返回
+      return music; // If not using Firebase, return directly
     }
     
     try {
-      // 检查 URL 是否已经是 Firebase URL
+      // Check if the URL is already a Firebase URL
       if (music.audioUrl.startsWith('https://firebasestorage.googleapis.com')) {
         return music;
       }
       
-      // 确保 URL 有效
+      // Ensure the URL is valid
       if (!music.audioUrl.startsWith('http')) {
-        print('无效的音频 URL: ${music.audioUrl}');
+        print('Invalid audio URL: ${music.audioUrl}');
         return music;
       }
       
-      // 从远程下载文件
+      // Download file from remote
       final response = await http.get(Uri.parse(music.audioUrl));
       if (response.statusCode != 200) {
-        throw Exception('下载音频文件失败: ${response.statusCode}');
+        throw Exception('Failed to download audio file: ${response.statusCode}');
       }
       
-      // 创建临时文件
+      // Create a temporary file
       final tempDir = await getTemporaryDirectory();
       final tempFile = File('${tempDir.path}/${music.id}.mp3');
       await tempFile.writeAsBytes(response.bodyBytes);
       
-      // 上传到 Firebase Storage
+      // Upload to Firebase Storage
       final fileName = '${music.id}.mp3';
       final downloadUrl = await _firebaseService.uploadAudioFile(tempFile, fileName);
       
-      // 更新音乐项
+      // Update music item
       final updatedMusic = music.copyWith(audioUrl: downloadUrl);
       
-      // 保存到 Firestore
+      // Save to Firestore
       await _firebaseService.addMusic(updatedMusic);
       
-      // 删除临时文件
+      // Delete temporary file
       await tempFile.delete();
       
-      print('已下载并上传音频到 Firebase: ${music.id}');
+      print('Downloaded and uploaded audio to Firebase: ${music.id}');
       return updatedMusic;
     } catch (e) {
-      print('下载并上传音频失败: $e');
-      return music; // 出错时返回原始音乐项
+      print('Failed to download and upload audio: $e');
+      return music; // Return the original music item when error
     }
   }
 
-  // 监听网络连接状态
+  // Monitor network connection status
   void _monitorConnectivity() {
     Connectivity().onConnectivityChanged.listen((ConnectivityResult result) {
       final wasOnline = _isOnline;
       _isOnline = result != ConnectivityResult.none;
       
-      // 当从离线变为在线状态时，尝试同步
+      // When offline changes to online, try to sync
       if (!wasOnline && _isOnline && _useFirebase) {
-        print('网络已恢复，开始同步数据...');
+        print('Network restored, start syncing data...');
         syncWithFirebase();
       }
       
       if (wasOnline != _isOnline) {
-        print('网络状态变化: ${_isOnline ? "在线" : "离线"}');
+        print('Network status changed: ${_isOnline ? "Online" : "Offline"}');
         notifyListeners();
       }
     });
   }
   
-  // 启动定期同步
+  // Start periodic sync
   void _startPeriodicSync() {
     _syncTimer?.cancel();
     _syncTimer = Timer.periodic(_syncInterval, (timer) {
@@ -540,37 +540,37 @@ class MusicLibraryManager extends ChangeNotifier {
     super.dispose();
   }
   
-  // 主同步方法
+  // Main sync method
   Future<void> syncWithFirebase() async {
     if (!_useFirebase || _isSyncing || !_isOnline) return;
     
     try {
       _isSyncing = true;
-      print('开始与 Firebase 同步数据...');
+      print('Start syncing data with Firebase...');
       
-      // 1. 先将本地修改推送到Firebase
+      // 1. Push local changes to Firebase first
       await _pushLocalChangesToFirebase();
       
-      // 2. 然后从Firebase获取最新数据
+      // 2. Then pull the latest data from Firebase
       await _pullChangesFromFirebase();
       
       _lastSyncTime = DateTime.now();
-      print('数据同步完成，当前音乐库有 ${_musicLibrary.length} 首音乐');
+      print('Data synced, current library has ${_musicLibrary.length} songs');
     } catch (e) {
-      print('数据同步失败: $e');
+      print('Failed to sync data: $e');
     } finally {
       _isSyncing = false;
     }
   }
   
-  // 向Firebase推送本地更改
+  // Push local changes to Firebase
   Future<void> _pushLocalChangesToFirebase() async {
     if (_locallyModifiedMusicIds.isEmpty) {
-      print('没有本地修改需要推送');
+      print('No local changes to push');
       return;
     }
     
-    print('推送本地修改到 Firebase: ${_locallyModifiedMusicIds.length} 项');
+    print('Push local changes to Firebase: ${_locallyModifiedMusicIds.length} items');
     
     for (final id in _locallyModifiedMusicIds.toList()) {
       try {
@@ -578,32 +578,32 @@ class MusicLibraryManager extends ChangeNotifier {
         if (musicIndex >= 0) {
           final music = _musicLibrary[musicIndex];
           
-          // 对于本地文件，上传到Firebase Storage
+          // For local files, upload to Firebase Storage
           if (music.audioUrl.startsWith('file://')) {
             await _uploadAudioToFirebase(music);
           } else {
-            // 直接更新Firestore数据
+            // Directly update Firestore data
             await _firebaseService.addMusic(music);
           }
           
           _locallyModifiedMusicIds.remove(id);
-          print('已同步 "${music.title}" 到Firebase');
+          print('Synced "${music.title}" to Firebase');
         }
       } catch (e) {
-        print('同步音乐 $id 到Firebase失败: $e');
+        print('Failed to sync music $id to Firebase: $e');
       }
     }
   }
   
-  // 从Firebase拉取最新变更
+  // Pull latest changes from Firebase
   Future<void> _pullChangesFromFirebase() async {
-    print('从 Firebase 拉取最新数据...');
+    print('Pull latest changes from Firebase...');
     
     try {
-      // 获取最新的音乐列表
+      // Get the latest music list
       final List<MusicItem> cloudMusic = await _firebaseService.getAllMusic();
       
-      // 创建本地和云端音乐的映射，用于快速查找
+      // Create a map of local and cloud music for quick lookup
       final Map<String, MusicItem> localMusicMap = {
         for (var music in _musicLibrary) music.id: music
       };
@@ -612,93 +612,93 @@ class MusicLibraryManager extends ChangeNotifier {
         for (var music in cloudMusic) music.id: music
       };
       
-      // 处理云端有但本地没有的音乐（新增）
+      // Handle music in cloud but not in local (new)
       for (final cloudItem in cloudMusic) {
         final localItem = localMusicMap[cloudItem.id];
         
         if (localItem == null) {
-          // 本地没有这首音乐，添加到本地
+          // Local does not have this music, add to local
           _musicLibrary.add(cloudItem);
-          print('添加云端音乐到本地: ${cloudItem.title}');
+          print('Add cloud music to local: ${cloudItem.title}');
         } else {
-          // 本地有这首音乐，检查是否需要更新
-          // 如果本地版本没有被修改过，并且云端版本更新，则更新本地版本
+          // Local has this music, check if it needs to be updated
+          // If local version is not modified and cloud version is updated, update local version
           if (!_locallyModifiedMusicIds.contains(cloudItem.id) && 
               (cloudItem.createdAt.isAfter(localItem.createdAt) || 
                cloudItem.audioUrl != localItem.audioUrl)) {
             
             final index = _musicLibrary.indexOf(localItem);
             _musicLibrary[index] = cloudItem;
-            print('更新本地音乐: ${cloudItem.title}');
+            print('Update local music: ${cloudItem.title}');
           }
         }
       }
       
-      // 本地有但云端没有的音乐，只在特定情况下处理
-      // 例如：如果确认云端记录被删除，可以考虑删除本地记录
-      // 但为了数据安全，这里暂不自动删除本地数据
+      // Music in local but not in cloud, only handle in specific cases
+      // For example: If confirmed that the cloud record is deleted, consider deleting local record
+      // But for data safety, here we do not automatically delete local data
       
-      // 保存更新后的本地库
+      // Save updated local library
       await saveToStorage();
       notifyListeners();
       
     } catch (e) {
-      print('从Firebase拉取数据失败: $e');
+      print('Failed to pull data from Firebase: $e');
       throw e;
     }
   }
   
-  // 增强的添加音乐方法
+  // Enhanced add music method
   Future<void> addMusicAndSync(MusicItem music) async {
-    // 确保有ID
+    // Ensure there is an ID
     final String id = music.id.isEmpty ? const Uuid().v4() : music.id;
     final musicWithId = music.id.isEmpty ? music.copyWith(id: id) : music;
     
-    // 设置创建时间
+    // Set creation time
     final now = DateTime.now();
     final musicWithTimestamp = musicWithId.copyWith(createdAt: now);
     
-    // 添加到本地库
+    // Add to local library
     await addMusic(musicWithTimestamp);
     
-    // 标记为本地修改
+    // Mark as locally modified
     _locallyModifiedMusicIds.add(musicWithTimestamp.id);
     
-    // 如果在线并启用Firebase，尝试立即同步
+    // If online and Firebase enabled, try to sync immediately
     if (_useFirebase && _isOnline) {
       try {
-        // 同步到Firebase
+        // Sync to Firebase
         if (musicWithTimestamp.audioUrl.startsWith('file://')) {
           await _uploadAudioToFirebase(musicWithTimestamp);
         } else {
           await _firebaseService.addMusic(musicWithTimestamp);
         }
         
-        // 同步成功，从本地修改列表中移除
+        // Sync successfully, remove from local modified list
         _locallyModifiedMusicIds.remove(musicWithTimestamp.id);
-        print('音乐 "${musicWithTimestamp.title}" 已立即同步到Firebase');
+        print('Music "${musicWithTimestamp.title}" has been synced immediately to Firebase');
       } catch (e) {
-        print('立即同步音乐到Firebase失败: $e');
-        print('将在下次同步时重试');
+        print('Failed to sync music immediately to Firebase: $e');
+        print('Will retry next sync');
       }
     }
   }
   
-  // 增强的删除音乐方法
+  // Enhanced delete music method
   Future<bool> deleteMusicAndSync(String id) async {
     bool success = await removeMusic(id);
     
     if (success) {
-      // 如果该ID在本地修改列表中，移除它
+      // If this ID is in the local modified list, remove it
       _locallyModifiedMusicIds.remove(id);
       
-      // 如果在线且启用Firebase，立即从Firebase删除
+      // If online and Firebase enabled, delete from Firebase immediately
       if (_useFirebase && _isOnline) {
         try {
           await _firebaseService.deleteMusic(id);
-          print('已从Firebase删除音乐: $id');
+          print('Music $id has been deleted from Firebase');
         } catch (e) {
-          print('从Firebase删除音乐失败: $e');
+          print('Failed to delete music from Firebase: $e');
         }
       }
     }
@@ -706,30 +706,30 @@ class MusicLibraryManager extends ChangeNotifier {
     return success;
   }
   
-  // 手动触发同步的公共方法
+  // Public method to manually trigger sync
   Future<void> forceSyncWithFirebase() async {
     if (!_useFirebase) {
-      print('Firebase同步未启用');
+      print('Firebase sync is not enabled');
       return;
     }
     
     if (!_isOnline) {
-      print('设备当前处于离线状态，无法同步');
+      print('Device is currently offline, cannot sync');
       return;
     }
     
     return syncWithFirebase();
   }
   
-  // 获取同步状态
+  // Get sync status
   bool get isSyncing => _isSyncing;
   
-  // 获取上次同步时间
+  // Get last sync time
   DateTime get lastSyncTime => _lastSyncTime;
   
-  // 获取网络状态
+  // Get network status
   bool get isOnline => _isOnline;
   
-  // 获取待同步项数量
+  // Get pending sync items count
   int get pendingSyncItemsCount => _locallyModifiedMusicIds.length;
 } 

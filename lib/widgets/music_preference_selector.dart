@@ -47,21 +47,21 @@ class _MusicPreferenceSelectorState extends State<MusicPreferenceSelector> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Vibe 选择部分
-          _buildSectionTitle('选择氛围 (Vibe)'),
+          // Vibe selection section
+          _buildSectionTitle('Select Vibe (Vibe)'),
           _buildVibeSelector(),
           
           const SizedBox(height: 16),
           
-          // Genre 选择部分
-          _buildSectionTitle('选择风格 (Genre)'),
+          // Genre selection section
+          _buildSectionTitle('Select Genre (Genre)'),
           _buildGenreSelector(),
         ],
       ),
     );
   }
   
-  // 构建部分标题
+  // Build section title
   Widget _buildSectionTitle(String title) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8.0, left: 4.0),
@@ -76,7 +76,7 @@ class _MusicPreferenceSelectorState extends State<MusicPreferenceSelector> {
     );
   }
   
-  // 构建氛围选择器
+  // Build vibe selector
   Widget _buildVibeSelector() {
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
@@ -102,7 +102,7 @@ class _MusicPreferenceSelectorState extends State<MusicPreferenceSelector> {
     );
   }
   
-  // 构建风格选择器
+  // Build genre selector
   Widget _buildGenreSelector() {
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
@@ -128,7 +128,7 @@ class _MusicPreferenceSelectorState extends State<MusicPreferenceSelector> {
     );
   }
   
-  // 构建选项卡片
+  // Build option card
   Widget _buildOptionCard({
     required String label,
     required IconData icon,

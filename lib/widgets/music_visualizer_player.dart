@@ -62,12 +62,12 @@ class _MusicVisualizerPlayerState extends State<MusicVisualizerPlayer> {
   
   @override
   Widget build(BuildContext context) {
-    // 如果播放器不可见，直接返回空组件
+    // If the player is not visible, return an empty component
     if (!_audioPlayerManager.isPlayerVisible) {
       return const SizedBox.shrink();
     }
     
-    // 只有在有当前音乐信息时才显示播放器
+    // Only show the player when there is current music information
     final currentMusic = _audioPlayerManager.currentMusic;
     if (currentMusic == null) {
       return const SizedBox.shrink();

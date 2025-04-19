@@ -243,38 +243,38 @@ class _LibraryScreenState extends State<LibraryScreen> {
   // Play music
   Future<void> _playMusic(MusicItem music) async {
     try {
-      print("开始播放音乐: ${music.title}, ID: ${music.id}");
+      print("Start playing music: ${music.title}, ID: ${music.id}");
       
-      // 获取当前所有音乐列表
+      // Get the current list of all music
       final List<MusicItem> allMusic = _filteredMusicList;
       
-      // 找到当前选择的音乐在列表中的索引
+      // Find the index of the currently selected music in the list
       final int currentIndex = allMusic.indexWhere((item) => item.id == music.id);
-      print("当前歌曲索引: $currentIndex, 列表长度: ${allMusic.length}");
+      print("Current song index: $currentIndex, list length: ${allMusic.length}");
       
       if (currentIndex >= 0) {
-        // 直接使用 AudioPlayerManager 设置播放列表并播放当前歌曲
-        print("设置播放列表并开始播放");
+        // Use AudioPlayerManager to set the playlist and play the current song
+        print("Setting playlist and starting playback");
         _audioPlayerManager.setPlaylist(allMusic, initialIndex: currentIndex);
       } else {
-        print("未找到歌曲在列表中的位置");
-        // 如果找不到歌曲索引，直接播放当前歌曲
+        print("Song not found in the list");
+        // If the song index is not found, play the current song directly
         await _audioPlayerManager.playMusic(music.id, music.audioUrl, musicItem: music);
       }
       
-      // 如果播放器不可见，则显示它
-      // 这一行代码实际上已经不再有效，因为我们移除了相关播放器，依赖的是底部的MusicVisualizerPlayer
-      // 但保留它以保持代码一致性
+      // If the player is not visible, show it
+      // This line of code is no longer effective, because we removed the related player, and rely on the bottom MusicVisualizerPlayer
+      // But keep it for code consistency
       if (!_showMusicPlayer) {
         setState(() {
           _showMusicPlayer = true;
         });
       }
     } catch (e) {
-      print("播放音乐失败: $e");
+      print("Failed to play music: $e");
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('播放音乐失败: ${e.toString()}')),
+          SnackBar(content: Text('Failed to play music: ${e.toString()}')),
         );
       }
     }
@@ -972,7 +972,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
       ),
       direction: DismissDirection.endToStart,
       confirmDismiss: (direction) async {
-        print('确认是否删除音乐: ${music.title} (${music.id})');
+        print('Confirm whether to delete music: ${music.title} (${music.id})');
         return await showDialog<bool>(
           context: context,
           builder: (context) => AlertDialog(
@@ -981,14 +981,14 @@ class _LibraryScreenState extends State<LibraryScreen> {
             actions: [
               TextButton(
                 onPressed: () {
-                  print('取消删除音乐');
+                  print('Cancel deleting music');
                   Navigator.of(context).pop(false);
                 },
                 child: const Text('Cancel'),
               ),
               TextButton(
                 onPressed: () {
-                  print('确认删除音乐');
+                  print('Confirm deleting music');
                   Navigator.of(context).pop(true);
                 },
                 child: const Text('Delete'),
@@ -998,48 +998,48 @@ class _LibraryScreenState extends State<LibraryScreen> {
         ) ?? false;
       },
       onDismissed: (direction) {
-        print('开始执行 onDismissed 回调，准备删除音乐: ${music.id}');
+        print('Start executing onDismissed callback, prepare to delete music: ${music.id}');
         
         try {
-          // 在调用异步操作之前，先从UI列表中移除该项
+          // Before calling the asynchronous operation, first remove the item from the UI list
           if (mounted) {
             setState(() {
-              print('从 UI 列表中移除音乐项: ${music.id}');
-              // 从过滤后的列表中直接移除该项
+              print('Remove music item from UI list: ${music.id}');
+              // Remove the item directly from the filtered list
               _filteredMusicList.removeWhere((item) => item.id == music.id);
             });
           }
           
-          // 如果当前正在播放这首音乐，先停止播放
+          // If the current music is being played, stop it first
           if (_audioPlayerManager.currentMusicId == music.id && _audioPlayerManager.isPlaying) {
-            print('停止当前播放的音乐');
+            print('Stop the current playing music');
             _audioPlayerManager.stopMusic();
           }
           
-          // 然后执行实际的删除操作
-          print('调用 MusicLibraryManager.removeMusic 方法');
+          // Then execute the actual deletion operation
+          print('Call MusicLibraryManager.removeMusic method');
           _libraryManager.removeMusic(music.id).then((success) {
-            print('删除音乐结果: ${success ? "成功" : "失败"}');
+            print('Delete music result: ${success ? "Success" : "Failed"}');
             if (!success && mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('删除音乐失败'))
+                SnackBar(content: Text('Failed to delete music'))
               );
             }
           }).catchError((error) {
-            print('删除音乐时发生错误: $error');
+            print('Error deleting music: $error');
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('删除音乐时出错: $error'))
+                SnackBar(content: Text('Error deleting music: $error'))
               );
             }
           });
           
-          print('onDismissed 回调执行完毕');
+          print('onDismissed callback executed');
         } catch (e) {
-          print('onDismissed 回调中捕获到异常: $e');
+          print('Error in onDismissed callback: $e');
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('发生错误: $e'))
+              SnackBar(content: Text('Error: $e'))
             );
           }
         }

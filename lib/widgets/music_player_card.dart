@@ -44,7 +44,6 @@ class _MusicPlayerCardState extends State<MusicPlayerCard> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // 标题行
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
             child: Row(

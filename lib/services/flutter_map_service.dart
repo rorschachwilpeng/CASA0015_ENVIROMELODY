@@ -174,12 +174,12 @@ class FlutterMapService extends ChangeNotifier {
         return;
       }
       
-      // 添加更严格的安全检查
+      // Add stricter security checks
       try {
-        // 尝试访问属性来验证控制器状态
+        // Try to access properties to verify controller state
         var testPoint = _mapController!.center;
         
-        // 移动地图
+        // Move map
         _mapController!.move(
           LatLng(_currentLocation!.latitude!, _currentLocation!.longitude!),
           COUNTRY_ZOOM_LEVEL
@@ -187,7 +187,6 @@ class FlutterMapService extends ChangeNotifier {
         print("Successfully moved map to current location");
       } catch (e) {
         print("Failed to move map: $e");
-        // 不抛出异常，优雅地处理错误
       }
     } catch (e) {
       print("Error moving to current location: $e");
@@ -523,12 +522,12 @@ class FlutterMapService extends ChangeNotifier {
     notifyListeners();
   }
   
-  // 添加通过音乐属性查找标记的更通用方法
+  // Add a more general method to find flags by music information
   void cleanupFlagsByMusicInfo(String? musicId, String? musicTitle) {
-    print('清理音乐相关标记，ID: $musicId，标题: $musicTitle');
+    print('Cleanup music-related flags, ID: $musicId, title: $musicTitle');
     
     if (musicId == null && (musicTitle == null || musicTitle.isEmpty)) {
-      print('无效的查询参数，musicId 和 musicTitle 都为空或无效');
+      print('Invalid query parameters, musicId and musicTitle are both null or invalid');
       return;
     }
     
@@ -536,42 +535,42 @@ class FlutterMapService extends ChangeNotifier {
     
     _persistentFlagMap.forEach((flagId, flagInfo) {
       if (flagInfo.musicTitle != null) {
-        print('检查标记 $flagId: 标题="${flagInfo.musicTitle}"');
+        print('Checking flag $flagId: title="${flagInfo.musicTitle}"');
         
-        // 尝试两种匹配方式
+        // Try two matching methods
         bool shouldDelete = false;
         
-        // 1. 如果标题完全匹配
+        // 1. If the title matches exactly
         if (musicTitle != null && musicTitle.isNotEmpty && 
             flagInfo.musicTitle == musicTitle) {
-          print('标题精确匹配: "${flagInfo.musicTitle}" == "$musicTitle"');
+          print('Title exact match: "${flagInfo.musicTitle}" == "$musicTitle"');
           shouldDelete = true;
         }
         
-        // 2. 如果标题包含音乐ID
+        // 2. If the title contains the music ID
         if (musicId != null && musicId.isNotEmpty && 
             flagInfo.musicTitle!.contains(musicId)) {
-          print('标题包含ID: "${flagInfo.musicTitle}" 包含 "$musicId"');
+          print('Title contains ID: "${flagInfo.musicTitle}" contains "$musicId"');
           shouldDelete = true;
         }
         
         if (shouldDelete) {
-          print('找到需要删除的标记: $flagId, 标题: "${flagInfo.musicTitle}"');
+          print('Found flag to delete: $flagId, title: "${flagInfo.musicTitle}"');
           flagsToDelete.add(flagId);
         }
       }
     });
     
-    // 删除找到的所有标记
+    // Delete all found flags
     if (flagsToDelete.isNotEmpty) {
-      print('准备删除 ${flagsToDelete.length} 个标记');
+      print('Preparing to delete ${flagsToDelete.length} flags');
       for (String id in flagsToDelete) {
         removeFlagInfo(id);
-        print('已删除标记: $id');
+        print('Deleted flag: $id');
       }
       notifyListeners();
     } else {
-      print('没有找到关联的标记需要删除');
+      print('No associated flags found to delete');
     }
   }
 }

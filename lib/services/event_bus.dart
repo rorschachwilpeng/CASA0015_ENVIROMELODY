@@ -22,7 +22,7 @@ class EventBus {
   }
 }
 
-// 音乐删除事件
+// Music deletion event
 class MusicDeletedEvent {
   final String musicId;
   MusicDeletedEvent(this.musicId);

@@ -9,15 +9,14 @@ class MusicItem {
   final String status;
   final DateTime createdAt;
   
-  // Optional: Add a field to represent the music source/API
   final String source;
   
-  // 新增位置相关字段
+  // Add new location-related fields
   final double? latitude;
   final double? longitude;
   final String? locationName;
   
-  // 新增天气数据字段
+  // Add new weather data field
   final Map<String, dynamic>? weatherData;
   
   MusicItem({
@@ -28,7 +27,7 @@ class MusicItem {
     required this.status,
     required this.createdAt,
     this.source = 'stability', // Default source is stability
-    // 新增字段初始化
+    // Add new location-related fields
     this.latitude,
     this.longitude,
     this.locationName,
@@ -62,7 +61,6 @@ class MusicItem {
           ? DateTime.parse(json['created_at']) 
           : DateTime.now(),
       source: json['source'] ?? 'stability',
-      // 添加新字段的解析
       latitude: json['latitude']?.toDouble(),
       longitude: json['longitude']?.toDouble(),
       locationName: json['location_name'],
@@ -80,7 +78,6 @@ class MusicItem {
       'status': status,
       'created_at': createdAt.toIso8601String(),
       'source': source,
-      // 添加新字段
       'latitude': latitude,
       'longitude': longitude,
       'location_name': locationName,
@@ -129,7 +126,6 @@ class MusicItem {
     String? status,
     DateTime? createdAt,
     String? source,
-    // 添加新字段
     double? latitude,
     double? longitude,
     String? locationName,
@@ -143,7 +139,6 @@ class MusicItem {
       status: status ?? this.status,
       createdAt: createdAt ?? this.createdAt,
       source: source ?? this.source,
-      // 添加新字段
       latitude: latitude ?? this.latitude,
       longitude: longitude ?? this.longitude,
       locationName: locationName ?? this.locationName,
@@ -156,13 +151,13 @@ class MusicItem {
     return 'MusicItem{id: $id, title: $title, prompt: $prompt, status: $status}';
   }
   
-  // 从 MusicItem 获取 WeatherData 对象
+  // Get WeatherData object from MusicItem
   WeatherData? getWeatherData() {
     if (weatherData == null) return null;
     return WeatherData.fromJsonMap(weatherData!);
   }
   
-  // 静态方法：创建带有天气数据的 MusicItem
+  // Static method: Create MusicItem with weather data
   static MusicItem createWithWeather({
     required String id,
     required String title,

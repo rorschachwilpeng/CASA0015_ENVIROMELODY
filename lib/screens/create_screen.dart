@@ -786,18 +786,18 @@ class _CreateScreenState extends State<CreateScreen> {
         
         // Save to the music library
         try {
-          developer.log('音乐已成功保存并同步: ${musicItem.title}', name: 'CreateScreen');
+          developer.log('Music has been successfully saved and synchronized: ${musicItem.title}', name: 'CreateScreen');
           
-          // 使用新的addMusicAndSync方法替代原来的addMusic
+          // Use the new addMusicAndSync method instead of the old addMusic
           await MusicLibraryManager().addMusicAndSync(musicItem);
           
-          // 显示成功提示
+          // Show success message
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: const Text('音乐已添加并同步到云端'),
+                content: const Text('Music has been added and synchronized to the cloud'),
                 action: SnackBarAction(
-                  label: '查看',
+                  label: 'View',
                   onPressed: () {
                     Navigator.of(context).pushNamed('/library');
                   },
@@ -807,13 +807,13 @@ class _CreateScreenState extends State<CreateScreen> {
             );
           }
         } catch (e) {
-          developer.log('保存音乐失败: $e', error: e, name: 'CreateScreen');
-          developer.log('异常类型: ${e.runtimeType}', name: 'CreateScreen');
+          developer.log('Failed to save music: $e', error: e, name: 'CreateScreen');
+          developer.log('Exception type: ${e.runtimeType}', name: 'CreateScreen');
           
-          // 显示错误提示
+          // Show error message
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('保存音乐失败: ${e.toString()}')),
+              SnackBar(content: Text('Failed to save music: ${e.toString()}')),
             );
           }
         }
@@ -1110,7 +1110,7 @@ class _CreateScreenState extends State<CreateScreen> {
                       )
                     : ElevatedButton(
                         onPressed: () {
-                          developer.log('Generate Music按钮被点击');
+                          developer.log('Generate Music button clicked');
                           
                           if (_stabilityService == null) {
                             _initializeStabilityService(); // Try to reinitialize the service
