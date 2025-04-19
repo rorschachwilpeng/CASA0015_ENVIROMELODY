@@ -17,6 +17,7 @@ import '../services/audio_player_manager.dart';
 import '../models/music_preference.dart';
 import '../widgets/music_preference_selector.dart';
 import '../services/deepseek_api_service.dart';  // 添加这一行
+import '../services/event_bus.dart';
 
 // Define FlagInfo class (put at the top of the file, all classes outside)
 class FlagInfo {
@@ -117,6 +118,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     apiKey: AppConfig.deepSeekApiKey,
   );
   
+  // 在 _HomeScreenState 类中添加 StreamSubscription
+  StreamSubscription? _musicDeletedSubscription;
+  
   @override
   void initState() {
     super.initState();
@@ -155,6 +159,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         });
       }
     });
+    
+    // 添加音乐删除回调
+    final libraryManager = MusicLibraryManager();
+    libraryManager.addMusicDeletedCallback(_handleMusicDeleted);
+    print('HomeScreen 已注册音乐删除回调');
   }
   
   @override
@@ -181,21 +190,31 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         
         // 在下一帧绘制后，恢复地图位置和缩放级别
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (_isMapReady) {
+          if (_isMapReady && mounted) {
             try {
-              _mapController.move(_lastMapCenter, _lastMapZoom);
-              // 重新加载所有标记
-              _loadPersistentFlags();
+              if (_mapController != null) {
+                // 添加安全检查，确保地图控制器已准备好
+                if (isMapControllerReady()) {
+                  _mapController.move(_lastMapCenter, _lastMapZoom);
+                  // 重新加载所有标记
+                  _loadPersistentFlags();
+                  print('成功恢复地图位置：中心=${_lastMapCenter}，缩放=${_lastMapZoom}');
+                } else {
+                  print('地图控制器尚未准备好，无法移动地图');
+                  // 设置一个延迟，稍后再尝试
+                  Future.delayed(Duration(milliseconds: 500), () {
+                    if (mounted && isMapControllerReady()) {
+                      _mapController.move(_lastMapCenter, _lastMapZoom);
+                      print('延迟后成功恢复地图位置');
+                    }
+                  });
+                }
+              }
             } catch (e) {
-              print('Error restoring map position: $e');
+              print('恢复地图位置时出错: $e');
             }
           }
         });
-      } else {
-        // 如果是首次初始化，允许定位到当前位置
-        _mapController = MapController();
-        _initMapService();
-        _hasInitializedOnce = true;
       }
     } else if (state == AppLifecycleState.paused) {
       // 应用进入后台时，保存当前地图状态
@@ -237,10 +256,27 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   
   @override
   void dispose() {
-    // Add this line of code to ensure that all markers are cleared when destroyed
+    // 添加这行代码以确保所有异步操作都被取消
+    print('HomeScreen 销毁：取消所有订阅和异步操作');
+    
+    // 移除音乐删除回调
+    final libraryManager = MusicLibraryManager();
+    libraryManager.removeMusicDeletedCallback(_handleMusicDeleted);
+    
+    // 保存当前状态
+    try {
+      _lastMapCenter = _mapController.center;
+      _lastMapZoom = _mapController.zoom;
+      print('保存地图状态：中心=${_lastMapCenter}，缩放=${_lastMapZoom}');
+    } catch (e) {
+      print('保存地图状态失败: $e');
+    }
+    
+    // 清理地图组件
     _mapService.clearMarkers();
     WidgetsBinding.instance.removeObserver(this);
     _mapService.dispose();
+    
     super.dispose();
   }
   
@@ -1801,6 +1837,59 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       _lastMapZoom = _mapController.zoom;
     } catch (e) {
       print('Failed to save map state: $e');
+    }
+  }
+
+  // 处理音乐删除的回调
+  void _handleMusicDeleted(String musicId) {
+    if (!mounted) {
+      print('HomeScreen 已销毁，忽略音乐删除通知');
+      return;
+    }
+    
+    print('HomeScreen 收到音乐删除通知，musicId: $musicId');
+    
+    // 获取音乐库
+    final libraryManager = MusicLibraryManager();
+    
+    // 查找所有与该音乐关联的标记
+    List<String> flagsToDelete = [];
+    
+    _flagInfoMap.forEach((flagId, flagInfo) {
+      print('检查标记 $flagId，musicTitle: ${flagInfo.musicTitle}');
+      
+      if (flagInfo.musicTitle != null) {
+        // 直接检查是否与被删除的音乐ID关联
+        final allMusic = libraryManager.allMusic;
+        
+        // 由于我们没有直接存储音乐ID和标记的映射关系，我们需要通过标题来查找
+        bool musicFound = false;
+        for (var music in allMusic) {
+          if (music.title == flagInfo.musicTitle) {
+            musicFound = true;
+            break;
+          }
+        }
+        
+        // 如果没有找到匹配的音乐，则删除这个标记
+        if (!musicFound) {
+          print('标记 $flagId 关联的音乐 "${flagInfo.musicTitle}" 已被删除，准备删除标记');
+          flagsToDelete.add(flagId);
+        }
+      }
+    });
+    
+    // 删除找到的所有标记
+    if (flagsToDelete.isNotEmpty) {
+      print('需要删除 ${flagsToDelete.length} 个标记');
+      setState(() {
+        for (String flagId in flagsToDelete) {
+          _deleteFlag(flagId);
+          print('已删除标记 $flagId');
+        }
+      });
+    } else {
+      print('没有找到需要删除的标记');
     }
   }
 } 

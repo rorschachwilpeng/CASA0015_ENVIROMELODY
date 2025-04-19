@@ -5,6 +5,7 @@ import '../firebase_options.dart';
 import 'dart:async';
 import '../models/music_item.dart';
 import '../services/firebase_service.dart';
+import '../services/music_library_manager.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({Key? key}) : super(key: key);
@@ -89,6 +90,29 @@ class ProfileScreen extends StatelessWidget {
               title: const Text('测试保存音乐到 Firebase'),
               onTap: () {
                 testAddMusicToFirestore();
+              },
+            ),
+            const Divider(),
+            ListTile(
+              leading: Icon(Icons.sync),
+              title: Text('同步音乐库'),
+              subtitle: Text('手动同步本地音乐到云端'),
+              trailing: MusicLibraryManager().isSyncing 
+                  ? CircularProgressIndicator() 
+                  : Icon(Icons.arrow_forward_ios),
+              onTap: () async {
+                // 显示同步开始的提示
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('开始同步...'), duration: Duration(seconds: 1))
+                );
+                
+                // 调用同步方法
+                await MusicLibraryManager().forceSyncWithFirebase();
+                
+                // 显示同步完成的提示
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('同步完成！上次同步时间: ${_formatTime(MusicLibraryManager().lastSyncTime)}'))
+                );
               },
             ),
             const Divider(),
@@ -318,5 +342,11 @@ class ProfileScreen extends StatelessWidget {
     } catch (e) {
       print('测试音乐保存失败: $e');
     }
+  }
+
+  // 添加这个辅助方法来格式化时间
+  String _formatTime(DateTime time) {
+    if (time.millisecondsSinceEpoch == 0) return '从未同步';
+    return '${time.hour}:${time.minute.toString().padLeft(2, '0')}:${time.second.toString().padLeft(2, '0')}';
   }
 } 

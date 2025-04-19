@@ -7,6 +7,7 @@ import 'package:location/location.dart';
 import 'dart:developer' as developer;
 import 'package:flutter/foundation.dart';
 import '../screens/home_screen.dart'; //Import FlagInfo class
+import '../services/music_library_manager.dart';
 
 // Move to class external 
 typedef ZoomChangedCallback = void Function(double zoom);
@@ -173,11 +174,12 @@ class FlutterMapService extends ChangeNotifier {
         return;
       }
       
-      // Add safety check to avoid using a destroyed controller
+      // 添加更严格的安全检查
       try {
-        // Check if the map controller is still valid
-        var testPoint = _mapController!.center; // Try to access the property to verify the controller state
+        // 尝试访问属性来验证控制器状态
+        var testPoint = _mapController!.center;
         
+        // 移动地图
         _mapController!.move(
           LatLng(_currentLocation!.latitude!, _currentLocation!.longitude!),
           COUNTRY_ZOOM_LEVEL
@@ -185,7 +187,7 @@ class FlutterMapService extends ChangeNotifier {
         print("Successfully moved map to current location");
       } catch (e) {
         print("Failed to move map: $e");
-        // Do not throw an exception here, handle the error gracefully
+        // 不抛出异常，优雅地处理错误
       }
     } catch (e) {
       print("Error moving to current location: $e");
@@ -498,5 +500,78 @@ class FlutterMapService extends ChangeNotifier {
     
     // Notify listener to update
     notifyListeners();
+  }
+  
+  // Add a method to delete flags by music ID
+  void deleteFlagsByMusicId(String musicId) {
+    // Find all flags associated with the music
+    List<String> flagsToDelete = [];
+    
+    _persistentFlagMap.forEach((flagId, flagInfo) {
+      // Check if the flag is associated with the music
+      if (flagInfo.musicTitle != null && flagInfo.musicTitle == musicId) {
+        flagsToDelete.add(flagId);
+      }
+    });
+    
+    // Remove all found flags
+    for (String flagId in flagsToDelete) {
+      removeFlagInfo(flagId);
+    }
+    
+    // Notify listener to update UI
+    notifyListeners();
+  }
+  
+  // 添加通过音乐属性查找标记的更通用方法
+  void cleanupFlagsByMusicInfo(String? musicId, String? musicTitle) {
+    print('清理音乐相关标记，ID: $musicId，标题: $musicTitle');
+    
+    if (musicId == null && (musicTitle == null || musicTitle.isEmpty)) {
+      print('无效的查询参数，musicId 和 musicTitle 都为空或无效');
+      return;
+    }
+    
+    List<String> flagsToDelete = [];
+    
+    _persistentFlagMap.forEach((flagId, flagInfo) {
+      if (flagInfo.musicTitle != null) {
+        print('检查标记 $flagId: 标题="${flagInfo.musicTitle}"');
+        
+        // 尝试两种匹配方式
+        bool shouldDelete = false;
+        
+        // 1. 如果标题完全匹配
+        if (musicTitle != null && musicTitle.isNotEmpty && 
+            flagInfo.musicTitle == musicTitle) {
+          print('标题精确匹配: "${flagInfo.musicTitle}" == "$musicTitle"');
+          shouldDelete = true;
+        }
+        
+        // 2. 如果标题包含音乐ID
+        if (musicId != null && musicId.isNotEmpty && 
+            flagInfo.musicTitle!.contains(musicId)) {
+          print('标题包含ID: "${flagInfo.musicTitle}" 包含 "$musicId"');
+          shouldDelete = true;
+        }
+        
+        if (shouldDelete) {
+          print('找到需要删除的标记: $flagId, 标题: "${flagInfo.musicTitle}"');
+          flagsToDelete.add(flagId);
+        }
+      }
+    });
+    
+    // 删除找到的所有标记
+    if (flagsToDelete.isNotEmpty) {
+      print('准备删除 ${flagsToDelete.length} 个标记');
+      for (String id in flagsToDelete) {
+        removeFlagInfo(id);
+        print('已删除标记: $id');
+      }
+      notifyListeners();
+    } else {
+      print('没有找到关联的标记需要删除');
+    }
   }
 }

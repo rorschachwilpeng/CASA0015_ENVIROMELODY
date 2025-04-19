@@ -972,6 +972,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
       ),
       direction: DismissDirection.endToStart,
       confirmDismiss: (direction) async {
+        print('确认是否删除音乐: ${music.title} (${music.id})');
         return await showDialog<bool>(
           context: context,
           builder: (context) => AlertDialog(
@@ -979,18 +980,70 @@ class _LibraryScreenState extends State<LibraryScreen> {
             content: const Text('Are you sure you want to delete this music file?'),
             actions: [
               TextButton(
-                onPressed: () => Navigator.of(context).pop(false),
+                onPressed: () {
+                  print('取消删除音乐');
+                  Navigator.of(context).pop(false);
+                },
                 child: const Text('Cancel'),
               ),
               TextButton(
-                onPressed: () => Navigator.of(context).pop(true),
+                onPressed: () {
+                  print('确认删除音乐');
+                  Navigator.of(context).pop(true);
+                },
                 child: const Text('Delete'),
               ),
             ],
           ),
-        );
+        ) ?? false;
       },
-      onDismissed: (direction) => _deleteMusic(music.id),
+      onDismissed: (direction) {
+        print('开始执行 onDismissed 回调，准备删除音乐: ${music.id}');
+        
+        try {
+          // 在调用异步操作之前，先从UI列表中移除该项
+          if (mounted) {
+            setState(() {
+              print('从 UI 列表中移除音乐项: ${music.id}');
+              // 从过滤后的列表中直接移除该项
+              _filteredMusicList.removeWhere((item) => item.id == music.id);
+            });
+          }
+          
+          // 如果当前正在播放这首音乐，先停止播放
+          if (_audioPlayerManager.currentMusicId == music.id && _audioPlayerManager.isPlaying) {
+            print('停止当前播放的音乐');
+            _audioPlayerManager.stopMusic();
+          }
+          
+          // 然后执行实际的删除操作
+          print('调用 MusicLibraryManager.removeMusic 方法');
+          _libraryManager.removeMusic(music.id).then((success) {
+            print('删除音乐结果: ${success ? "成功" : "失败"}');
+            if (!success && mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('删除音乐失败'))
+              );
+            }
+          }).catchError((error) {
+            print('删除音乐时发生错误: $error');
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('删除音乐时出错: $error'))
+              );
+            }
+          });
+          
+          print('onDismissed 回调执行完毕');
+        } catch (e) {
+          print('onDismissed 回调中捕获到异常: $e');
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('发生错误: $e'))
+            );
+          }
+        }
+      },
       child: ListTile(
         leading: CircleAvatar(
           backgroundColor: Theme.of(context).primaryColor.withOpacity(0.1),
