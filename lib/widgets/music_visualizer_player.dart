@@ -62,10 +62,13 @@ class _MusicVisualizerPlayerState extends State<MusicVisualizerPlayer> {
   
   @override
   Widget build(BuildContext context) {
-    // Only check currentMusic instead of currentMusicId, because we need to display the player even if the music has been played
-    final currentMusic = _audioPlayerManager.currentMusic;
+    // 如果播放器不可见，直接返回空组件
+    if (!_audioPlayerManager.isPlayerVisible) {
+      return const SizedBox.shrink();
+    }
     
-    // If there is no current music information, do not display the player
+    // 只有在有当前音乐信息时才显示播放器
+    final currentMusic = _audioPlayerManager.currentMusic;
     if (currentMusic == null) {
       return const SizedBox.shrink();
     }
@@ -159,6 +162,7 @@ class _MusicVisualizerPlayerState extends State<MusicVisualizerPlayer> {
                   iconSize: 18,
                   onPressed: () {
                     _audioPlayerManager.stopMusic();
+                    _audioPlayerManager.hidePlayer();
                   },
                 ),
               ],
@@ -216,6 +220,7 @@ class _MusicVisualizerPlayerState extends State<MusicVisualizerPlayer> {
                   constraints: const BoxConstraints(),
                   onPressed: () {
                     _audioPlayerManager.stopMusic();
+                    _audioPlayerManager.hidePlayer();
                   },
                 ),
               ],

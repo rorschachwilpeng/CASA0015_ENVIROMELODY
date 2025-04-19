@@ -55,6 +55,23 @@ class AudioPlayerManager extends ChangeNotifier {
   // Mutex variable to prevent playNext from being called multiple times simultaneously
   bool _isPlayNextExecuting = false;
   
+  // 添加播放器可见性状态
+  bool _isPlayerVisible = false;
+  
+  // 添加播放器可见性的getter和setter
+  bool get isPlayerVisible => _isPlayerVisible;
+  void showPlayer() {
+    _isPlayerVisible = true;
+    notifyListeners();
+    print('Player is now visible');
+  }
+
+  void hidePlayer() {
+    _isPlayerVisible = false;
+    notifyListeners();
+    print('Player is now hidden');
+  }
+  
   // Internal constructor
   AudioPlayerManager._internal() {
     // Configure the player
@@ -201,6 +218,7 @@ class AudioPlayerManager extends ChangeNotifier {
       // If the same song is already playing, do nothing
       if (_currentMusicId == musicId && _player.playing) {
         print("Same song is already playing, do not replay");
+        showPlayer(); // 确保播放器可见
         return;
       }
       
@@ -208,6 +226,7 @@ class AudioPlayerManager extends ChangeNotifier {
       _currentMusicId = musicId;
       
       // Notify listeners before playback
+      showPlayer(); // 显示播放器
       notifyListeners();
       
       // If another song is playing, stop it first
