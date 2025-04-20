@@ -47,6 +47,72 @@ class MapState {
   });
 }
 
+// Pixel Theme
+class PixelTheme {
+  // Yellow-based color scheme
+  static const Color background = Color(0xFFF8F4E3);    // Yellow background
+  static const Color primary = Color(0xFFFF7A59);       // Orange
+  static const Color secondary = Color(0xFFFFBB36);     // Yellow
+  static const Color surface = Color(0xFFFFF1DC);       // Light yellow surface
+  static const Color text = Color(0xFF3A3A3A);          // Dark gray text
+  static const Color textLight = Color(0xFF666666);     // Light gray text
+  static const Color accent = Color(0xFF1B8A6B);        // Green accent
+  static const Color error = Color(0xFFD35269);         // Red error
+  
+  // Font size
+  static const double fontSizeSmall = 10.0;
+  static const double fontSizeMedium = 14.0;
+  static const double fontSizeLarge = 18.0;
+  static const double fontSizeXLarge = 24.0;
+  
+  // Border style - thicker border
+  static BoxBorder pixelBorder = Border.all(
+    color: text,
+    width: 2.0,
+  );
+  
+  // Card shadow style
+  static List<BoxShadow> cardShadow = [
+    BoxShadow(
+      color: Colors.black.withOpacity(0.2),
+      offset: const Offset(4, 4),
+      blurRadius: 0, // No blur, keep pixel feel
+    ),
+  ];
+  
+  // Button style
+  static ButtonStyle buttonStyle = ElevatedButton.styleFrom(
+    backgroundColor: surface, 
+    foregroundColor: text,
+    elevation: 0,
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.zero, // Square edge
+      side: BorderSide(color: text, width: 2.0),
+    ),
+    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+  );
+  
+  // Monospaced font style
+  static TextStyle get titleStyle => TextStyle(
+    fontFamily: 'DMMono', 
+    fontSize: fontSizeLarge,
+    fontWeight: FontWeight.bold,
+    color: text,
+  );
+  
+  static TextStyle get bodyStyle => TextStyle(
+    fontFamily: 'DMMono',
+    fontSize: fontSizeMedium,
+    color: text,
+  );
+  
+  static TextStyle get labelStyle => TextStyle(
+    fontFamily: 'DMMono',
+    fontSize: fontSizeSmall,
+    color: textLight,
+  );
+}
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
 
@@ -114,7 +180,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   MusicVibe? _selectedVibe;
   MusicGenre? _selectedGenre;
   
-  // 在 _HomeScreenState 类中添加 DeepSeekApiService 实例
+  // Add DeepSeekApiService instance in _HomeScreenState class
   final DeepSeekApiService _deepSeekApiService = DeepSeekApiService(
     apiKey: AppConfig.deepSeekApiKey,
   );
@@ -318,25 +384,26 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   Future<void> _goToCurrentLocation() async {
     if (!_isMapReady || _mapController == null) return;
     
-    setState(() {
-      _isLoadingLocation = true;
-    });
+    // Show pixel-style loading dialog
+    showPixelLoadingDialog(context, 'Getting your location...');
     
     try {
       await _mapService.moveToCurrentLocation();
+      
+      // Close loading dialog after success
+      if (mounted && Navigator.canPop(context)) {
+        Navigator.pop(context);
+      }
     } catch (e) {
       print('Error moving to current location: $e');
       
-      if (mounted) {
+      // Close loading dialog when error occurs
+      if (mounted && Navigator.canPop(context)) {
+        Navigator.pop(context);
+        
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Cannot access your location')),
         );
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoadingLocation = false;
-        });
       }
     }
   }
@@ -630,89 +697,241 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: PixelTheme.background, // Set yellow background
       appBar: AppBar(
-        title: const Text('Music Map'),
+        backgroundColor: PixelTheme.surface,
+        title: Text(
+          'ENVIROMELODY',
+          style: TextStyle(
+            fontFamily: 'DMMono', // Use monospaced font
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 1.5, // Increase letter spacing
+            color: PixelTheme.text,
+          ),
+        ),
+        elevation: 0,
+        shape: Border(
+          bottom: BorderSide(
+            color: PixelTheme.text,
+            width: 2.0,
+          ),
+        ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _goToCurrentLocation,
-            tooltip: 'Refresh map',
+          Container(
+            margin: const EdgeInsets.only(right: 8),
+            decoration: BoxDecoration(
+              border: Border.all(color: PixelTheme.text, width: 2),
+              color: PixelTheme.surface,
+            ),
+            child: IconButton(
+              icon: Icon(Icons.refresh, color: PixelTheme.text, size: 20),
+              onPressed: _goToCurrentLocation,
+              tooltip: 'Refresh map',
+            ),
           ),
         ],
       ),
       body: Stack(
         children: [
-          FlutterMap(
-            mapController: _mapController,
-            options: MapOptions(
-              center: _isFirstLoad ? _mapService.getDefaultLocation() : _lastMapCenter,
-              zoom: _isFirstLoad ? COUNTRY_ZOOM_LEVEL : _lastMapZoom,
-              onMapReady: _onMapReady,
-              onTap: _handleMapTap,
-              onPositionChanged: _handleMapMoved,
+          // Map card design
+          Container(
+            margin: const EdgeInsets.fromLTRB(12, 70, 12, 80), // Leave space for top and bottom
+            decoration: BoxDecoration(
+              color: Colors.white,
+              border: PixelTheme.pixelBorder,
+              boxShadow: PixelTheme.cardShadow,
             ),
-            children: [
-              TileLayer(
-                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                userAgentPackageName: 'com.example.soundscape_app',
+            child: ClipRRect(
+              child: FlutterMap(
+                mapController: _mapController,
+                options: MapOptions(
+                  center: _isFirstLoad ? _mapService.getDefaultLocation() : _lastMapCenter,
+                  zoom: _isFirstLoad ? COUNTRY_ZOOM_LEVEL : _lastMapZoom,
+                  onMapReady: _onMapReady,
+                  onTap: _handleMapTap,
+                  onPositionChanged: _handleMapMoved,
+                ),
+                children: [
+                  TileLayer(
+                    urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                    userAgentPackageName: 'com.example.soundscape_app',
+                  ),
+                  MarkerLayer(
+                    markers: _mapService.markers,
+                  ),
+                ],
               ),
-              MarkerLayer(
-                markers: _mapService.markers,
-              ),
-            ],
+            ),
           ),
           
-          if (_isLoadingWeather)
-            Positioned(
-              top: 16,
-              left: 16,
-              child: Container(
-                padding: const EdgeInsets.all(8.0),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(8.0),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      spreadRadius: 1,
-                      blurRadius: 2,
-                      offset: const Offset(0, 1),
-                    ),
-                  ],
+          // Search bar design
+          Positioned(
+            top: 16,
+            left: 12,
+            right: 12,
+            child: Container(
+              decoration: BoxDecoration(
+                color: PixelTheme.surface,
+                border: PixelTheme.pixelBorder,
+                boxShadow: PixelTheme.cardShadow,
+              ),
+              height: 48,
+              child: TextField(
+                controller: _searchController,
+                style: PixelTheme.bodyStyle, // Use monospaced font
+                decoration: InputDecoration(
+                  hintText: 'Search location...',
+                  hintStyle: TextStyle(
+                    fontFamily: 'DMMono',
+                    fontSize: 14,
+                    color: PixelTheme.textLight,
+                  ),
+                  prefixIcon: Icon(Icons.search, size: 20, color: PixelTheme.text),
+                  suffixIcon: _searchController.text.isNotEmpty
+                    ? Container(
+                        margin: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: PixelTheme.error,
+                          border: Border.all(color: PixelTheme.text, width: 1),
+                        ),
+                        child: InkWell(
+                          onTap: () {
+                            _searchController.clear();
+                            setState(() {
+                              _searchResults = [];
+                            });
+                          },
+                          child: Icon(Icons.close, size: 16, color: Colors.white),
+                        ),
+                      )
+                    : _isSearching
+                      ? const Padding(
+                          padding: EdgeInsets.all(12.0),
+                          child: SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        )
+                      : null,
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 15, horizontal: 16),
                 ),
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.blue,
+                onSubmitted: _searchPlaces,
+              ),
+            ),
+          ),
+          
+          // Search results list
+          if (_searchResults.isNotEmpty)
+            Positioned(
+              top: 70,
+              left: 12,
+              right: 12,
+              child: Container(
+                constraints: BoxConstraints(
+                  maxHeight: MediaQuery.of(context).size.height * 0.3,
+                ),
+                decoration: BoxDecoration(
+                  color: PixelTheme.surface,
+                  border: PixelTheme.pixelBorder,
+                  boxShadow: PixelTheme.cardShadow,
+                ),
+                child: ListView.separated(
+                  shrinkWrap: true,
+                  itemCount: _searchResults.length,
+                  separatorBuilder: (context, index) => Divider(
+                    color: PixelTheme.text.withOpacity(0.3),
+                    height: 1,
+                  ),
+                  itemBuilder: (context, index) {
+                    final result = _searchResults[index];
+                    return Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () => _selectSearchResult(result),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          child: Row(
+                            children: [
+                              Icon(
+                                result.type == 'city' ? Icons.location_city :
+                                result.type == 'country' ? Icons.public :
+                                Icons.location_on,
+                                size: 18,
+                                color: PixelTheme.text,
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      result.name.split(',').first,
+                                      style: PixelTheme.bodyStyle,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    Text(
+                                      result.address?.toString() ?? result.name,
+                                      style: PixelTheme.labelStyle,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
-                    ),
-                    SizedBox(width: 8),
-                    Text('Getting weather data...', style: TextStyle(fontSize: 12)),
-                  ],
+                    );
+                  },
                 ),
               ),
             ),
           
-          if (_weatherData != null)
-            Positioned(
-              top: 16,
-              left: 16,
-              right: 16,
-              child: _buildWeatherCard(_weatherData!),
+          // Bottom button bar
+          Positioned(
+            bottom: 16,
+            left: 12,
+            right: 12,
+            child: Container(
+              decoration: BoxDecoration(
+                color: PixelTheme.surface,
+                border: PixelTheme.pixelBorder,
+                boxShadow: PixelTheme.cardShadow,
+              ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    _buildPixelMapButton(
+                      icon: _isPlacingFlag ? Icons.cancel : Icons.flag,
+                      label: _isPlacingFlag ? 'Cancel flag' : 'Place flag',
+                      onTap: _toggleFlagPlacementMode,
+                      color: _isPlacingFlag ? PixelTheme.error : PixelTheme.primary,
+                    ),
+                    _buildPixelMapButton(
+                      icon: Icons.my_location,
+                      label: 'My location',
+                      onTap: _goToCurrentLocation,
+                      color: PixelTheme.accent,
+                    ),
+                  ],
+                ),
+              ),
             ),
+          ),
           
+          // Map zoom buttons
           Positioned(
             right: 16,
             bottom: 100,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                _buildZoomButton(
+                _buildPixelZoomButton(
                   icon: Icons.add,
                   onPressed: () {
                     double currentZoom = _mapZoomLevel ?? COUNTRY_ZOOM_LEVEL;
@@ -723,7 +942,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   },
                 ),
                 const SizedBox(height: 8),
-                _buildZoomButton(
+                _buildPixelZoomButton(
                   icon: Icons.remove,
                   onPressed: () {
                     double currentZoom = _mapController.zoom;
@@ -739,37 +958,49 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               ],
             ),
           ),
-          
-          Positioned(
-            bottom: 16,
-            left: 16,
-            right: 16,
-            child: Card(
-              elevation: 4,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
+                
+          // Weather information card
+          if (_weatherData != null)
+            Positioned(
+              top: 75,
+              left: 16,
+              right: 16,
+              child: _buildPixelWeatherCard(_weatherData!),
+            ),
+        
+          // Loading indicator
+          if (_isLoadingWeather)
+            Positioned(
+              top: 75,
+              left: 16,
+              child: Container(
+                padding: const EdgeInsets.all(8.0),
+                decoration: BoxDecoration(
+                  color: PixelTheme.surface,
+                  border: PixelTheme.pixelBorder,
+                ),
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    _buildMapButton(
-                      icon: _isPlacingFlag ? Icons.cancel : Icons.flag,
-                      label: _isPlacingFlag ? 'Cancel placement' : 'Place flag',
-                      onTap: _toggleFlagPlacementMode,
+                    SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: PixelTheme.primary,
+                      ),
                     ),
-                    _buildMapButton(
-                      icon: Icons.my_location,
-                      label: 'My Location',
-                      onTap: _goToCurrentLocation,
+                    const SizedBox(width: 8),
+                    Text(
+                      'Getting weather data...',
+                      style: PixelTheme.labelStyle,
                     ),
                   ],
                 ),
               ),
             ),
-          ),
           
+          // Place flag prompt bar
           if (_isPlacingFlag)
             Positioned(
               top: 70,
@@ -777,115 +1008,22 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               right: 0,
               child: Container(
                 alignment: Alignment.center,
-                color: Colors.red.withOpacity(0.7),
+                color: PixelTheme.error.withOpacity(0.8),
                 padding: const EdgeInsets.symmetric(vertical: 8.0),
-                child: const Row(
+                child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(Icons.flag, color: Colors.white),
-                    SizedBox(width: 8),
+                    const SizedBox(width: 8),
                     Text(
                       'Click map to place flag',
-                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'DMMono',
+                      ),
                     ),
                   ],
-                ),
-              ),
-            ),
-          
-          // Add search bar
-          Positioned(
-            top: 10,
-            left: 10,
-            right: 10,
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(8),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 4,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: TextField(
-                controller: _searchController,
-                decoration: InputDecoration(
-                  hintText: 'Search location...',
-                  prefixIcon: const Icon(Icons.search),
-                  suffixIcon: _searchController.text.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.clear),
-                        onPressed: () {
-                          _searchController.clear();
-                          setState(() {
-                            _searchResults = [];
-                          });
-                        },
-                      )
-                    : _isSearching 
-                      ? const SizedBox(
-                          width: 24,
-                          height: 24,
-                          child: Padding(
-                            padding: EdgeInsets.all(6.0),
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          ),
-                        )
-                      : null,
-                  border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                ),
-                onSubmitted: _searchPlaces,
-              ),
-            ),
-          ),
-          
-          // Search results list
-          if (_searchResults.isNotEmpty)
-            Positioned(
-              top: 60,
-              left: 10,
-              right: 10,
-              child: Container(
-                constraints: BoxConstraints(
-                  maxHeight: MediaQuery.of(context).size.height * 0.4,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(8),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 4,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: ListView.builder(
-                  shrinkWrap: true,
-                  itemCount: _searchResults.length,
-                  itemBuilder: (context, index) {
-                    final result = _searchResults[index];
-                    return ListTile(
-                      title: Text(
-                        result.name.split(',').first,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      subtitle: Text(
-                        result.address?.toString() ?? result.name,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      leading: Icon(
-                        result.type == 'city' ? Icons.location_city :
-                        result.type == 'country' ? Icons.public :
-                        Icons.location_on,
-                      ),
-                      onTap: () => _selectSearchResult(result),
-                    );
-                  },
                 ),
               ),
             ),
@@ -894,39 +1032,50 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     );
   }
   
-  Widget _buildWeatherCard(WeatherData weatherData) {
+  Widget _buildPixelWeatherCard(WeatherData weatherData) {
     final location = weatherData.location?.getFormattedLocation() ?? weatherData.cityName;
     
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
+    return Container(
+      decoration: BoxDecoration(
+        color: PixelTheme.surface,
+        border: Border.all(color: PixelTheme.text, width: 2),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.3),
+            offset: const Offset(4, 4),
+            blurRadius: 0,
+          ),
+        ],
       ),
-      margin: const EdgeInsets.only(top: 60),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Top title bar
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              border: Border(
+                bottom: BorderSide(color: PixelTheme.text, width: 2),
+              ),
+              color: PixelTheme.secondary.withOpacity(0.3),
+            ),
+            child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Expanded(
                   child: Text(
                     location,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
+                      fontFamily: 'DMMono',
                     ),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                IconButton(
-                  icon: const Icon(Icons.close, size: 16),
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                  onPressed: () {
+                GestureDetector(
+                  onTap: () {
                     setState(() {
                       _weatherData = null;
                       for (var id in _weatherMarkerIds) {
@@ -935,114 +1084,184 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                       _weatherMarkerIds.clear();
                     });
                   },
+                  child: Container(
+                    width: 24,
+                    height: 24,
+                    decoration: BoxDecoration(
+                      border: Border.all(color: PixelTheme.text, width: 1),
+                      color: PixelTheme.error,
+                    ),
+                    child: const Center(
+                      child: Icon(
+                        Icons.close,
+                        size: 16,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
                 ),
               ],
             ),
-            
-            Row(
+          ),
+          
+          // Weather information section
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Text(
-                            '${weatherData.temperature.toStringAsFixed(1)}°',
-                            style: const TextStyle(
-                    fontSize: 28,
-                              fontWeight: FontWeight.w300,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
+              children: [
+                // Left temperature display
+                Container(
+                  width: 80,
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: PixelTheme.text.withOpacity(0.3), width: 1),
+                    color: Colors.white,
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        _getWeatherIcon(),
+                        color: _getWeatherColor(),
+                        size: 28,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '${weatherData.temperature.toStringAsFixed(1)}°',
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          fontFamily: 'DMMono',
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                
+                const SizedBox(width: 12),
+                
+                // Right detailed information
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         weatherData.weatherDescription,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          fontFamily: 'DMMono',
                         ),
                       ),
-                      Row(
-                        children: [
-                          Icon(Icons.water_drop_outlined, size: 12, color: Colors.grey),
-                          Text(' ${weatherData.humidity}%', style: TextStyle(fontSize: 10)),
-                          const SizedBox(width: 8),
-                          Icon(Icons.air, size: 12, color: Colors.grey),
-                          Text(' ${weatherData.windSpeed} m/s', style: TextStyle(fontSize: 10)),
-                        ],
+                      const SizedBox(height: 8),
+                      _buildWeatherDetailRow(
+                        icon: Icons.water_drop_outlined,
+                        label: 'Humidity',
+                        value: '${weatherData.humidity}%'
+                      ),
+                      const SizedBox(height: 4),
+                      _buildWeatherDetailRow(
+                        icon: Icons.air,
+                        label: 'Wind',
+                        value: '${weatherData.windSpeed} m/s'
                       ),
                     ],
                   ),
                 ),
               ],
             ),
-            
-            const SizedBox(height: 8),
-            
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  backgroundColor: Colors.deepPurple,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                icon: const Icon(Icons.music_note, size: 14),
-                label: const Text('Generate music based on weather', 
-                        style: TextStyle(fontSize: 12)),
-                onPressed: () {
-                  // 创建临时标志ID
+          ),
+          
+          // Generate music button
+          Container(
+            width: double.infinity,
+            decoration: BoxDecoration(
+              border: Border(
+                top: BorderSide(color: PixelTheme.text, width: 1),
+              ),
+              color: PixelTheme.primary.withOpacity(0.1),
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () {
                   String tempFlagId = 'flag_temp_${DateTime.now().millisecondsSinceEpoch}';
                   
-                  // 保存天气信息但不添加标记
                   _flagInfoMap[tempFlagId] = FlagInfo(
                     position: LatLng(weatherData.location?.latitude ?? 0, 
-                                    weatherData.location?.longitude ?? 0),
+                                   weatherData.location?.longitude ?? 0),
                     weatherData: weatherData,
                     createdAt: DateTime.now(),
                   );
                   
                   _showGenerateMusicDialog(weatherData, tempFlagId);
                 },
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.music_note,
+                        size: 16,
+                        color: PixelTheme.primary,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Generate music based on weather',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontFamily: 'DMMono',
+                          color: PixelTheme.primary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
-  
-  Widget _buildZoomButton({
+
+  // Weather detail row
+  Widget _buildWeatherDetailRow({
     required IconData icon,
-    required VoidCallback onPressed,
+    required String label,
+    required String value,
   }) {
-    return Container(
-      width: 40,
-      height: 40,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(8),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 2,
-            spreadRadius: 1,
-            offset: const Offset(0, 1),
-            ),
-          ],
+    return Row(
+      children: [
+        Icon(
+          icon,
+          size: 14,
+          color: PixelTheme.textLight,
         ),
-      child: IconButton(
-        icon: Icon(icon),
-        padding: EdgeInsets.zero,
-        iconSize: 20,
-        onPressed: onPressed,
-        tooltip: icon == Icons.add ? 'Zoom in' : 'Zoom out',
-      ),
+        const SizedBox(width: 4),
+        Text(
+          '$label: ',
+          style: TextStyle(
+            fontSize: 12,
+            fontFamily: 'DMMono',
+            color: PixelTheme.textLight,
+          ),
+        ),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 12,
+            fontFamily: 'DMMono',
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ],
     );
   }
-  
+
   void _toggleFlagPlacementMode() {
     print('Switching to flag placement mode, current state: $_isPlacingFlag');
     
@@ -1655,182 +1874,316 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     );
   }
 
-  Widget _buildMapButton({
+  Widget _buildPixelMapButton({
     required IconData icon,
     required String label,
     required VoidCallback onTap,
+    required Color color,
   }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
-      child: Padding(
-        padding: const EdgeInsets.all(4.0),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 20),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: const TextStyle(fontSize: 10),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 42,
+          height: 42,
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.2),
+            border: Border.all(color: color, width: 2),
+          ),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: onTap,
+              child: Center(
+                child: Icon(
+                  icon,
+                  size: 20,
+                  color: color,
+                ),
+              ),
             ),
-          ],
+          ),
         ),
-      ),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 11,
+            fontFamily: 'DMMono',
+            color: PixelTheme.text,
+          ),
+        ),
+      ],
     );
   }
 
   void _showGenerateMusicDialog(WeatherData weatherData, String flagId) {
-    // Reset the selection state each time the dialog is opened
+    // 重置每次对话框打开时的选择状态
     _selectedVibe = null;
     _selectedGenre = null;
     
-    // Use StatefulBuilder to allow setState inside the dialog
+    // 使用 StatefulBuilder 允许在对话框内部使用 setState
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        // Get screen size
+        // 获取屏幕尺寸
         final screenHeight = MediaQuery.of(context).size.height;
         final screenWidth = MediaQuery.of(context).size.width;
         
         return StatefulBuilder(
           builder: (context, setState) {
             return Dialog(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
+              backgroundColor: Colors.transparent,
+              elevation: 0,
               child: Container(
-                width: screenWidth * 0.85,
-                height: screenHeight * 0.6, // Increase height to fit content
-                padding: const EdgeInsets.all(16),
+                width: screenWidth * 0.9,
+                constraints: BoxConstraints(
+                  maxHeight: screenHeight * 0.7,
+                ),
+                decoration: BoxDecoration(
+                  color: PixelTheme.surface,
+                  border: Border.all(color: PixelTheme.text, width: 2),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.3),
+                      offset: const Offset(6, 6),
+                      blurRadius: 0,
+                    ),
+                  ],
+                ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Title
-                    Text(
-                      'Generate music for ${weatherData.cityName} with ${weatherData.weatherDescription} weather',
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      decoration: BoxDecoration(
+                        border: Border(
+                          bottom: BorderSide(color: PixelTheme.text, width: 2),
+                        ),
+                        color: PixelTheme.secondary.withOpacity(0.3),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              'Generate music',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                fontFamily: 'DMMono',
+                              ),
+                            ),
+                          ),
+                          GestureDetector(
+                            onTap: () => Navigator.pop(context),
+                            child: Container(
+                              width: 24,
+                              height: 24,
+                              decoration: BoxDecoration(
+                                border: Border.all(color: PixelTheme.text, width: 1),
+                                color: PixelTheme.error,
+                              ),
+                              child: const Center(
+                                child: Icon(
+                                  Icons.close,
+                                  size: 16,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 16),
                     
-                    // Scrollable content area
+                    // Content area
                     Expanded(
                       child: SingleChildScrollView(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Show Vibe options directly
-                            Text('Select vibe:', style: TextStyle(fontWeight: FontWeight.bold)),
-                            const SizedBox(height: 8),
-                            // Create a grid layout to show all Vibe options
-                            Wrap(
-                              spacing: 8,
-                              runSpacing: 8,
-                              children: MusicVibe.values.map((vibe) {
-                                return ChoiceChip(
-                                  label: Text(vibe.name),
-                                  selected: _selectedVibe == vibe,
-                                  onSelected: (selected) {
-                                    setState(() {
-                                      _selectedVibe = selected ? vibe : null;
-                                    });
-                                  },
-                                );
-                              }).toList(),
-                            ),
-                            
-                            const SizedBox(height: 16),
-                            
-                            // Show Genre options directly
-                            Text('Select genre:', style: TextStyle(fontWeight: FontWeight.bold)),
-                            const SizedBox(height: 8),
-                            // Create a grid layout to show all Genre options
-                            Wrap(
-                              spacing: 8,
-                              runSpacing: 8,
-                              children: MusicGenre.values.map((genre) {
-                                return ChoiceChip(
-                                  label: Text(genre.name),
-                                  selected: _selectedGenre == genre,
-                                  onSelected: (selected) {
-                                    setState(() {
-                                      _selectedGenre = selected ? genre : null;
-                                    });
-                                  },
-                                );
-                              }).toList(),
-                            ),
-                            
-                            const SizedBox(height: 16),
-                            
-                            // Weather information card
-                            Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: Colors.blue.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(color: Colors.blue.withOpacity(0.3)),
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Icon(
-                                        _getWeatherIconForData(weatherData),
-                                        color: _getWeatherColorForData(weatherData),
-                                        size: 24,
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Location and weather information
+                              Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  border: Border.all(color: PixelTheme.text, width: 1),
+                                  color: PixelTheme.background,
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      _getWeatherIconForData(weatherData),
+                                      color: _getWeatherColorForData(weatherData),
+                                      size: 24,
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            weatherData.cityName,
+                                            style: TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.bold,
+                                              fontFamily: 'DMMono',
+                                            ),
+                                          ),
+                                          Text(
+                                            '${weatherData.weatherDescription}, ${weatherData.temperature.toStringAsFixed(1)}°C',
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              fontFamily: 'DMMono',
+                                            ),
+                                          ),
+                                        ],
                                       ),
-                                      const SizedBox(width: 8),
-                                      Text(
-                                        'Weather: ${weatherData.weatherDescription}',
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Text('Temperature: ${weatherData.temperature.toStringAsFixed(1)}°C'),
-                                  Text('Humidity: ${weatherData.humidity}%'),
-                                  Text('Wind speed: ${weatherData.windSpeed} m/s'),
-                                ],
+                                    ),
+                                  ],
+                                ),
                               ),
-                            ),
-                          ],
+                              
+                              const SizedBox(height: 20),
+                              
+                              // Vibe 选择部分
+                              Text(
+                                '选择氛围:',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  fontFamily: 'DMMono',
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  border: Border.all(color: PixelTheme.text.withOpacity(0.3), width: 1),
+                                ),
+                                child: Wrap(
+                                  spacing: 8,
+                                  runSpacing: 8,
+                                  children: MusicVibe.values.map((vibe) {
+                                    return _buildPixelChoiceChip(
+                                      label: vibe.name,
+                                      selected: _selectedVibe == vibe,
+                                      onSelected: (selected) {
+                                        setState(() {
+                                          _selectedVibe = selected ? vibe : null;
+                                        });
+                                      },
+                                    );
+                                  }).toList(),
+                                ),
+                              ),
+                              
+                              const SizedBox(height: 20),
+                              
+                              // Genre 选择部分
+                              Text(
+                                '选择风格:',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  fontFamily: 'DMMono',
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  border: Border.all(color: PixelTheme.text.withOpacity(0.3), width: 1),
+                                ),
+                                child: Wrap(
+                                  spacing: 8,
+                                  runSpacing: 8,
+                                  children: MusicGenre.values.map((genre) {
+                                    return _buildPixelChoiceChip(
+                                      label: genre.name,
+                                      selected: _selectedGenre == genre,
+                                      onSelected: (selected) {
+                                        setState(() {
+                                          _selectedGenre = selected ? genre : null;
+                                        });
+                                      },
+                                    );
+                                  }).toList(),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
                     
-                    // Button area
-                    const SizedBox(height: 16),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        TextButton(
-                          onPressed: () {
-                            Navigator.pop(context);
-                          },
-                          child: const Text('Cancel'),
+                    // Bottom button area
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        border: Border(
+                          top: BorderSide(color: PixelTheme.text, width: 1),
                         ),
-                        const SizedBox(width: 8),
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.deepPurple,
-                            foregroundColor: Colors.white,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Container(
+                            decoration: BoxDecoration(
+                              border: Border.all(color: PixelTheme.text, width: 2),
+                            ),
+                            child: TextButton(
+                              onPressed: () => Navigator.pop(context),
+                              style: TextButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                backgroundColor: PixelTheme.surface,
+                                foregroundColor: PixelTheme.text,
+                              ),
+                              child: Text(
+                                '取消',
+                                style: TextStyle(
+                                  fontFamily: 'DMMono',
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ),
                           ),
-                          onPressed: () {
-                            Navigator.pop(context);
-                            
-                            _generateMusicAndUpdateFlag(weatherData, flagId);
-                          },
-                          child: const Text('Generate music'),
-                        ),
-                      ],
+                          Container(
+                            decoration: BoxDecoration(
+                              border: Border.all(color: PixelTheme.text, width: 2),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.3),
+                                  offset: const Offset(2, 2),
+                                  blurRadius: 0,
+                                ),
+                              ],
+                            ),
+                            child: TextButton(
+                              onPressed: () {
+                                Navigator.pop(context);
+                                _generateMusicAndUpdateFlag(weatherData, flagId);
+                              },
+                              style: TextButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                backgroundColor: PixelTheme.primary,
+                                foregroundColor: Colors.white,
+                              ),
+                              child: Text(
+                                '生成音乐',
+                                style: TextStyle(
+                                  fontFamily: 'DMMono',
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
@@ -1842,7 +2195,270 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     );
   }
 
-  void _generateMusicAndUpdateFlag(WeatherData weatherData, String flagId) {
-    // Implementation of _generateMusicAndUpdateFlag method
+  // Pixel style choice chip
+  Widget _buildPixelChoiceChip({
+    required String label,
+    required bool selected,
+    required Function(bool) onSelected,
+  }) {
+    return GestureDetector(
+      onTap: () => onSelected(!selected),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: selected ? PixelTheme.primary : PixelTheme.surface,
+          border: Border.all(
+            color: selected ? PixelTheme.primary : PixelTheme.text,
+            width: 1,
+          ),
+          boxShadow: selected ? [] : [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.2),
+              offset: const Offset(2, 2),
+              blurRadius: 0,
+            ),
+          ],
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: selected ? Colors.white : PixelTheme.text,
+            fontSize: 12,
+            fontFamily: 'DMMono',
+            fontWeight: selected ? FontWeight.bold : FontWeight.normal,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _generateMusicAndUpdateFlag(WeatherData weatherData, String flagId, [String? customPrompt]) async {
+    // Show pixel-style loading dialog
+    showPixelLoadingDialog(context, 'Generating music...');
+    
+    try {
+      String prompt;
+      
+      // If a custom prompt is provided, use it, otherwise use DeepSeek to generate
+      if (customPrompt != null && customPrompt.isNotEmpty) {
+        prompt = customPrompt;
+      } else {
+        // Use DeepSeek to generate an optimized prompt
+        try {
+          prompt = await _deepSeekApiService.generateMusicPrompt(
+            weatherDescription: weatherData.weatherDescription,
+            temperature: weatherData.temperature,
+            humidity: weatherData.humidity,
+            windSpeed: weatherData.windSpeed,
+            cityName: weatherData.cityName,
+            vibeName: _selectedVibe?.name,
+            genreName: _selectedGenre?.name,
+          );
+        } catch (e) {
+          print('Failed to generate prompt with DeepSeek: $e');
+          // Fallback to weather service prompt
+          prompt = weatherData.buildMusicPrompt();
+          
+          // Add music preferences
+          if (_selectedVibe != null || _selectedGenre != null) {
+            prompt += '\n\nMusic preferences: ';
+            if (_selectedVibe != null) {
+              prompt += '${_selectedVibe!.name} atmosphere, ';
+            }
+            if (_selectedGenre != null) {
+              prompt += '${_selectedGenre!.name} style.';
+            }
+          }
+        }
+      }
+      
+      // Build music title, including preferences
+      String musicTitle = '${weatherData.cityName} ${weatherData.weatherDescription} music';
+      if (_selectedVibe != null || _selectedGenre != null) {
+        musicTitle += ' - ';
+        if (_selectedVibe != null) {
+          musicTitle += '${_selectedVibe!.name} ';
+        }
+        if (_selectedGenre != null) {
+          musicTitle += '${_selectedGenre!.name}';
+        }
+      }
+      
+      // Use StabilityAudioService to generate music
+      final StabilityAudioService audioService = StabilityAudioService(
+        apiKey: AppConfig.stabilityApiKey
+      );
+      
+      final result = await audioService.generateMusic(
+        prompt,
+        outputFormat: "mp3",
+        durationSeconds: 60, // Update to 60 seconds
+        steps: 30,
+        saveLocally: true,
+      );
+      
+      // Get audio URL from result
+      final audioUrl = result['audio_url'];
+      // Ensure audioUrl starts with file://
+      final String finalAudioUrl = audioUrl.startsWith('file://') 
+          ? audioUrl 
+          : 'file://$audioUrl';
+      
+      // Create a unique music ID
+      final musicId = 'music_${DateTime.now().millisecondsSinceEpoch}';
+      
+      // Create MusicItem object
+      final musicItem = MusicItem(
+        id: musicId,
+        title: musicTitle,
+        prompt: prompt,
+        audioUrl: finalAudioUrl,
+        status: 'complete',
+        createdAt: DateTime.now(),
+      );
+      
+      // Add to MusicLibraryManager
+      final MusicLibraryManager libraryManager = MusicLibraryManager();
+      await libraryManager.addMusic(musicItem);
+      
+      if (mounted) {
+        // Update local state
+        if (_flagInfoMap.containsKey(flagId)) {
+          setState(() {
+            final flagInfo = _flagInfoMap[flagId]!;
+            final updatedInfo = FlagInfo(
+              position: flagInfo.position,
+              weatherData: flagInfo.weatherData,
+              createdAt: flagInfo.createdAt,
+              musicTitle: musicTitle,
+            );
+            
+            _flagInfoMap[flagId] = updatedInfo;
+            
+            // Add marker after music generation
+            _mapService.addMarker(
+              id: flagId,
+              position: flagInfo.position,
+              title: '',
+              icon: Container(
+                width: 40,
+                height: 40,
+                alignment: Alignment.center,
+                child: Icon(
+                  Icons.flag,
+                  color: Colors.red,
+                  size: 15.0, 
+                ),
+              ),
+              onTap: () {
+                print('Flag clicked: $flagId');
+                _showFlagInfoWindow(flagId, flagInfo.position);
+              },
+              onLongPress: () {
+                _showDeleteMarkerDialog(flagId);
+              },
+            );
+            
+            // Save to persistent service
+            _mapService.saveFlagInfo(flagId, updatedInfo);
+          });
+        }
+        
+        // Safely close loading dialog
+        if (Navigator.canPop(context)) {
+          Navigator.of(context).pop(); // Close loading dialog
+        }
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Music generated successfully: $musicTitle')),
+        );
+      }
+      
+    } catch (e) {
+      print('Error generating music: $e');
+      
+      if (mounted && Navigator.canPop(context)) {
+        Navigator.of(context).pop(); // Close loading dialog
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Music generation failed: $e')),
+        );
+      }
+    }
+  }
+
+  Widget _buildPixelZoomButton({
+    required IconData icon,
+    required VoidCallback onPressed,
+  }) {
+    return Container(
+      width: 32,
+      height: 32,
+      decoration: BoxDecoration(
+        color: PixelTheme.surface,
+        border: Border.all(color: PixelTheme.text, width: 2),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.3),
+            offset: const Offset(2, 2),
+            blurRadius: 0,
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onPressed,
+          child: Center(
+            child: Icon(
+              icon,
+              size: 16,
+              color: PixelTheme.text,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Show pixel-style loading dialog
+  void showPixelLoadingDialog(BuildContext context, String message) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: PixelTheme.surface,
+              border: Border.all(color: PixelTheme.text, width: 2),
+              boxShadow: PixelTheme.cardShadow,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(height: 8),
+                CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(PixelTheme.primary),
+                ),
+                const SizedBox(height: 24),
+                Text(
+                  message,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontFamily: 'DMMono',
+                    color: PixelTheme.text,
+                  ),
+                ),
+                const SizedBox(height: 8),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 } 

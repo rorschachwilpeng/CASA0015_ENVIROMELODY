@@ -82,6 +82,8 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
     return MaterialApp(
       title: 'SoundScape',
       theme: ThemeData(
+        fontFamily: 'VT323',
+        primaryColor: PixelTheme.primary,
         primarySwatch: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,
         useMaterial3: true,
