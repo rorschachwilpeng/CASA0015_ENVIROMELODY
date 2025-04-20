@@ -7,6 +7,7 @@ import '../models/music_item.dart';
 import '../services/firebase_service.dart';
 import '../services/music_library_manager.dart';
 import '../theme/pixel_theme.dart';
+import 'splash_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({Key? key}) : super(key: key);
@@ -112,33 +113,9 @@ class ProfileScreen extends StatelessWidget {
             
             _buildSyncSection(context),
             
-            const SizedBox(height: 24),
+            _buildTestSplashSection(context),
             
-            // Logout button with pixel style
-            Container(
-              decoration: BoxDecoration(
-                border: Border.all(color: PixelTheme.error, width: 2),
-                color: PixelTheme.error.withOpacity(0.1),
-                boxShadow: PixelTheme.cardShadow,
-              ),
-              child: TextButton.icon(
-                icon: Icon(Icons.logout, color: PixelTheme.error),
-                label: Text(
-                  'Logout',
-                  style: PixelTheme.bodyStyle.copyWith(
-                    color: PixelTheme.error,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                onPressed: () {
-                  // TODO: Implement logout functionality
-                },
-                style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
-                  backgroundColor: Colors.transparent,
-                ),
-              ),
-            ),
+            const SizedBox(height: 24),
           ],
         ),
       ),
@@ -609,5 +586,97 @@ class ProfileScreen extends StatelessWidget {
   String _formatTime(DateTime time) {
     if (time.millisecondsSinceEpoch == 0) return 'Never synced';
     return '${time.hour}:${time.minute.toString().padLeft(2, '0')}:${time.second.toString().padLeft(2, '0')}';
+  }
+
+  // 新增方法：构建测试启动页按钮部分
+  Widget _buildTestSplashSection(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12, top: 12),
+      decoration: BoxDecoration(
+        color: PixelTheme.surface,
+        border: Border.all(color: PixelTheme.primary, width: 2),
+        boxShadow: PixelTheme.cardShadow,
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            // 显示启动页面
+            Navigator.push(
+              context,
+              PageRouteBuilder(
+                pageBuilder: (context, animation, secondaryAnimation) => 
+                  SplashScreen(
+                    nextScreen: Navigator.of(context).canPop() 
+                      ? const Material(child: Center(child: Text('Back to Profile')))
+                      : const Material(child: Center(child: Text('Error'))),
+                    onSplashComplete: () {
+                      // 启动页面完成后返回Profile页面
+                      Future.delayed(Duration.zero, () {
+                        if (Navigator.of(context).canPop()) {
+                          Navigator.of(context).pop();
+                        }
+                      });
+                    },
+                  ),
+                transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                  return FadeTransition(opacity: animation, child: child);
+                },
+              ),
+            );
+          },
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+            child: Row(
+              children: [
+                // 按钮图标
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    border: Border.all(color: PixelTheme.primary, width: 1),
+                    color: PixelTheme.primary.withOpacity(0.1),
+                  ),
+                  child: Icon(
+                    Icons.play_circle_outline,
+                    size: 20,
+                    color: PixelTheme.primary,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                
+                // 按钮文本
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Test Splash Screen',
+                        style: PixelTheme.bodyStyle.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: PixelTheme.primary,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'View the app startup animation again',
+                        style: PixelTheme.labelStyle,
+                      ),
+                    ],
+                  ),
+                ),
+                
+                // 箭头图标
+                Icon(
+                  Icons.arrow_forward_ios,
+                  size: 16,
+                  color: PixelTheme.primary,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 } 

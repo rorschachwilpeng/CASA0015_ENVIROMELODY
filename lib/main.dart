@@ -3,6 +3,7 @@ import 'screens/home_screen.dart';
 import 'screens/create_screen.dart';
 import 'screens/library_screen.dart';
 import 'screens/profile_screen.dart';
+import 'screens/splash_screen.dart';
 import 'services/music_library_manager.dart';
 import 'services/audio_player_manager.dart';
 import 'widgets/mini_player.dart';
@@ -15,20 +16,20 @@ import 'theme/pixel_theme.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // 使用生成的配置初始化 Firebase
+  // Use the generated configuration to initialize Firebase
   try {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
-    print('Firebase 初始化成功!');
+    print('Firebase initialization successful!');
   } catch (e) {
-    print('Firebase 初始化失败: $e');
-    // 尝试不带选项初始化
+    print('Firebase initialization failed: $e');
+    // Try to initialize without options
     try {
       await Firebase.initializeApp();
-      print('Firebase 默认初始化成功!');
+      print('Firebase default initialization successful!');
     } catch (e) {
-      print('Firebase 默认初始化也失败: $e');
+      print('Firebase default initialization also failed: $e');
     }
   }
   
@@ -81,15 +82,15 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'SoundScape',
+      title: 'EnviroMelody',
       theme: ThemeData(
-        fontFamily: 'VT323',
+        fontFamily: 'DMMono',
         primaryColor: PixelTheme.primary,
         primarySwatch: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,
         useMaterial3: true,
       ),
-      home: const MainScreen(),
+      home: SplashScreen(nextScreen: const MainScreen()),
       debugShowCheckedModeBanner: false,
     );
   }
@@ -118,14 +119,14 @@ class _MainScreenState extends State<MainScreen> {
       body: _pages[_currentIndex],
       bottomNavigationBar: Column(
         mainAxisSize: MainAxisSize.min,
-        children: [ 
+        children: [
           const MusicVisualizerPlayer(),
           
           Container(
             decoration: BoxDecoration(
               color: PixelTheme.surface,
               border: Border(
-                top: BorderSide(color: PixelTheme.text.withOpacity(0.2), width: 1),
+                top: BorderSide(color: PixelTheme.text, width: 2),
               ),
             ),
             child: Padding(
@@ -153,7 +154,7 @@ class _MainScreenState extends State<MainScreen> {
                   ),
                   _buildPixelNavItem(
                     icon: Icons.person,
-                    label: 'Profile',
+                    label: 'Settings',
                     isSelected: _currentIndex == 3,
                     onTap: () => setState(() { _currentIndex = 3; }),
                   ),
@@ -172,9 +173,6 @@ class _MainScreenState extends State<MainScreen> {
     required bool isSelected,
     required VoidCallback onTap,
   }) {
-    final activeColor = PixelTheme.primary;
-    final inactiveColor = PixelTheme.text.withOpacity(0.7);
-    
     return InkWell(
       onTap: onTap,
       child: Column(
@@ -185,13 +183,13 @@ class _MainScreenState extends State<MainScreen> {
             height: 36,
             decoration: BoxDecoration(
               border: Border.all(
-                color: isSelected ? activeColor : PixelTheme.text.withOpacity(0.3),
+                color: isSelected ? PixelTheme.primary : PixelTheme.text,
                 width: isSelected ? 2 : 1,
               ),
-              color: isSelected ? activeColor.withOpacity(0.2) : PixelTheme.surface,
+              color: isSelected ? PixelTheme.primary.withOpacity(0.2) : PixelTheme.surface,
               boxShadow: isSelected ? [
                 BoxShadow(
-                  color: activeColor.withOpacity(0.2),
+                  color: Colors.black.withOpacity(0.2),
                   offset: const Offset(2, 2),
                   blurRadius: 0,
                 ),
@@ -201,7 +199,6 @@ class _MainScreenState extends State<MainScreen> {
               child: Icon(
                 icon,
                 color: isSelected ? PixelTheme.primary : PixelTheme.textLight,
-                //color: isSelected ? activeColor : inactiveColor,
                 size: 20,
               ),
             ),
@@ -209,10 +206,11 @@ class _MainScreenState extends State<MainScreen> {
           const SizedBox(height: 4),
           Text(
             label,
-            style: PixelTheme.labelStyle.copyWith(
+            style: TextStyle(
               fontSize: 10,
+              fontFamily: 'DMMono',
+              color: isSelected ? PixelTheme.primary : PixelTheme.textLight,
               fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-              color: isSelected ? activeColor : inactiveColor,
             ),
           ),
         ],
