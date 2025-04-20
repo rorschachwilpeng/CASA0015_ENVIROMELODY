@@ -78,10 +78,9 @@ class AudioPlayerManager extends ChangeNotifier {
   // Add prevent duplicate call flag
   bool _isHandlingCompletion = false;
   
-  // 添加调试模式标志
+  // Add debug mode flag
   bool _debugMode = true;
-  
-  // 封装日志方法
+   
   void _log(String message) {
     if (_debugMode) {
       print("[AudioPlayerManager] $message");

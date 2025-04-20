@@ -15,26 +15,26 @@ class MusicVisualizerPlayer extends StatefulWidget {
 class _MusicVisualizerPlayerState extends State<MusicVisualizerPlayer> {
   final AudioPlayerManager _audioPlayerManager = AudioPlayerManager();
   bool _showFullPlayer = false;
+  final _progressBarKey = GlobalKey();
   
   @override
   void initState() {
     super.initState();
     _audioPlayerManager.addListener(_onPlayerChanged);
     
-    // 重置可能卡住的互斥锁
+    // Reset the mutex that might get stuck
     _audioPlayerManager.resetPlayNextMutex();
     
-    // 添加播放完成监听
+    // Add a playback completion listener
     _audioPlayerManager.audioPlayer.processingStateStream.listen((state) {
       if (state == ProcessingState.completed) {
         print("Song completed detected");
-        // 给自动播放一些时间，如果没有自动切换，则检查互斥锁状态
+        // Give some time for automatic playback, if it doesn't switch automatically, check the mutex status
         Future.delayed(Duration(seconds: 1), () {
           if (_audioPlayerManager.isPlaying == false) {
             print("Auto play may have failed, resetting mutex");
-            // 请确保 AudioPlayerManager 中有这个公开方法
+            // Ensure AudioPlayerManager has this public method
             _audioPlayerManager.resetPlayNextMutex();
-            // 不要自动调用 playNext，让系统自己处理
           }
         });
       }
@@ -62,9 +62,9 @@ class _MusicVisualizerPlayerState extends State<MusicVisualizerPlayer> {
   
   void _playNextSong() async {
     print("===== NEXT SONG FUNCTION CALLED =====");
-    _checkPlaylistStatus(); // 添加调试
+    _checkPlaylistStatus(); 
     
-    // 正常方式尝试
+    // Try to play next song
     final success = await _audioPlayerManager.playNext();
     print("Next song result: $success");
     
@@ -93,10 +93,33 @@ class _MusicVisualizerPlayerState extends State<MusicVisualizerPlayer> {
     print("Has next: ${_audioPlayerManager.hasNext}");
     print("Has previous: ${_audioPlayerManager.hasPrevious}");
     
-    // 手动验证hasNext的计算
+    // Manually verify the calculation of hasNext
     if (_audioPlayerManager.playlist.isNotEmpty) {
       print("Manual check - Has next: ${_audioPlayerManager.currentIndex < _audioPlayerManager.playlist.length - 1}");
     }
+  }
+  
+  void _handleProgressBarTap(double dx, Duration duration) {
+    if (duration == Duration.zero) return;
+    
+    // Use the key of the progress bar to get the RenderBox
+    final RenderBox? box = _progressBarKey.currentContext?.findRenderObject() as RenderBox?;
+    if (box == null) return;
+
+    // Get the actual width of the progress bar
+    final containerWidth = box.size.width;
+    
+    // Limit the drag range to the container
+    dx = dx.clamp(0.0, containerWidth);
+    
+    // Calculate the progress ratio
+    final progress = dx / containerWidth;
+    
+    // Calculate the corresponding time position
+    final position = Duration(milliseconds: (duration.inMilliseconds * progress).round());
+    
+    // Drag to the corresponding position
+    _audioPlayerManager.seekTo(position);
   }
   
   @override
@@ -117,7 +140,7 @@ class _MusicVisualizerPlayerState extends State<MusicVisualizerPlayer> {
       return Container(
         height: 60,
         decoration: BoxDecoration(
-          color: PixelTheme.surface,
+          color: PixelTheme.secondary,
           border: Border(
             top: BorderSide(color: PixelTheme.text, width: 2),
           ),
@@ -184,7 +207,6 @@ class _MusicVisualizerPlayerState extends State<MusicVisualizerPlayer> {
                     ],
                   ),
                 ),
-                // 保留原功能代码，仅修改样式
                 StreamBuilder<PlayerState>(
                   stream: _audioPlayerManager.audioPlayer.playerStateStream,
                   builder: (context, snapshot) {
@@ -248,7 +270,7 @@ class _MusicVisualizerPlayerState extends State<MusicVisualizerPlayer> {
     // Full Player
     return Container(
       decoration: BoxDecoration(
-        color: PixelTheme.surface,
+        color: PixelTheme.secondary,
         border: Border(
           top: BorderSide(color: PixelTheme.text, width: 2),
         ),
@@ -358,35 +380,60 @@ class _MusicVisualizerPlayerState extends State<MusicVisualizerPlayer> {
                   stream: _audioPlayerManager.audioPlayer.positionStream,
                   builder: (context, positionSnapshot) {
                     final position = positionSnapshot.data ?? Duration.zero;
+                    final progress = duration.inMilliseconds > 0
+                        ? position.inMilliseconds / duration.inMilliseconds
+                        : 0.0;
                     
                     return Column(
                       children: [
-                        // 使用LayoutBuilder修复进度条宽度问题
-                        Container(
-                          height: 12,
-                          width: double.infinity,
-                          decoration: BoxDecoration(
-                            border: Border.all(color: PixelTheme.text, width: 1),
-                            color: Colors.white,
-                          ),
-                          child: LayoutBuilder(
-                            builder: (context, constraints) {
-                              final availableWidth = constraints.maxWidth;
-                              final progress = position.inMilliseconds / 
-                                  (duration.inMilliseconds > 0 ? duration.inMilliseconds : 1);
-                              final progressWidth = (availableWidth * progress)
-                                  .clamp(0.0, availableWidth);
-                              
-                              return Row(
-                                children: [
-                                  Container(
-                                    width: progressWidth,
-                                    color: PixelTheme.primary,
-                                  ),
-                                  Expanded(child: Container()),
-                                ],
-                              );
-                            }
+                        // Dragable Progress Bar
+                        GestureDetector(
+                          onTapDown: (details) {
+                            // Calculate the progress corresponding to the clicked position
+                            _handleProgressBarTap(details.localPosition.dx, duration);
+                          },
+                          onHorizontalDragUpdate: (details) {
+                            // Calculate the progress corresponding to the dragged position
+                            _handleProgressBarTap(details.localPosition.dx, duration);
+                          },
+                          child: Container(
+                            key: _progressBarKey,
+                            height: 12,
+                            width: double.infinity,
+                            decoration: BoxDecoration(
+                              border: Border.all(color: PixelTheme.text, width: 1),
+                              color: Colors.white,
+                            ),
+                            child: LayoutBuilder(
+                              builder: (context, constraints) {
+                                final availableWidth = constraints.maxWidth;
+                                final progressWidth = (availableWidth * progress)
+                                    .clamp(0.0, availableWidth);
+                                
+                                return Stack(
+                                  children: [
+                                    // Progress bar fill part
+                                    Container(
+                                      width: progressWidth,
+                                      color: PixelTheme.primary,
+                                    ),
+                                    // Progress bar drag indicator
+                                    Positioned(
+                                      left: progressWidth - 6,
+                                      top: 0,
+                                      bottom: 0,
+                                      child: Container(
+                                        width: 12,
+                                        decoration: BoxDecoration(
+                                          color: PixelTheme.primary.withOpacity(0.8),
+                                          border: Border.all(color: PixelTheme.text, width: 1),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                );
+                              }
+                            ),
                           ),
                         ),
                         const SizedBox(height: 4),
@@ -422,13 +469,13 @@ class _MusicVisualizerPlayerState extends State<MusicVisualizerPlayer> {
             ),
           ),
           
-          // 关键部分：控制按钮，确保正确调用切换歌曲的函数
+          // Key part: Control buttons, ensure correct function calls
           Padding(
             padding: const EdgeInsets.fromLTRB(0, 0, 0, 8),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // 添加调试日志以跟踪点击事件
+                // Add debug logs to track click events
                 IconButton(
                   icon: Icon(
                     Icons.skip_previous,
@@ -482,7 +529,7 @@ class _MusicVisualizerPlayerState extends State<MusicVisualizerPlayer> {
                   },
                 ),
                 const SizedBox(width: 16),
-                // 修改下一首按钮的代码
+                // Modify the next song button code
                 IconButton(
                   icon: Icon(
                     Icons.skip_next,
@@ -492,7 +539,7 @@ class _MusicVisualizerPlayerState extends State<MusicVisualizerPlayer> {
                   constraints: const BoxConstraints(),
                   iconSize: 24,
                   onPressed: () {
-                    _checkPlaylistStatus(); // 添加调试
+                    _checkPlaylistStatus(); 
                     if (_audioPlayerManager.hasNext) {
                       _playNextSong();
                     } else {

@@ -6,6 +6,7 @@ import 'dart:async';
 import '../models/music_item.dart';
 import '../services/firebase_service.dart';
 import '../services/music_library_manager.dart';
+import '../theme/pixel_theme.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({Key? key}) : super(key: key);
@@ -14,120 +15,315 @@ class ProfileScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     // Mock user data
     const String username = "Music Lover";
-    const String email = "music_lover@example.com";
+    const String email = "music_lover@ucl.ac.uk";
     const int createdMusicCount = 15;
     const int favoriteMusicCount = 8;
     
     return Scaffold(
+      backgroundColor: PixelTheme.background,
       appBar: AppBar(
-        title: const Text('Profile'),
+        title: Text(
+          'Profile',
+          style: PixelTheme.titleStyle.copyWith(
+            fontSize: 22,
+            letterSpacing: 0.5,
+          ),
+        ),
+        backgroundColor: PixelTheme.surface,
+        foregroundColor: PixelTheme.text,
+        elevation: 0,
+        centerTitle: true,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            const CircleAvatar(
-              radius: 60,
-              backgroundColor: Colors.blue,
+            // Profile avatar with pixel style
+            Container(
+              width: 120,
+              height: 120,
+              decoration: BoxDecoration(
+                color: PixelTheme.surface,
+                border: PixelTheme.pixelBorder,
+                boxShadow: PixelTheme.cardShadow,
+              ),
               child: Icon(
                 Icons.person,
                 size: 80,
-                color: Colors.white,
+                color: PixelTheme.primary,
               ),
             ),
             const SizedBox(height: 16),
-            const Text(
+            
+            // Username with pixel style
+            Text(
               username,
-              style: TextStyle(
+              style: PixelTheme.titleStyle.copyWith(
                 fontSize: 24,
-                fontWeight: FontWeight.bold,
+                color: PixelTheme.text,
               ),
             ),
-            const Text(
+            
+            // Email with pixel style
+            Text(
               email,
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey,
+              style: PixelTheme.bodyStyle.copyWith(
+                color: PixelTheme.textLight,
               ),
             ),
+            
             const SizedBox(height: 32),
-            const Divider(),
-            ListTile(
-              leading: const Icon(Icons.music_note),
-              title: const Text('My Created Music'),
-              trailing: Text(
-                '$createdMusicCount',
-                style: const TextStyle(fontSize: 18),
-              ),
+            
+            // Profile sections
+            _buildProfileSection(
+              icon: Icons.music_note,
+              title: 'My Created Music',
+              value: '$createdMusicCount',
               onTap: () {
                 // TODO: Navigate to user created music list
               },
             ),
-            const Divider(),
-            ListTile(
-              leading: const Icon(Icons.favorite),
-              title: const Text('My Favorite Music'),
-              trailing: Text(
-                '$favoriteMusicCount',
-                style: const TextStyle(fontSize: 18),
-              ),
+            
+            _buildProfileSection(
+              icon: Icons.favorite,
+              title: 'My Favorite Music',
+              value: '$favoriteMusicCount',
               onTap: () {
                 // TODO: Navigate to user favorite music list
               },
             ),
-            const Divider(),
-            ListTile(
-              leading: const Icon(Icons.settings),
-              title: const Text('Settings'),
+            
+            _buildProfileSection(
+              icon: Icons.settings,
+              title: 'Settings',
               onTap: () {
                 // TODO: Navigate to settings page
               },
             ),
-            const Divider(),
-            ListTile(
-              leading: const Icon(Icons.cloud_upload),
-              title: const Text('Test saving music to Firebase'),
+            
+            _buildProfileSection(
+              icon: Icons.cloud_upload,
+              title: 'Test saving music to Firebase',
               onTap: () {
                 testAddMusicToFirestore();
               },
             ),
-            const Divider(),
-            ListTile(
-              leading: Icon(Icons.sync),
-              title: Text('Sync music library'),
-              subtitle: Text('Manually sync local music to the cloud'),
-              trailing: MusicLibraryManager().isSyncing 
-                  ? CircularProgressIndicator() 
-                  : Icon(Icons.arrow_forward_ios),
-              onTap: () async {
-                // Show the prompt for starting the sync
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Starting sync...'), duration: Duration(seconds: 1))
-                );
-                
-                // Call the sync method
-                await MusicLibraryManager().forceSyncWithFirebase();
-                
-                // Show the prompt for completing the sync
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Sync completed! Last sync time: ${_formatTime(MusicLibraryManager().lastSyncTime)}'))
-                );
-              },
-            ),
-            const Divider(),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () {
-                // TODO: Implement logout functionality
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
-                foregroundColor: Colors.white,
+            
+            _buildSyncSection(context),
+            
+            const SizedBox(height: 24),
+            
+            // Logout button with pixel style
+            Container(
+              decoration: BoxDecoration(
+                border: Border.all(color: PixelTheme.error, width: 2),
+                color: PixelTheme.error.withOpacity(0.1),
+                boxShadow: PixelTheme.cardShadow,
               ),
-              child: const Text('Logout'),
+              child: TextButton.icon(
+                icon: Icon(Icons.logout, color: PixelTheme.error),
+                label: Text(
+                  'Logout',
+                  style: PixelTheme.bodyStyle.copyWith(
+                    color: PixelTheme.error,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                onPressed: () {
+                  // TODO: Implement logout functionality
+                },
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
+                  backgroundColor: Colors.transparent,
+                ),
+              ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+  
+  // Helper method to build profile sections with pixel style
+  Widget _buildProfileSection({
+    required IconData icon,
+    required String title,
+    String? value,
+    required VoidCallback onTap,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: PixelTheme.surface,
+        border: Border.all(color: PixelTheme.text.withOpacity(0.3), width: 1),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+            child: Row(
+              children: [
+                // Section icon
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    border: Border.all(color: PixelTheme.text.withOpacity(0.5), width: 1),
+                    color: PixelTheme.surface,
+                  ),
+                  child: Icon(
+                    icon,
+                    size: 20,
+                    color: PixelTheme.primary,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                
+                // Section title
+                Expanded(
+                  child: Text(
+                    title,
+                    style: PixelTheme.bodyStyle.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                
+                // Section value (if provided)
+                if (value != null)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: PixelTheme.text.withOpacity(0.3), width: 1),
+                      color: PixelTheme.primary.withOpacity(0.1),
+                    ),
+                    child: Text(
+                      value,
+                      style: PixelTheme.bodyStyle.copyWith(
+                        color: PixelTheme.primary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                
+                // Arrow icon
+                if (value == null)
+                  Icon(
+                    Icons.arrow_forward_ios,
+                    size: 16,
+                    color: PixelTheme.textLight,
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+  
+  // Special section for sync functionality with progress indicator
+  Widget _buildSyncSection(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: PixelTheme.surface,
+        border: Border.all(color: PixelTheme.text.withOpacity(0.3), width: 1),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () async {
+            // Show the prompt for starting the sync
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  'Starting sync...',
+                  style: PixelTheme.bodyStyle.copyWith(color: Colors.white),
+                ),
+                duration: Duration(seconds: 1),
+                backgroundColor: PixelTheme.primary,
+              )
+            );
+            
+            // Call the sync method
+            await MusicLibraryManager().forceSyncWithFirebase();
+            
+            // Show the prompt for completing the sync
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  'Sync completed! Last sync time: ${_formatTime(MusicLibraryManager().lastSyncTime)}',
+                  style: PixelTheme.bodyStyle.copyWith(color: Colors.white),
+                ),
+                backgroundColor: PixelTheme.accent,
+              )
+            );
+          },
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+            child: Row(
+              children: [
+                // Section icon
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    border: Border.all(color: PixelTheme.text.withOpacity(0.5), width: 1),
+                    color: PixelTheme.surface,
+                  ),
+                  child: Icon(
+                    Icons.sync,
+                    size: 20,
+                    color: PixelTheme.accent,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                
+                // Section content
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Sync music library',
+                        style: PixelTheme.bodyStyle.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Manually sync local music to the cloud',
+                        style: PixelTheme.labelStyle,
+                      ),
+                    ],
+                  ),
+                ),
+                
+                // Sync indicator
+                MusicLibraryManager().isSyncing
+                  ? Container(
+                      width: 24,
+                      height: 24,
+                      padding: EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: PixelTheme.accent, width: 1),
+                      ),
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: PixelTheme.accent,
+                      ),
+                    )
+                  : Icon(
+                      Icons.arrow_forward_ios,
+                      size: 16,
+                      color: PixelTheme.textLight,
+                    ),
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -148,10 +344,23 @@ class ProfileScreen extends StatelessWidget {
         barrierDismissible: false,
         builder: (BuildContext ctx) {
           dialogContext = ctx;
-          return const WillPopScope(
-            onWillPop: null,
+          return WillPopScope(
+            onWillPop: () async => false,
             child: Center(
-              child: CircularProgressIndicator(),
+              child: Container(
+                width: 80,
+                height: 80,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: PixelTheme.surface,
+                  border: PixelTheme.pixelBorder,
+                  boxShadow: PixelTheme.cardShadow,
+                ),
+                child: CircularProgressIndicator(
+                  color: PixelTheme.primary,
+                  strokeWidth: 2,
+                ),
+              ),
             ),
           );
         },
@@ -296,26 +505,78 @@ class ProfileScreen extends StatelessWidget {
     }
   }
   
-  // Show the result dialog
+  // Show the result dialog with pixel style
   void _showResultDialog(BuildContext context, String title, String message, bool success) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(title),
-        content: SingleChildScrollView(
-          child: Text(message),
-        ),
-        icon: Icon(
-          success ? Icons.check_circle : Icons.error,
-          color: success ? Colors.green : Colors.red,
-          size: 48,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('OK'),
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+        child: Container(
+          decoration: BoxDecoration(
+            color: PixelTheme.surface,
+            border: PixelTheme.pixelBorder,
+            boxShadow: PixelTheme.cardShadow,
           ),
-        ],
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  border: Border(bottom: BorderSide(color: PixelTheme.text, width: 2)),
+                  color: success ? PixelTheme.accent.withOpacity(0.1) : PixelTheme.error.withOpacity(0.1),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      success ? Icons.check_circle : Icons.error,
+                      color: success ? PixelTheme.accent : PixelTheme.error,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        title,
+                        style: PixelTheme.titleStyle,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: SingleChildScrollView(
+                  child: Text(
+                    message,
+                    style: PixelTheme.bodyStyle,
+                  ),
+                ),
+              ),
+              Container(
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  border: Border(top: BorderSide(color: PixelTheme.text, width: 1)),
+                ),
+                child: TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: TextButton.styleFrom(
+                    backgroundColor: PixelTheme.surface,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                  child: Text(
+                    'OK',
+                    style: PixelTheme.bodyStyle.copyWith(
+                      color: success ? PixelTheme.accent : PixelTheme.primary,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -344,7 +605,7 @@ class ProfileScreen extends StatelessWidget {
     }
   }
 
-  // Add this helper method to format time
+  // Helper method to format time
   String _formatTime(DateTime time) {
     if (time.millisecondsSinceEpoch == 0) return 'Never synced';
     return '${time.hour}:${time.minute.toString().padLeft(2, '0')}:${time.second.toString().padLeft(2, '0')}';

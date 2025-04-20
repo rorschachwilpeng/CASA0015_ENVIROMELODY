@@ -118,16 +118,14 @@ class _MainScreenState extends State<MainScreen> {
       body: _pages[_currentIndex],
       bottomNavigationBar: Column(
         mainAxisSize: MainAxisSize.min,
-        children: [
-          // 使用我们的音乐可视化播放器代替 MiniPlayer
+        children: [ 
           const MusicVisualizerPlayer(),
           
-          // 像素风格的底部导航栏
           Container(
             decoration: BoxDecoration(
               color: PixelTheme.surface,
               border: Border(
-                top: BorderSide(color: PixelTheme.text, width: 2),
+                top: BorderSide(color: PixelTheme.text.withOpacity(0.2), width: 1),
               ),
             ),
             child: Padding(
@@ -155,7 +153,7 @@ class _MainScreenState extends State<MainScreen> {
                   ),
                   _buildPixelNavItem(
                     icon: Icons.person,
-                    label: 'Settings',
+                    label: 'Profile',
                     isSelected: _currentIndex == 3,
                     onTap: () => setState(() { _currentIndex = 3; }),
                   ),
@@ -168,13 +166,15 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 
-  // 添加这个辅助方法来构建像素风格的导航项
   Widget _buildPixelNavItem({
     required IconData icon,
     required String label,
     required bool isSelected,
     required VoidCallback onTap,
   }) {
+    final activeColor = PixelTheme.primary;
+    final inactiveColor = PixelTheme.text.withOpacity(0.7);
+    
     return InkWell(
       onTap: onTap,
       child: Column(
@@ -185,13 +185,13 @@ class _MainScreenState extends State<MainScreen> {
             height: 36,
             decoration: BoxDecoration(
               border: Border.all(
-                color: isSelected ? PixelTheme.primary : PixelTheme.text,
+                color: isSelected ? activeColor : PixelTheme.text.withOpacity(0.3),
                 width: isSelected ? 2 : 1,
               ),
-              color: isSelected ? PixelTheme.primary.withOpacity(0.2) : PixelTheme.surface,
+              color: isSelected ? activeColor.withOpacity(0.2) : PixelTheme.surface,
               boxShadow: isSelected ? [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.2),
+                  color: activeColor.withOpacity(0.2),
                   offset: const Offset(2, 2),
                   blurRadius: 0,
                 ),
@@ -201,6 +201,7 @@ class _MainScreenState extends State<MainScreen> {
               child: Icon(
                 icon,
                 color: isSelected ? PixelTheme.primary : PixelTheme.textLight,
+                //color: isSelected ? activeColor : inactiveColor,
                 size: 20,
               ),
             ),
@@ -208,11 +209,10 @@ class _MainScreenState extends State<MainScreen> {
           const SizedBox(height: 4),
           Text(
             label,
-            style: TextStyle(
+            style: PixelTheme.labelStyle.copyWith(
               fontSize: 10,
-              fontFamily: 'DMMono',
-              color: isSelected ? PixelTheme.primary : PixelTheme.textLight,
               fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              color: isSelected ? activeColor : inactiveColor,
             ),
           ),
         ],

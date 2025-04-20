@@ -15,6 +15,7 @@ import 'dart:convert';
 import '../models/music_item.dart';
 import '../services/music_library_manager.dart';
 import '../services/audio_player_manager.dart';
+import '../theme/pixel_theme.dart';
 
 class CreateScreen extends StatefulWidget {
   const CreateScreen({Key? key}) : super(key: key);
@@ -1003,98 +1004,200 @@ class _CreateScreenState extends State<CreateScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Generate Music'),
+        title: Text('Create Music', style: PixelTheme.titleStyle),
+        backgroundColor: PixelTheme.surface,
+        foregroundColor: PixelTheme.text,
+        elevation: 0,
+        titleSpacing: 12,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.info_outline),
-            onPressed: () {
-              showDialog(
-                context: context,
-                builder: (context) => AlertDialog(
-                  title: const Text('About Stability AI'),
-                  content: const Text('This app uses Stability AI\'s Stable Audio API to generate music based on text prompts.'),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      child: const Text('Close'),
-                    ),
-                  ],
-                ),
-              );
-            },
-            tooltip: 'About API',
+          Container(
+            margin: const EdgeInsets.only(right: 8),
+            decoration: BoxDecoration(
+              border: Border.all(color: PixelTheme.text, width: 1),
+              color: PixelTheme.surface,
+            ),
+            child: IconButton(
+              icon: Icon(Icons.info_outline, color: PixelTheme.text, size: 18),
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (context) => _buildPixelDialog(
+                    title: 'About Stability AI',
+                    content: 'You can describe the song you want to create.\n\nNOTE: This app uses Stability AI\'s Stable Audio API to generate music',
+                  ),
+                );
+              },
+              tooltip: 'About API',
+            ),
           ),
         ],
       ),
+      backgroundColor: PixelTheme.background,
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Stability AI Music Generator',
-                style: TextStyle(
-                  fontSize: 18, 
-                  fontWeight: FontWeight.bold,
-                  color: Colors.purple[700],
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                decoration: BoxDecoration(
+                  color: PixelTheme.surface,
+                  border: PixelTheme.pixelBorder,
+                  boxShadow: PixelTheme.cardShadow,
+                ),
+                child: Text(
+                  'Stability AI Music Generator',
+                  style: TextStyle(
+                    fontSize: 18, 
+                    fontWeight: FontWeight.bold,
+                    fontFamily: 'DMMono',
+                    color: PixelTheme.primary,
+                  ),
                 ),
               ),
               
               const SizedBox(height: 16),
               
-              ExpansionTile(
-                title: Text('Generation Settings', style: TextStyle(fontSize: 16)),
-                initiallyExpanded: false,
-                children: [
-                  ListTile(
-                    title: Text('Duration (Seconds)'),
-                    subtitle: Slider(
-                      value: _durationSeconds.toDouble(),
-                      min: 10,
-                      max: 60,
-                      divisions: 10,
-                      label: _durationSeconds.toString(),
-                      onChanged: (value) {
-                        setState(() {
-                          _durationSeconds = value.round();
-                        });
-                      },
-                    ),
-                    trailing: Text('$_durationSeconds', style: TextStyle(fontWeight: FontWeight.bold)),
-                  ),
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16),
-                    child: Row(
-                      children: [
-                        Text('Quality Steps: ', style: TextStyle(fontWeight: FontWeight.w500)),
-                        Text('30', style: TextStyle(fontWeight: FontWeight.bold)),
-                        Text(' (fixed for optimal generation)', style: TextStyle(fontStyle: FontStyle.italic, fontSize: 12)),
-                      ],
+              Container(
+                decoration: BoxDecoration(
+                  color: PixelTheme.surface,
+                  border: PixelTheme.pixelBorder,
+                ),
+                child: Theme(
+                  data: Theme.of(context).copyWith(
+                    dividerColor: PixelTheme.text.withOpacity(0.2),
+                    colorScheme: ColorScheme.light(
+                      primary: PixelTheme.primary,
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16),
-                    child: Text(
-                      'Estimated cost: ${(0.06 * 30 + 9).toStringAsFixed(1)} credits',
-                      style: TextStyle(fontStyle: FontStyle.italic),
+                  child: ExpansionTile(
+                    title: Text('Generate Settings', 
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontFamily: 'DMMono',
+                        fontWeight: FontWeight.bold,
+                        color: PixelTheme.text,
+                      ),
                     ),
+                    initiallyExpanded: false,
+                    children: [
+                      ListTile(
+                        title: Text('Duration (seconds)', style: PixelTheme.bodyStyle),
+                        subtitle: SliderTheme(
+                          data: SliderThemeData(
+                            activeTrackColor: PixelTheme.primary,
+                            inactiveTrackColor: PixelTheme.textLight.withOpacity(0.3),
+                            thumbColor: PixelTheme.primary,
+                            overlayColor: PixelTheme.primary.withOpacity(0.2),
+                            trackHeight: 6,
+                          ),
+                          child: Slider(
+                            value: _durationSeconds.toDouble(),
+                            min: 10,
+                            max: 60,
+                            divisions: 10,
+                            label: _durationSeconds.toString(),
+                            onChanged: (value) {
+                              setState(() {
+                                _durationSeconds = value.round();
+                              });
+                            },
+                          ),
+                        ),
+                        trailing: Container(
+                          width: 40,
+                          height: 30,
+                          decoration: BoxDecoration(
+                            border: Border.all(color: PixelTheme.text, width: 1),
+                            color: PixelTheme.surface,
+                          ),
+                          alignment: Alignment.center,
+                          child: Text(
+                            '$_durationSeconds', 
+                            style: TextStyle(
+                              fontFamily: 'DMMono',
+                              fontWeight: FontWeight.bold,
+                              color: PixelTheme.text,
+                            ),
+                          ),
+                        ),
+                      ),
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        child: Row(
+                          children: [
+                            Text('Quality Steps: ', style: PixelTheme.bodyStyle),
+                            Text('30', style: TextStyle(fontWeight: FontWeight.bold)),
+                            Expanded(
+                              child: Text(
+                                ' (fixed for optimal generation)', 
+                                style: TextStyle(fontStyle: FontStyle.italic, fontSize: 12),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        child: Text(
+                          'Estimated cost: ${(0.06 * 30 + 9).toStringAsFixed(1)} credits',
+                          style: PixelTheme.labelStyle.copyWith(fontStyle: FontStyle.italic),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
               
               const SizedBox(height: 16),
               
-              TextField(
-                controller: _promptController,
-                decoration: InputDecoration(
-                  labelText: 'Describe the music you want',
-                  hintText: 'Example: A song in 3/4 time with cello, drums, and rhythmic claps. Sad and melancholic mood.',
-                  border: OutlineInputBorder(),
+              Container(
+                decoration: BoxDecoration(
+                  color: PixelTheme.surface,
+                  border: PixelTheme.pixelBorder,
+                  boxShadow: PixelTheme.cardShadow,
                 ),
-                maxLines: 3,
-                enabled: !_isLoading,
+                padding: const EdgeInsets.all(2),
+                child: TextField(
+                  controller: _promptController,
+                  decoration: InputDecoration(
+                    labelText: 'Describe the music you want',
+                    hintText: 'For example: A 3/4 song with a cello, drums, and rhythmic clapping. Sad and melancholic mood.',
+                    hintStyle: PixelTheme.labelStyle.copyWith(
+                      color: PixelTheme.textLight.withOpacity(0.7),
+                      fontSize: 15.0,
+                    ),
+                    labelStyle: TextStyle(
+                      fontFamily: 'DMMono',
+                      fontSize: 16.0,
+                      color: PixelTheme.text,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.zero,
+                      borderSide: BorderSide(color: PixelTheme.text, width: 1),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.zero,
+                      borderSide: BorderSide(color: PixelTheme.text, width: 1),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.zero,
+                      borderSide: BorderSide(color: PixelTheme.primary, width: 2),
+                    ),
+                    filled: true,
+                    fillColor: PixelTheme.surface,
+                    contentPadding: EdgeInsets.all(12),
+                  ),
+                  style: PixelTheme.bodyStyle.copyWith(
+                    fontSize: 16.0,
+                  ),
+                  maxLines: 3,
+                  enabled: !_isLoading,
+                ),
               ),
               
               const SizedBox(height: 16.0),
@@ -1104,71 +1207,94 @@ class _CreateScreenState extends State<CreateScreen> {
                 child: _isLoading
                     ? ElevatedButton.icon(
                         onPressed: _cancelGeneration,
-                        icon: const Icon(Icons.cancel, color: Colors.white),
-                        label: const Text('Cancel Generation'),
+                        icon: const Icon(Icons.cancel, color: Colors.white, size: 18),
+                        label: Text('Cancel Generation', style: PixelTheme.bodyStyle.copyWith(color: Colors.white)),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.red,
+                          backgroundColor: PixelTheme.error,
                           padding: const EdgeInsets.symmetric(vertical: 16.0),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.zero,
+                            side: BorderSide(color: PixelTheme.text, width: 2),
+                          ),
+                          elevation: 0,
                         ),
                       )
-                    : ElevatedButton(
+                    : ElevatedButton.icon(
                         onPressed: () {
                           developer.log('Generate Music button clicked');
                           
                           if (_stabilityService == null) {
-                            _initializeStabilityService(); // Try to reinitialize the service
+                            _initializeStabilityService();
                           } else {
-                            _generateMusicWithStability(); // Normal call to generate method
+                            _generateMusicWithStability();
                           }
                         },
+                        icon: Icon(Icons.music_note, color: Colors.white, size: 18),
+                        label: Text('Generate Music', style: PixelTheme.bodyStyle.copyWith(color: Colors.white)),
                         style: ElevatedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 16.0),
-                          backgroundColor: Colors.purple,
+                          backgroundColor: PixelTheme.primary,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.zero,
+                            side: BorderSide(color: PixelTheme.text, width: 2),
+                          ),
+                          elevation: 0,
+                          shadowColor: Colors.black.withOpacity(0.3),
                         ),
-                        child: const Text('Generate Music'),
                       ),
               ),
               
               if (_isLoading) ...[
                 const SizedBox(height: 16.0),
-                Row(
-                  children: [
-                    const SizedBox(
-                      width: 24,
-                      height: 24,
-                      child: CircularProgressIndicator(strokeWidth: 2.0),
-                    ),
-                    const SizedBox(width: 16.0),
-                    Expanded(
-                      child: Text(
-                        _statusMessage,
-                        style: const TextStyle(
-                          color: Colors.blue,
-                          fontWeight: FontWeight.bold,
+                Container(
+                  decoration: BoxDecoration(
+                    color: PixelTheme.surface,
+                    border: Border.all(color: PixelTheme.text, width: 1),
+                  ),
+                  padding: const EdgeInsets.all(12),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 24,
+                        height: 24,
+                        padding: EdgeInsets.all(4),
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.0,
+                          valueColor: AlwaysStoppedAnimation<Color>(PixelTheme.primary),
                         ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(width: 16.0),
+                      Expanded(
+                        child: Text(
+                          _statusMessage,
+                          style: PixelTheme.bodyStyle.copyWith(
+                            color: PixelTheme.primary,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
               
               if (_errorMessage != null) ...[
                 const SizedBox(height: 16.0),
                 Container(
-                  padding: const EdgeInsets.all(8.0),
+                  padding: const EdgeInsets.all(12.0),
                   decoration: BoxDecoration(
-                    color: Colors.red.shade50,
-                    borderRadius: BorderRadius.circular(8.0),
-                    border: Border.all(color: Colors.red.shade200),
+                    color: PixelTheme.surface,
+                    borderRadius: BorderRadius.zero,
+                    border: Border.all(color: PixelTheme.error, width: 2),
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.error_outline, color: Colors.red),
-                      const SizedBox(width: 8.0),
+                      Icon(Icons.error_outline, color: PixelTheme.error, size: 18),
+                      const SizedBox(width: 12.0),
                       Expanded(
                         child: Text(
                           _errorMessage!,
-                          style: const TextStyle(color: Colors.red),
+                          style: PixelTheme.bodyStyle.copyWith(color: PixelTheme.error),
                         ),
                       ),
                     ],
@@ -1179,39 +1305,52 @@ class _CreateScreenState extends State<CreateScreen> {
               const SizedBox(height: 24.0),
               
               if (_generatedMusic != null) ...[
-                Text(
-                  'Generated Music:',
-                  style: Theme.of(context).textTheme.titleLarge,
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                  decoration: BoxDecoration(
+                    color: PixelTheme.surface,
+                    border: Border.all(color: PixelTheme.text, width: 2),
+                  ),
+                  child: Text(
+                    'Generated Music:',
+                    style: PixelTheme.titleStyle,
+                  ),
                 ),
                 const SizedBox(height: 8.0),
-                Card(
-                  elevation: 4.0,
+                Container(
+                  decoration: BoxDecoration(
+                    color: PixelTheme.surface,
+                    border: PixelTheme.pixelBorder,
+                    boxShadow: PixelTheme.cardShadow,
+                  ),
                   child: Padding(
                     padding: const EdgeInsets.all(16.0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          _safeText(_generatedMusic!.title, 'Untitled Music'),
-                          style: Theme.of(context).textTheme.titleMedium,
+                          _safeText(_generatedMusic!.title, 'No title music'),
+                          style: PixelTheme.titleStyle,
                           overflow: TextOverflow.ellipsis,
                           maxLines: 2,
                         ),
-                        const SizedBox(height: 8.0),
+                        const SizedBox(height: 12.0),
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text('Prompt:', style: TextStyle(fontWeight: FontWeight.bold)),
+                            Text('Prompt:', style: PixelTheme.bodyStyle.copyWith(fontWeight: FontWeight.bold)),
                             const SizedBox(height: 4.0),
                             Container(
+                              width: double.infinity,
                               padding: const EdgeInsets.all(8.0),
                               decoration: BoxDecoration(
-                                color: Colors.grey.shade100,
-                                borderRadius: BorderRadius.circular(4.0),
+                                color: PixelTheme.background,
+                                border: Border.all(color: PixelTheme.text, width: 1),
                               ),
                               child: Text(
                                 _safeText(_generatedMusic!.prompt, 'No prompt'),
-                                style: TextStyle(fontSize: 14, color: Colors.grey.shade800),
+                                style: PixelTheme.bodyStyle,
                               ),
                             ),
                           ],
@@ -1219,42 +1358,51 @@ class _CreateScreenState extends State<CreateScreen> {
                         const SizedBox(height: 12.0),
                         Row(
                           children: [
-                            const Text('ID: ', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                            Text('ID: ', style: PixelTheme.labelStyle.copyWith(fontWeight: FontWeight.bold)),
                             Expanded(
                               child: Text(
                                 _generatedMusic!.id,
-                                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                                style: PixelTheme.labelStyle,
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
-                            IconButton(
-                              icon: const Icon(Icons.copy, size: 14),
-                              onPressed: () => _copyIdToClipboard(_generatedMusic!.id),
-                              tooltip: 'Copy ID',
-                              padding: EdgeInsets.zero,
-                              constraints: const BoxConstraints(),
+                            Container(
+                              width: 24,
+                              height: 24,
+                              decoration: BoxDecoration(
+                                border: Border.all(color: PixelTheme.text, width: 1),
+                                color: PixelTheme.surface,
+                              ),
+                              child: IconButton(
+                                icon: Icon(Icons.copy, size: 14, color: PixelTheme.text),
+                                onPressed: () => _copyIdToClipboard(_generatedMusic!.id),
+                                tooltip: 'Copy ID',
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(),
+                              ),
                             ),
                           ],
                         ),
-                        const Divider(height: 24),
-                        const Text('Audio Controls:', style: TextStyle(fontWeight: FontWeight.bold)),
-                        const SizedBox(height: 8.0),
-                        _buildAudioControls(),
+                        Divider(height: 24, color: PixelTheme.text.withOpacity(0.3), thickness: 1),
+                        Text('Audio Controls:', style: PixelTheme.bodyStyle.copyWith(fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 12.0),
+                        _buildPixelAudioControls(),
                         if (_isPlaying) ...[
                           const SizedBox(height: 16.0),
-                          const Row(
+                          Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              SizedBox(
+                              Container(
                                 width: 16,
                                 height: 16,
+                                padding: EdgeInsets.all(2),
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2.0,
-                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.green),
+                                  valueColor: AlwaysStoppedAnimation<Color>(PixelTheme.accent),
                                 ),
                               ),
-                              SizedBox(width: 8.0),
-                              Text('Playing audio...', style: TextStyle(color: Colors.green)),
+                              const SizedBox(width: 8.0),
+                              Text('Playing...', style: PixelTheme.labelStyle.copyWith(color: PixelTheme.accent)),
                             ],
                           ),
                         ],
@@ -1270,6 +1418,158 @@ class _CreateScreenState extends State<CreateScreen> {
     );
   }
   
+  // Pixel Style Dialog
+  Widget _buildPixelDialog({required String title, required String content}) {
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+      elevation: 0,
+      backgroundColor: Colors.transparent,
+      child: Container(
+        decoration: BoxDecoration(
+          color: PixelTheme.surface,
+          border: PixelTheme.pixelBorder,
+          boxShadow: PixelTheme.cardShadow,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                border: Border(bottom: BorderSide(color: PixelTheme.text, width: 2)),
+                color: PixelTheme.primary.withOpacity(0.1),
+              ),
+              child: Text(
+                title,
+                style: PixelTheme.titleStyle,
+                textAlign: TextAlign.center,
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text(
+                content,
+                style: PixelTheme.bodyStyle,
+              ),
+            ),
+            Container(
+              width: double.infinity,
+              decoration: BoxDecoration(
+                border: Border(top: BorderSide(color: PixelTheme.text, width: 1)),
+              ),
+              child: TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                style: ButtonStyle(
+                  backgroundColor: MaterialStateProperty.all(PixelTheme.surface),
+                  foregroundColor: MaterialStateProperty.all(PixelTheme.text),
+                  padding: MaterialStateProperty.all(EdgeInsets.symmetric(vertical: 12)),
+                  shape: MaterialStateProperty.all(RoundedRectangleBorder(borderRadius: BorderRadius.zero)),
+                ),
+                child: Text('Close', style: PixelTheme.bodyStyle),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Pixel Style Audio Controls Button
+  Widget _buildPixelAudioControls() {
+    final bool isPlaying = _audioPlayerManager.isPlaying;
+    
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Container(
+          margin: EdgeInsets.symmetric(horizontal: 8),
+          decoration: BoxDecoration(
+            color: PixelTheme.surface,
+            border: Border.all(color: PixelTheme.text, width: 2),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.2),
+                offset: const Offset(2, 2),
+                blurRadius: 0,
+              ),
+            ],
+          ),
+          child: Material(
+            color: isPlaying ? PixelTheme.accent : PixelTheme.primary,
+            child: InkWell(
+              onTap: () {
+                if (isPlaying) {
+                  _audioPlayerManager.pauseMusic();
+                } else {
+                  _audioPlayerManager.resumeMusic();
+                }
+              },
+              child: Container(
+                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      isPlaying ? Icons.pause : Icons.play_arrow, 
+                      color: Colors.white,
+                      size: 18,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      isPlaying ? 'Pause' : 'Play',
+                      style: PixelTheme.bodyStyle.copyWith(color: Colors.white),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+        Container(
+          margin: EdgeInsets.symmetric(horizontal: 8),
+          decoration: BoxDecoration(
+            color: PixelTheme.surface,
+            border: Border.all(color: PixelTheme.text, width: 2),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.2),
+                offset: const Offset(2, 2),
+                blurRadius: 0,
+              ),
+            ],
+          ),
+          child: Material(
+            color: PixelTheme.textLight,
+            child: InkWell(
+              onTap: () {
+                _audioPlayerManager.stopMusic();
+              },
+              child: Container(
+                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.stop, 
+                      color: Colors.white,
+                      size: 18,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Stop',
+                      style: PixelTheme.bodyStyle.copyWith(color: Colors.white),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   String _safeText(String? text, String defaultValue) {
     if (text == null || text.isEmpty) {
       return defaultValue;
@@ -1395,35 +1695,6 @@ class _CreateScreenState extends State<CreateScreen> {
           ),
         ],
       ),
-    );
-  }
-
-  // Build audio control buttons
-  Widget _buildAudioControls() {
-    final bool isPlaying = _audioPlayerManager.isPlaying;
-    
-    return Wrap(
-      spacing: 8.0,
-      children: [
-        ElevatedButton.icon(
-          icon: Icon(isPlaying ? Icons.pause : Icons.play_arrow),
-          label: Text(isPlaying ? 'Pause' : 'Play'),
-          onPressed: () {
-            if (isPlaying) {
-              _audioPlayerManager.pauseMusic();
-            } else {
-              _audioPlayerManager.resumeMusic();
-            }
-          },
-        ),
-        ElevatedButton.icon(
-          icon: const Icon(Icons.stop),
-          label: const Text('Stop'),
-          onPressed: () {
-            _audioPlayerManager.stopMusic();
-          },
-        ),
-      ],
     );
   }
 } 

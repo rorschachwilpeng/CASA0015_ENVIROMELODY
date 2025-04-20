@@ -11,6 +11,7 @@ import 'dart:async'; // Add timer support
 import '../widgets/audio_visualizer.dart';
 import '../widgets/music_player_card.dart';
 import '../services/playlist_manager.dart';
+import '../theme/pixel_theme.dart'; // 导入像素主题
 
 // Define the sort option enum
 enum SortOption {
@@ -379,119 +380,132 @@ class _LibraryScreenState extends State<LibraryScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Color(0xFFF8F4E3), 
       appBar: AppBar(
         title: _isSearching
             ? _buildSearchBar()
-            : Text(
-                'My music library',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: Colors.grey[800],
+            : Padding(
+                padding: const EdgeInsets.only(left: 8.0),
+                child: Text(
+                  'My Music Library',
+                  style: PixelTheme.titleStyle.copyWith(
+                    fontSize: 22,
+                    letterSpacing: 0.5,
+                    color: PixelTheme.primary,
+                  ),
                 ),
               ),
-        backgroundColor: Colors.white,
+        backgroundColor: PixelTheme.surface,
+        foregroundColor: PixelTheme.text,
         elevation: 0,
-        centerTitle: false,
+        centerTitle: true, 
         leading: _isSearching
-            ? IconButton(
-                icon: const Icon(Icons.arrow_back),
-                onPressed: () {
-                  setState(() {
-                    _isSearching = false;
-                    _searchController.clear();
-                    _filterAndSortMusic();
-                  });
-                },
+            ? Container(
+                margin: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  border: Border.all(color: PixelTheme.text, width: 1),
+                  color: PixelTheme.surface,
+                ),
+                child: IconButton(
+                  icon: Icon(Icons.arrow_back, color: PixelTheme.text, size: 18),
+                  padding: EdgeInsets.zero,
+                  onPressed: () {
+                    setState(() {
+                      _isSearching = false;
+                      _searchController.clear();
+                      _filterAndSortMusic();
+                    });
+                  },
+                ),
               )
             : null,
         actions: [
-          // Search button
+          // 搜索按钮 - 复古风格
           if (!_isSearching)
-            IconButton(
-              icon: const Icon(Icons.search),
-              onPressed: () {
-                setState(() {
-                  _isSearching = true;
-                  // Focus the search field
-                  Future.delayed(
-                    const Duration(milliseconds: 100),
-                    () => _searchFocusNode.requestFocus(),
-                  );
-                });
-              },
-            ),
-          // Sort button
-          if (!_isSearching)
-            IconButton(
-              icon: Row(
-                children: [
-                  const Icon(Icons.sort),
-                  const SizedBox(width: 4),
-                  Transform.rotate(
-                    angle: 90 * 3.1415926 / 180, // 90 degrees
-                    child: const Icon(Icons.chevron_right, size: 16),
-                  ),
-                ],
-                mainAxisSize: MainAxisSize.min,
+            Container(
+              margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+              decoration: BoxDecoration(
+                border: Border.all(color: PixelTheme.text.withOpacity(0.5), width: 1),
+                color: PixelTheme.surface,
               ),
-              onPressed: _showSortOptionsDialog,
+              child: IconButton(
+                icon: Icon(Icons.search, color: PixelTheme.text, size: 18),
+                padding: EdgeInsets.zero,
+                onPressed: () {
+                  setState(() {
+                    _isSearching = true;
+                    Future.delayed(
+                      const Duration(milliseconds: 100),
+                      () => _searchFocusNode.requestFocus(),
+                    );
+                  });
+                },
+              ),
             ),
-          // Refresh button
+          // 排序按钮 - 复古风格
           if (!_isSearching)
-            IconButton(
-              icon: const Icon(Icons.refresh),
-              onPressed: _loadLibrary,
+            Container(
+              margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+              decoration: BoxDecoration(
+                border: Border.all(color: PixelTheme.text.withOpacity(0.5), width: 1),
+                color: PixelTheme.surface,
+              ),
+              child: IconButton(
+                icon: Icon(Icons.sort, color: PixelTheme.text, size: 18),
+                padding: EdgeInsets.zero,
+                onPressed: _showSortOptionsDialog,
+              ),
             ),
-          // More options
-          if (!_isSearching && !_isMultiSelectMode)
-            IconButton(
-              icon: const Icon(Icons.more_vert),
-              onPressed: () {
-                _showBottomSheet(context);
-              },
-            ),
-          // Multi-select mode exit
-          if (_isMultiSelectMode)
-            IconButton(
-              icon: const Icon(Icons.close),
-              onPressed: _toggleMultiSelectMode,
-            ),
-          // Delete selected
-          if (_isMultiSelectMode && _selectedMusicIds.isNotEmpty)
-            IconButton(
-              icon: const Icon(Icons.delete),
-              onPressed: _deleteSelectedMusic,
+          // 刷新按钮 - 复古风格
+          if (!_isSearching)
+            Container(
+              margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+              decoration: BoxDecoration(
+                border: Border.all(color: PixelTheme.text.withOpacity(0.5), width: 1),
+                color: PixelTheme.surface,
+              ),
+              child: IconButton(
+                icon: Icon(Icons.refresh, color: PixelTheme.text, size: 18),
+                padding: EdgeInsets.zero,
+                onPressed: _loadLibrary,
+              ),
             ),
         ],
       ),
       body: Stack(
         children: [
-          // Show sorting method
+          // 排序信息栏 - 更精致的风格
           if (!_isSearching)
             Positioned(
               top: 0,
               left: 0,
               right: 0,
               child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-                color: Colors.grey[100],
+                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+                decoration: BoxDecoration(
+                  color: PixelTheme.secondary.withOpacity(0.15),
+                  border: Border(
+                    bottom: BorderSide(color: PixelTheme.text.withOpacity(0.2), width: 1),
+                  ),
+                ),
                 child: Row(
                   children: [
-                    Icon(Icons.sort, size: 16, color: Colors.grey[600]),
+                    Icon(Icons.sort, size: 14, color: PixelTheme.text),
                     const SizedBox(width: 8),
                     Text(
                       'Sorting method:',
-                      style: TextStyle(
-                        color: Colors.grey[600],
-                        fontSize: 12,
+                      style: PixelTheme.labelStyle.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: PixelTheme.primary,
                       ),
                     ),
                     const SizedBox(width: 8),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        color: Colors.grey[200],
-                        borderRadius: BorderRadius.circular(4),
+                        color: PixelTheme.surface,
+                        border: Border.all(color: PixelTheme.text.withOpacity(0.5), width: 1),
+                        borderRadius: BorderRadius.circular(2),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
@@ -500,28 +514,34 @@ class _LibraryScreenState extends State<LibraryScreen> {
                             _currentSortOption == SortOption.newest || _currentSortOption == SortOption.oldest
                                 ? Icons.access_time
                                 : Icons.timer,
-                            size: 14,
-                            color: Colors.grey[600],
+                            size: 12,
+                            color: PixelTheme.text,
                           ),
                           const SizedBox(width: 4),
                           Text(
                             _getSortOptionLabel(_currentSortOption),
-                            style: TextStyle(
-                              fontSize: 12,
+                            style: PixelTheme.labelStyle.copyWith(
                               fontWeight: FontWeight.bold,
-                              color: Colors.grey[800],
+                              fontSize: 11,
                             ),
                           ),
-                          const Icon(Icons.arrow_drop_down, size: 16),
+                          Icon(Icons.arrow_drop_down, size: 14, color: PixelTheme.text),
                         ],
                       ),
                     ),
                     Expanded(child: Container()),
-                    Text(
-                      'Count: ${_filteredMusicList.length}',
-                      style: TextStyle(
-                        color: Colors.grey[600],
-                        fontSize: 12,
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: PixelTheme.surface,
+                        border: Border.all(color: PixelTheme.text.withOpacity(0.5), width: 1),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                      child: Text(
+                        'Number: ${_filteredMusicList.length}',
+                        style: PixelTheme.labelStyle.copyWith(
+                          fontSize: 11,
+                        ),
                       ),
                     ),
                   ],
@@ -529,53 +549,62 @@ class _LibraryScreenState extends State<LibraryScreen> {
               ),
             ),
           
-          // Show search status bar
-          if (_isSearching && _searchQuery.isNotEmpty)
-            Positioned(
-              top: 0,
-              left: 0,
-              right: 0,
-              child: _buildSearchStatusBar(),
-            ),
-          
-          // Main content
           Positioned(
             top: _isSearching && _searchQuery.isNotEmpty
-                ? 40 // Search status bar shown
-                : (_isSearching ? 0 : 40), // Show sorting bar or not
+                ? 40 
+                : (_isSearching ? 0 : 40),
             left: 0,
             right: 0,
             bottom: 0,
             child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
+                ? Center(
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: PixelTheme.surface,
+                        border: Border.all(color: PixelTheme.text.withOpacity(0.5), width: 1),
+                      ),
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.0,
+                        valueColor: AlwaysStoppedAnimation<Color>(PixelTheme.primary),
+                      ),
+                    ),
+                  )
                 : _filteredMusicList.isEmpty
                     ? _searchQuery.isNotEmpty
-                        ? _buildEmptySearchResultView()
-                        : _buildEmptyLibraryView()
-                    : ListView.separated(
+                        ? _buildPixelEmptySearchResultView()
+                        : _buildPixelEmptyLibraryView()
+                    : ListView.builder( // 改用builder而非separated，便于定制间距
                         padding: EdgeInsets.only(
-                          bottom: 70, // Leave space for the music player at the bottom
+                          bottom: 80, // 为底部播放器留出空间
+                          left: 12,
+                          right: 12,
+                          top: 8,
                         ),
                         itemCount: _filteredMusicList.length,
-                        separatorBuilder: (context, index) => const Divider(height: 1),
                         itemBuilder: (context, index) {
                           final music = _filteredMusicList[index];
                           final isPlaying = _audioPlayerManager.currentMusicId == music.id && 
                                           _audioPlayerManager.isPlaying;
                           
-                          return _isMultiSelectMode
-                              ? _buildMultiSelectListItem(
-                                  music, 
-                                  isPlaying, 
-                                  _selectedMusicIds.contains(music.id),
-                                )
-                              : _buildRegularListItem(music, isPlaying, index);
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 8.0),
+                            child: _isMultiSelectMode
+                                ? _buildEnhancedMultiSelectListItem(
+                                    music, 
+                                    isPlaying, 
+                                    _selectedMusicIds.contains(music.id),
+                                  )
+                                : _buildEnhancedRegularListItem(music, isPlaying, index),
+                          );
                         },
                       ),
           ),
-          
         ],
       ),
+
     );
   }
   
@@ -778,31 +807,35 @@ class _LibraryScreenState extends State<LibraryScreen> {
 
   // Build the search bar
   Widget _buildSearchBar() {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
-      height: 50,
+    return Container(
+      height: 36,
+      margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
       decoration: BoxDecoration(
-        color: Colors.grey[100],
-        borderRadius: BorderRadius.circular(8),
+        color: PixelTheme.surface,
+        border: Border.all(color: PixelTheme.text.withOpacity(0.3), width: 1),
       ),
       child: TextField(
         controller: _searchController,
         focusNode: _searchFocusNode,
+        style: PixelTheme.bodyStyle.copyWith(fontSize: 13),
         decoration: InputDecoration(
           hintText: 'Search music...',
-          prefixIcon: const Icon(Icons.search),
+          hintStyle: PixelTheme.labelStyle.copyWith(
+            color: PixelTheme.textLight.withOpacity(0.7),
+            fontSize: 12,
+          ),
+          prefixIcon: Icon(Icons.search, color: PixelTheme.text.withOpacity(0.5), size: 16),
           suffixIcon: _searchController.text.isNotEmpty
               ? IconButton(
-                  icon: const Icon(Icons.clear),
+                  icon: Icon(Icons.clear, color: PixelTheme.text.withOpacity(0.5), size: 16),
                   onPressed: _clearSearch,
                 )
               : null,
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         ),
         textInputAction: TextInputAction.search,
         onSubmitted: (value) {
-          // Hide the keyboard
           FocusScope.of(context).unfocus();
         },
       ),
@@ -810,37 +843,53 @@ class _LibraryScreenState extends State<LibraryScreen> {
   }
 
   // Build the empty search result view
-  Widget _buildEmptySearchResultView() {
+  Widget _buildPixelEmptySearchResultView() {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.search_off,
-            size: 80,
-            color: Colors.grey[400],
+          Container(
+            width: 100,
+            height: 100,
+            decoration: BoxDecoration(
+              border: Border.all(color: PixelTheme.text, width: 2),
+              color: PixelTheme.surface,
+            ),
+            child: Icon(
+              Icons.search_off,
+              size: 60,
+              color: PixelTheme.textLight,
+            ),
           ),
           const SizedBox(height: 16),
           Text(
             'No matching music',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Colors.grey[600],
-            ),
+            style: PixelTheme.titleStyle,
           ),
           const SizedBox(height: 8),
           Text(
             'Try using different keywords to search',
-            style: TextStyle(
-              color: Colors.grey[600],
-            ),
+            style: PixelTheme.bodyStyle,
           ),
           const SizedBox(height: 24),
-          ElevatedButton.icon(
-            icon: const Icon(Icons.clear),
-            label: const Text('Clear search'),
-            onPressed: _clearSearch,
+          Container(
+            decoration: BoxDecoration(
+              border: Border.all(color: PixelTheme.text, width: 2),
+              color: PixelTheme.primary,
+              boxShadow: PixelTheme.cardShadow,
+            ),
+            child: TextButton.icon(
+              icon: Icon(Icons.clear, color: Colors.white, size: 18),
+              label: Text(
+                'Clear search',
+                style: PixelTheme.bodyStyle.copyWith(color: Colors.white),
+              ),
+              onPressed: _clearSearch,
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                backgroundColor: PixelTheme.primary,
+              ),
+            ),
           ),
         ],
       ),
@@ -961,167 +1010,199 @@ class _LibraryScreenState extends State<LibraryScreen> {
   }
 
   // List item for regular mode
-  Widget _buildRegularListItem(MusicItem music, bool isPlaying, int index) {
+  Widget _buildEnhancedRegularListItem(MusicItem music, bool isPlaying, int index) {
     return Dismissible(
       key: Key(music.id),
       background: Container(
-        color: Colors.red,
+        color: PixelTheme.error,
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.only(right: 16.0),
-        child: const Icon(Icons.delete, color: Colors.white),
+        child: Icon(Icons.delete, color: Colors.white, size: 20),
       ),
       direction: DismissDirection.endToStart,
       confirmDismiss: (direction) async {
-        print('Confirm whether to delete music: ${music.title} (${music.id})');
         return await showDialog<bool>(
           context: context,
-          builder: (context) => AlertDialog(
-            title: const Text('Confirm delete'),
-            content: const Text('Are you sure you want to delete this music file?'),
+          builder: (context) => _buildPixelDialog(
+            title: 'Confirm delete',
+            content: 'Are you sure you want to delete this music file?',
             actions: [
               TextButton(
-                onPressed: () {
-                  print('Cancel deleting music');
-                  Navigator.of(context).pop(false);
-                },
-                child: const Text('Cancel'),
+                onPressed: () => Navigator.of(context).pop(false),
+                child: Text('Cancel', style: PixelTheme.bodyStyle),
               ),
               TextButton(
-                onPressed: () {
-                  print('Confirm deleting music');
-                  Navigator.of(context).pop(true);
-                },
-                child: const Text('Delete'),
+                onPressed: () => Navigator.of(context).pop(true),
+                child: Text('Delete', style: PixelTheme.bodyStyle.copyWith(color: PixelTheme.error)),
               ),
             ],
           ),
         ) ?? false;
       },
       onDismissed: (direction) {
-        print('Start executing onDismissed callback, prepare to delete music: ${music.id}');
-        
-        try {
-          // Before calling the asynchronous operation, first remove the item from the UI list
-          if (mounted) {
-            setState(() {
-              print('Remove music item from UI list: ${music.id}');
-              // Remove the item directly from the filtered list
-              _filteredMusicList.removeWhere((item) => item.id == music.id);
-            });
-          }
-          
-          // If the current music is being played, stop it first
-          if (_audioPlayerManager.currentMusicId == music.id && _audioPlayerManager.isPlaying) {
-            print('Stop the current playing music');
-            _audioPlayerManager.stopMusic();
-          }
-          
-          // Then execute the actual deletion operation
-          print('Call MusicLibraryManager.removeMusic method');
-          _libraryManager.removeMusic(music.id).then((success) {
-            print('Delete music result: ${success ? "Success" : "Failed"}');
-            if (!success && mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Failed to delete music'))
-              );
-            }
-          }).catchError((error) {
-            print('Error deleting music: $error');
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Error deleting music: $error'))
-              );
-            }
+        if (mounted) {
+          setState(() {
+            _filteredMusicList.removeWhere((item) => item.id == music.id);
           });
-          
-          print('onDismissed callback executed');
-        } catch (e) {
-          print('Error in onDismissed callback: $e');
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Error: $e'))
-            );
-          }
         }
+        
+        if (_audioPlayerManager.currentMusicId == music.id && _audioPlayerManager.isPlaying) {
+          _audioPlayerManager.stopMusic();
+        }
+        
+        _libraryManager.removeMusic(music.id);
       },
-      child: ListTile(
-        leading: CircleAvatar(
-          backgroundColor: Theme.of(context).primaryColor.withOpacity(0.1),
-          child: const Icon(Icons.music_note),
+      child: Container(
+        decoration: BoxDecoration(
+          color: PixelTheme.surface,
+          border: Border.all(
+            color: isPlaying ? PixelTheme.primary : PixelTheme.text.withOpacity(0.3), 
+            width: isPlaying ? 2 : 1
+          ),
+          boxShadow: isPlaying 
+              ? [BoxShadow(
+                  color: PixelTheme.primary.withOpacity(0.15),
+                  offset: Offset(2, 2),
+                  blurRadius: 0,
+                )]
+              : null,
         ),
-        title: _searchQuery.isEmpty
-            ? Text(
-                music.title.isEmpty ? 'Untitled Music' : music.title,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              )
-            : _highlightText(
-                music.title.isEmpty ? 'Untitled Music' : music.title,
-                _searchQuery,
-              ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Row(
           children: [
-            _searchQuery.isEmpty
-                ? Text(
-                    music.prompt.isEmpty ? 'No prompt' : music.prompt,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  )
-                : _highlightText(
-                    music.prompt.isEmpty ? 'No prompt' : music.prompt,
-                    _searchQuery,
+            Container(
+              width: 50,
+              height: 50,
+              decoration: BoxDecoration(
+                border: Border(
+                  right: BorderSide(
+                    color: isPlaying ? PixelTheme.primary.withOpacity(0.3) : PixelTheme.text.withOpacity(0.1), 
+                    width: 1
                   ),
-            Text(
-              music.createdAt.toString().substring(0, 16),
-              style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                ),
+                color: isPlaying
+                    ? PixelTheme.primary.withOpacity(0.1)
+                    : PixelTheme.surface,
+              ),
+              child: Center(
+                child: Icon(
+                  Icons.music_note, 
+                  color: isPlaying ? PixelTheme.primary : PixelTheme.text.withOpacity(0.7), 
+                  size: 22
+                ),
+              ),
+            ),
+            
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      music.title.isEmpty ? 'No title music' : music.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: PixelTheme.bodyStyle.copyWith(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                        color: isPlaying ? PixelTheme.primary : PixelTheme.text,
+                      ),
+                    ),
+                    SizedBox(height: 3),
+                    Text(
+                      music.prompt.isEmpty ? 'No prompt' : music.prompt,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: PixelTheme.labelStyle.copyWith(
+                        fontSize: 11,
+                        color: PixelTheme.textLight,
+                      ),
+                    ),
+                    SizedBox(height: 3),
+                    Text(
+                      music.createdAt.toString().substring(0, 16),
+                      style: PixelTheme.labelStyle.copyWith(
+                        fontSize: 10,
+                        color: PixelTheme.textLight.withOpacity(0.7),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            
+            Container(
+              width: 44,
+              height: 44,
+              margin: EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                border: Border.all(
+                  color: isPlaying ? PixelTheme.primary.withOpacity(0.7) : PixelTheme.text.withOpacity(0.2), 
+                  width: 1
+                ),
+                color: isPlaying
+                    ? PixelTheme.primary.withOpacity(0.1)
+                    : PixelTheme.surface,
+              ),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () {
+                    if (isPlaying) {
+                      _pauseMusic();
+                    } else {
+                      _playMusic(music);
+                    }
+                  },
+                  child: Center(
+                    child: Icon(
+                      isPlaying ? Icons.pause : Icons.play_arrow,
+                      color: isPlaying ? PixelTheme.primary : PixelTheme.text,
+                      size: 22,
+                    ),
+                  ),
+                ),
+              ),
             ),
           ],
         ),
-        trailing: IconButton(
-          icon: Icon(
-            isPlaying ? Icons.pause : Icons.play_arrow,
-            color: isPlaying ? Colors.blue : null,
-          ),
-          onPressed: () {
-            if (isPlaying) {
-              _pauseMusic();
-            } else {
-              _playMusic(music);
-            }
-          },
-        ),
-        onTap: () {
-          // You can navigate to the details page
-        },
-        onLongPress: () => _showMusicOptions(music),
       ),
     );
   }
 
   // Add or modify search status bar build method
-  Widget _buildSearchStatusBar() {
-    return Padding(
+  Widget _buildPixelSearchStatusBar() {
+    return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: PixelTheme.surface,
+        border: Border(
+          bottom: BorderSide(color: PixelTheme.text, width: 1),
+        ),
+      ),
       child: Row(
         children: [
           Expanded(
             child: Text(
-              'Search results: "${_searchQuery}" ${_filteredMusicList.isEmpty ? "(No matches)" : "(${_filteredMusicList.length} items)"}',
-              style: TextStyle(
-                color: Colors.grey[600],
-                fontStyle: FontStyle.italic,
-              ),
+              'Search results: "${_searchQuery}" ${_filteredMusicList.isEmpty ? "(No match)" : "(${_filteredMusicList.length} items)"}',
+              style: PixelTheme.labelStyle,
             ),
           ),
           if (_searchQuery.isNotEmpty)
-            TextButton.icon(
-              icon: const Icon(Icons.clear, size: 16),
-              label: const Text('Clear'),
-              onPressed: _clearSearch,
-              style: TextButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-                minimumSize: const Size(50, 30),
+            Container(
+              decoration: BoxDecoration(
+                border: Border.all(color: PixelTheme.text, width: 1),
+                color: PixelTheme.surface,
+              ),
+              child: TextButton.icon(
+                icon: Icon(Icons.clear, size: 14, color: PixelTheme.text),
+                label: Text('Clear', style: PixelTheme.labelStyle),
+                onPressed: _clearSearch,
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  minimumSize: const Size(50, 28),
+                  backgroundColor: PixelTheme.surface,
+                ),
               ),
             ),
         ],
@@ -1238,4 +1319,182 @@ class _LibraryScreenState extends State<LibraryScreen> {
       ),
     );
   }
+
+  // Add pixel dialog method
+  Widget _buildPixelDialog({
+    required String title,
+    required String content,
+    List<Widget>? actions,
+  }) {
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+      elevation: 0,
+      backgroundColor: Colors.transparent,
+      child: Container(
+        decoration: BoxDecoration(
+          color: PixelTheme.surface,
+          border: PixelTheme.pixelBorder,
+          boxShadow: PixelTheme.cardShadow,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                border: Border(bottom: BorderSide(color: PixelTheme.text, width: 2)),
+                color: PixelTheme.primary.withOpacity(0.1),
+              ),
+              child: Text(
+                title,
+                style: PixelTheme.titleStyle,
+                textAlign: TextAlign.center,
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text(
+                content,
+                style: PixelTheme.bodyStyle,
+              ),
+            ),
+            if (actions != null)
+              Container(
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  border: Border(top: BorderSide(color: PixelTheme.text, width: 1)),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: actions.map((action) {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                      child: action,
+                    );
+                  }).toList(),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Add pixel empty library view method
+  Widget _buildPixelEmptyLibraryView() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 100,
+            height: 100,
+            decoration: BoxDecoration(
+              border: Border.all(color: PixelTheme.text, width: 2),
+              color: PixelTheme.surface,
+            ),
+            child: Icon(
+              Icons.music_off,
+              size: 60,
+              color: PixelTheme.textLight,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Your music library is empty',
+            style: PixelTheme.titleStyle,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'After generating music, they will be automatically added here',
+            style: PixelTheme.bodyStyle,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEnhancedMultiSelectListItem(MusicItem music, bool isPlaying, bool isSelected) {
+    return ListTile(
+      leading: CircleAvatar(
+        backgroundColor: isSelected
+            ? Colors.blue.withOpacity(0.3)
+            : Theme.of(context).primaryColor.withOpacity(0.1),
+        child: isSelected
+            ? const Icon(Icons.check, color: Colors.blue)
+            : const Icon(Icons.music_note),
+      ),
+      title: Text(
+        music.title.isEmpty ? 'Untitled Music' : music.title,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      ),
+      subtitle: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            music.prompt.isEmpty ? 'No prompt' : music.prompt,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          Text(
+            music.createdAt.toString().substring(0, 16),
+            style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+          ),
+        ],
+      ),
+      trailing: Checkbox(
+        value: isSelected,
+        onChanged: (value) {
+          setState(() {
+            if (value == true) {
+              _selectedMusicIds.add(music.id);
+            } else {
+              _selectedMusicIds.remove(music.id);
+            }
+          });
+        },
+      ),
+      onTap: () {
+        setState(() {
+          if (_selectedMusicIds.contains(music.id)) {
+            _selectedMusicIds.remove(music.id);
+          } else {
+            _selectedMusicIds.add(music.id);
+          }
+        });
+      },
+    );
+  }
+
+
+  Widget _buildNavItem(IconData icon, String label, bool isActive, Function() onTap) {
+    final activeColor = PixelTheme.primary;
+    final inactiveColor = PixelTheme.text.withOpacity(0.7);
+    
+    return InkWell(
+      onTap: onTap,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            icon, 
+            color: isActive ? activeColor : inactiveColor,
+            size: 22,
+          ),
+          SizedBox(height: 4),
+          Text(
+            label,
+            style: PixelTheme.labelStyle.copyWith(
+              fontSize: 10,
+              fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+              color: isActive ? activeColor : inactiveColor,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
 } 
