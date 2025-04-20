@@ -112,6 +112,9 @@ class _CreateScreenState extends State<CreateScreen> {
     
     // Listen to the audio playback status change
     _audioPlayerManager.addListener(_onAudioPlayerChanged);
+    
+    // Ensure default duration is 60 seconds
+    _durationSeconds = 60;
   }
 
   @override

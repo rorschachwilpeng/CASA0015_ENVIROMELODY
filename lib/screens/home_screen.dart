@@ -902,8 +902,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
       ),
+      margin: const EdgeInsets.only(top: 60),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
@@ -915,14 +916,14 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   child: Text(
                     location,
                     style: const TextStyle(
-                      fontSize: 20,
+                      fontSize: 16,
                       fontWeight: FontWeight.bold,
                     ),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.close),
+                  icon: const Icon(Icons.close, size: 16),
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
                   onPressed: () {
@@ -937,73 +938,37 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 ),
               ],
             ),
-            const SizedBox(height: 8),
             
             Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  flex: 1,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           Text(
                             '${weatherData.temperature.toStringAsFixed(1)}°',
                             style: const TextStyle(
-                              fontSize: 36,
+                    fontSize: 28,
                               fontWeight: FontWeight.w300,
                             ),
                           ),
                           const SizedBox(width: 8),
-                          Image.network(
-                            weatherData.getIconUrl(),
-                            width: 40,
-                            height: 40,
-                            errorBuilder: (context, error, stackTrace) {
-                              return Icon(
-                                _getWeatherIcon(),
-                                size: 40,
-                                color: _getWeatherColor(),
-                              );
-                            },
-                          ),
-                        ],
-                      ),
-                      Text(
-                        weatherData.weatherDescription,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                
                 Expanded(
-                  flex: 1,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildWeatherDetailRow(
-                        Icons.thermostat_outlined, 
-                        'Feels like', 
-                        '${weatherData.feelsLike.toStringAsFixed(1)}°C'
+                      Text(
+                        weatherData.weatherDescription,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
-                      const SizedBox(height: 4),
-                      _buildWeatherDetailRow(
-                        Icons.water_drop_outlined, 
-                        'Humidity', 
-                        '${weatherData.humidity}%'
-                      ),
-                      const SizedBox(height: 4),
-                      _buildWeatherDetailRow(
-                        Icons.air, 
-                        'Wind speed', 
-                        '${weatherData.windSpeed} m/s'
+                      Row(
+                        children: [
+                          Icon(Icons.water_drop_outlined, size: 12, color: Colors.grey),
+                          Text(' ${weatherData.humidity}%', style: TextStyle(fontSize: 10)),
+                          const SizedBox(width: 8),
+                          Icon(Icons.air, size: 12, color: Colors.grey),
+                          Text(' ${weatherData.windSpeed} m/s', style: TextStyle(fontSize: 10)),
+                        ],
                       ),
                     ],
                   ),
@@ -1011,26 +976,27 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               ],
             ),
             
-            const SizedBox(height: 16),
+            const SizedBox(height: 8),
             
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  padding: const EdgeInsets.symmetric(vertical: 8),
                   backgroundColor: Colors.deepPurple,
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ),
-                icon: const Icon(Icons.music_note),
-                label: const Text('Generate music based on weather'),
+                icon: const Icon(Icons.music_note, size: 14),
+                label: const Text('Generate music based on weather', 
+                        style: TextStyle(fontSize: 12)),
                 onPressed: () {
-                  // Create a temporary flag ID
+                  // 创建临时标志ID
                   String tempFlagId = 'flag_temp_${DateTime.now().millisecondsSinceEpoch}';
                   
-                  // Save weather information but do not add a marker
+                  // 保存天气信息但不添加标记
                   _flagInfoMap[tempFlagId] = FlagInfo(
                     position: LatLng(weatherData.location?.latitude ?? 0, 
                                     weatherData.location?.longitude ?? 0),
@@ -1048,360 +1014,31 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     );
   }
   
-  Widget _buildWeatherDetailRow(IconData icon, String label, String value) {
-    return Row(
-      children: [
-        Icon(icon, size: 16, color: Colors.grey),
-        const SizedBox(width: 4),
-        Text(
-          '$label: ',
-          style: const TextStyle(
-            fontSize: 12,
-            color: Colors.grey,
-          ),
-        ),
-        Text(
-          value,
-          style: const TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      ],
-    );
-  }
-  
-  // Replace the original _showGenerateMusicDialog method
-  void _showGenerateMusicDialog(WeatherData weatherData, String flagId) {
-    // Reset selection state each time dialog is opened
-    _selectedVibe = null;
-    _selectedGenre = null;
-    
-    // Use StatefulBuilder to allow setState inside dialog
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        // Get screen dimensions
-        final screenHeight = MediaQuery.of(context).size.height;
-        final screenWidth = MediaQuery.of(context).size.width;
-        
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return Dialog(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Container(
-                width: screenWidth * 0.85,
-                height: screenHeight * 0.5,
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Title
-                    Text(
-                      'Generate music for ${weatherData.cityName}\'s ${weatherData.weatherDescription} weather',
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    
-                    // Scrollable content area
-                    Expanded(
-                      child: SingleChildScrollView(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Music preference selector
-                            MusicPreferenceSelector(
-                              initialVibe: _selectedVibe,
-                              initialGenre: _selectedGenre,
-                              onPreferencesChanged: (vibe, genre) {
-                                setState(() {
-                                  _selectedVibe = vibe;
-                                  _selectedGenre = genre;
-                                });
-                              },
-                            ),
-                            
-                            const SizedBox(height: 16),
-                            
-                            // Weather information card
-                            Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: Colors.blue.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(color: Colors.blue.withOpacity(0.3)),
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Icon(
-                                        _getWeatherIconForData(weatherData),
-                                        color: _getWeatherColorForData(weatherData),
-                                        size: 24,
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Text(
-                                        'Weather: ${weatherData.weatherDescription}',
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Text('Temperature: ${weatherData.temperature.toStringAsFixed(1)}°C'),
-                                  Text('Humidity: ${weatherData.humidity}%'),
-                                  Text('Wind Speed: ${weatherData.windSpeed} m/s'),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    
-                    // Button area
-                    const SizedBox(height: 16),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        TextButton(
-                          onPressed: () {
-                            Navigator.pop(context);
-                          },
-                          child: const Text('Cancel'),
-                        ),
-                        const SizedBox(width: 8),
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.deepPurple,
-                            foregroundColor: Colors.white,
-                          ),
-                          onPressed: () {
-                            Navigator.pop(context);
-                            
-                            // Generate music with AI-optimized prompt
-                            _generateMusicAndUpdateFlag(weatherData, flagId);
-                          },
-                          child: const Text('Generate Music'),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            );
-          }
-        );
-      },
-    );
-  }
-  
-  // Modify the _generateMusicAndUpdateFlag method
-  Future<void> _generateMusicAndUpdateFlag(WeatherData weatherData, String flagId, [String? customPrompt]) async {
-    // Show loading dialog
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const CircularProgressIndicator(),
-            const SizedBox(height: 20),
-            Container(
-              padding: const EdgeInsets.all(16),
+  Widget _buildZoomButton({
+    required IconData icon,
+    required VoidCallback onPressed,
+  }) {
+    return Container(
+      width: 40,
+      height: 40,
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(8),
-              ),
-              child: const Text('Generating music...'),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 2,
+            spreadRadius: 1,
+            offset: const Offset(0, 1),
             ),
           ],
         ),
-      ),
-    );
-    
-    try {
-      String prompt;
-      
-      // If a custom prompt is provided, use it, otherwise use DeepSeek to generate
-      if (customPrompt != null && customPrompt.isNotEmpty) {
-        prompt = customPrompt;
-      } else {
-        // Use DeepSeek to generate an optimized prompt
-        try {
-          prompt = await _deepSeekApiService.generateMusicPrompt(
-            weatherDescription: weatherData.weatherDescription,
-            temperature: weatherData.temperature,
-            humidity: weatherData.humidity,
-            windSpeed: weatherData.windSpeed,
-            cityName: weatherData.cityName,
-            vibeName: _selectedVibe?.name,
-            genreName: _selectedGenre?.name,
-          );
-        } catch (e) {
-          print('Failed to generate prompt with DeepSeek: $e');
-          // Fallback to weather service prompt
-          prompt = weatherData.buildMusicPrompt();
-          
-          // Add music preferences
-          if (_selectedVibe != null || _selectedGenre != null) {
-            prompt += '\n\nMusic preferences: ';
-            if (_selectedVibe != null) {
-              prompt += '${_selectedVibe!.name} atmosphere, ';
-            }
-            if (_selectedGenre != null) {
-              prompt += '${_selectedGenre!.name} style.';
-            }
-          }
-        }
-      }
-      
-      // Build music title, including preferences
-      String musicTitle = '${weatherData.cityName} ${weatherData.weatherDescription} music';
-      if (_selectedVibe != null || _selectedGenre != null) {
-        musicTitle += ' - ';
-        if (_selectedVibe != null) {
-          musicTitle += '${_selectedVibe!.name} ';
-        }
-        if (_selectedGenre != null) {
-          musicTitle += '${_selectedGenre!.name}';
-        }
-      }
-      
-      // Use StabilityAudioService to generate music
-      final StabilityAudioService audioService = StabilityAudioService(
-        apiKey: AppConfig.stabilityApiKey
-      );
-      
-      final result = await audioService.generateMusic(
-        prompt,
-        outputFormat: "mp3",
-        durationSeconds: 20,
-        steps: 30,
-        saveLocally: true,
-      );
-      
-      // Get audio URL from result
-      final audioUrl = result['audio_url'];
-      // Ensure audioUrl starts with file://
-      final String finalAudioUrl = audioUrl.startsWith('file://') 
-          ? audioUrl 
-          : 'file://$audioUrl';
-      
-      // Create a unique music ID
-      final musicId = 'music_${DateTime.now().millisecondsSinceEpoch}';
-      
-      // Create MusicItem object
-      final musicItem = MusicItem(
-        id: musicId,
-        title: musicTitle,
-        prompt: prompt,
-        audioUrl: finalAudioUrl,
-        status: 'complete',
-        createdAt: DateTime.now(),
-      );
-      
-      // Add to MusicLibraryManager
-      final MusicLibraryManager libraryManager = MusicLibraryManager();
-      await libraryManager.addMusic(musicItem);
-      
-      if (mounted) {
-        // Update local state
-        if (_flagInfoMap.containsKey(flagId)) {
-          setState(() {
-            final flagInfo = _flagInfoMap[flagId]!;
-            final updatedInfo = FlagInfo(
-              position: flagInfo.position,
-              weatherData: flagInfo.weatherData,
-              createdAt: flagInfo.createdAt,
-              musicTitle: musicTitle,
-            );
-            
-            _flagInfoMap[flagId] = updatedInfo;
-            
-            // Add marker to map after music generation
-            _mapService.addMarker(
-              id: flagId,
-              position: flagInfo.position,
-              title: '',
-              icon: Container(
-                width: 40,
-                height: 40,
-                alignment: Alignment.center,
-                child: Icon(
-                  Icons.flag,
-                  color: Colors.red,
-                  size: 15.0, 
-                ),
-              ),
-              onTap: () {
-                print('Flag clicked: $flagId');
-                _showFlagInfoWindow(flagId, flagInfo.position);
-              },
-              onLongPress: () {
-                _showDeleteMarkerDialog(flagId);
-              },
-            );
-            
-            // Save to persistent service
-            _mapService.saveFlagInfo(flagId, updatedInfo);
-          });
-        }
-        
-        // Close the loading dialog safely
-        if (Navigator.canPop(context)) {
-          Navigator.of(context).pop(); // Close the loading dialog
-        }
-        
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Successfully generated music: $musicTitle')),
-        );
-      }
-      
-    } catch (e) {
-      print('Error generating music: $e');
-      
-      if (mounted && Navigator.canPop(context)) {
-        Navigator.of(context).pop(); // Close the loading dialog
-        
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to generate music: $e')),
-        );
-      }
-    }
-  }
-  
-  Widget _buildMapButton({
-    required IconData icon,
-    required String label,
-    required VoidCallback onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
-      child: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: const TextStyle(fontSize: 12),
-            ),
-          ],
-        ),
+      child: IconButton(
+        icon: Icon(icon),
+        padding: EdgeInsets.zero,
+        iconSize: 20,
+        onPressed: onPressed,
+        tooltip: icon == Icons.add ? 'Zoom in' : 'Zoom out',
       ),
     );
   }
@@ -1425,35 +1062,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     } else {
       ScaffoldMessenger.of(context).clearSnackBars();
     }
-  }
-  
-  Widget _buildZoomButton({
-    required IconData icon,
-    required VoidCallback onPressed,
-  }) {
-    return Container(
-      width: 40,
-      height: 40,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 2,
-            spreadRadius: 1,
-            offset: const Offset(0, 1),
-          ),
-        ],
-      ),
-      child: IconButton(
-        icon: Icon(icon),
-        padding: EdgeInsets.zero,
-        iconSize: 20,
-        onPressed: onPressed,
-        tooltip: icon == Icons.add ? 'Zoom in' : 'Zoom out',
-      ),
-    );
   }
 
   void _showWeatherCard(WeatherData weatherData) {
@@ -2045,5 +1653,196 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Moved to: ${result.name}')),
     );
+  }
+
+  Widget _buildMapButton({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Padding(
+        padding: const EdgeInsets.all(4.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 20),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: const TextStyle(fontSize: 10),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showGenerateMusicDialog(WeatherData weatherData, String flagId) {
+    // Reset the selection state each time the dialog is opened
+    _selectedVibe = null;
+    _selectedGenre = null;
+    
+    // Use StatefulBuilder to allow setState inside the dialog
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        // Get screen size
+        final screenHeight = MediaQuery.of(context).size.height;
+        final screenWidth = MediaQuery.of(context).size.width;
+        
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return Dialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Container(
+                width: screenWidth * 0.85,
+                height: screenHeight * 0.6, // Increase height to fit content
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Title
+                    Text(
+                      'Generate music for ${weatherData.cityName} with ${weatherData.weatherDescription} weather',
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    
+                    // Scrollable content area
+                    Expanded(
+                      child: SingleChildScrollView(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Show Vibe options directly
+                            Text('Select vibe:', style: TextStyle(fontWeight: FontWeight.bold)),
+                            const SizedBox(height: 8),
+                            // Create a grid layout to show all Vibe options
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: MusicVibe.values.map((vibe) {
+                                return ChoiceChip(
+                                  label: Text(vibe.name),
+                                  selected: _selectedVibe == vibe,
+                                  onSelected: (selected) {
+                                    setState(() {
+                                      _selectedVibe = selected ? vibe : null;
+                                    });
+                                  },
+                                );
+                              }).toList(),
+                            ),
+                            
+                            const SizedBox(height: 16),
+                            
+                            // Show Genre options directly
+                            Text('Select genre:', style: TextStyle(fontWeight: FontWeight.bold)),
+                            const SizedBox(height: 8),
+                            // Create a grid layout to show all Genre options
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: MusicGenre.values.map((genre) {
+                                return ChoiceChip(
+                                  label: Text(genre.name),
+                                  selected: _selectedGenre == genre,
+                                  onSelected: (selected) {
+                                    setState(() {
+                                      _selectedGenre = selected ? genre : null;
+                                    });
+                                  },
+                                );
+                              }).toList(),
+                            ),
+                            
+                            const SizedBox(height: 16),
+                            
+                            // Weather information card
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Colors.blue.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: Colors.blue.withOpacity(0.3)),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Icon(
+                                        _getWeatherIconForData(weatherData),
+                                        color: _getWeatherColorForData(weatherData),
+                                        size: 24,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        'Weather: ${weatherData.weatherDescription}',
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text('Temperature: ${weatherData.temperature.toStringAsFixed(1)}°C'),
+                                  Text('Humidity: ${weatherData.humidity}%'),
+                                  Text('Wind speed: ${weatherData.windSpeed} m/s'),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    
+                    // Button area
+                    const SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        TextButton(
+                          onPressed: () {
+                            Navigator.pop(context);
+                          },
+                          child: const Text('Cancel'),
+                        ),
+                        const SizedBox(width: 8),
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.deepPurple,
+                            foregroundColor: Colors.white,
+                          ),
+                          onPressed: () {
+                            Navigator.pop(context);
+                            
+                            _generateMusicAndUpdateFlag(weatherData, flagId);
+                          },
+                          child: const Text('Generate music'),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
+        );
+      },
+    );
+  }
+
+  void _generateMusicAndUpdateFlag(WeatherData weatherData, String flagId) {
+    // Implementation of _generateMusicAndUpdateFlag method
   }
 } 

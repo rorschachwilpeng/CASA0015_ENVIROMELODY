@@ -50,7 +50,7 @@ class StabilityAudioService {
   Future<Map<String, dynamic>> generateMusic(
     String prompt, {
     String outputFormat = "mp3",
-    int durationSeconds = 20,
+    int durationSeconds = 60,
     int steps = 30,
     bool saveLocally = true,
   }) async {
