@@ -19,6 +19,7 @@ import '../widgets/music_preference_selector.dart';
 import '../services/deepseek_api_service.dart';
 import '../services/event_bus.dart';
 import '../services/geocoding_service.dart';
+import '../theme/pixel_theme.dart';
 
 // Define FlagInfo class (put at the top of the file, all classes outside)
 class FlagInfo {
@@ -45,72 +46,6 @@ class MapState {
     required this.center,
     required this.zoom,
   });
-}
-
-// Pixel Theme
-class PixelTheme {
-  // Yellow-based color scheme
-  static const Color background = Color(0xFFF8F4E3);    // Yellow background
-  static const Color primary = Color(0xFFFF7A59);       // Orange
-  static const Color secondary = Color(0xFFFFBB36);     // Yellow
-  static const Color surface = Color(0xFFFFF1DC);       // Light yellow surface
-  static const Color text = Color(0xFF3A3A3A);          // Dark gray text
-  static const Color textLight = Color(0xFF666666);     // Light gray text
-  static const Color accent = Color(0xFF1B8A6B);        // Green accent
-  static const Color error = Color(0xFFD35269);         // Red error
-  
-  // Font size
-  static const double fontSizeSmall = 10.0;
-  static const double fontSizeMedium = 14.0;
-  static const double fontSizeLarge = 18.0;
-  static const double fontSizeXLarge = 24.0;
-  
-  // Border style - thicker border
-  static BoxBorder pixelBorder = Border.all(
-    color: text,
-    width: 2.0,
-  );
-  
-  // Card shadow style
-  static List<BoxShadow> cardShadow = [
-    BoxShadow(
-      color: Colors.black.withOpacity(0.2),
-      offset: const Offset(4, 4),
-      blurRadius: 0, // No blur, keep pixel feel
-    ),
-  ];
-  
-  // Button style
-  static ButtonStyle buttonStyle = ElevatedButton.styleFrom(
-    backgroundColor: surface, 
-    foregroundColor: text,
-    elevation: 0,
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.zero, // Square edge
-      side: BorderSide(color: text, width: 2.0),
-    ),
-    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-  );
-  
-  // Monospaced font style
-  static TextStyle get titleStyle => TextStyle(
-    fontFamily: 'DMMono', 
-    fontSize: fontSizeLarge,
-    fontWeight: FontWeight.bold,
-    color: text,
-  );
-  
-  static TextStyle get bodyStyle => TextStyle(
-    fontFamily: 'DMMono',
-    fontSize: fontSizeMedium,
-    color: text,
-  );
-  
-  static TextStyle get labelStyle => TextStyle(
-    fontFamily: 'DMMono',
-    fontSize: fontSizeSmall,
-    color: textLight,
-  );
 }
 
 class HomeScreen extends StatefulWidget {
@@ -717,20 +652,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             width: 2.0,
           ),
         ),
-        actions: [
-          Container(
-            margin: const EdgeInsets.only(right: 8),
-            decoration: BoxDecoration(
-              border: Border.all(color: PixelTheme.text, width: 2),
-              color: PixelTheme.surface,
-            ),
-            child: IconButton(
-              icon: Icon(Icons.refresh, color: PixelTheme.text, size: 20),
-              onPressed: _goToCurrentLocation,
-              tooltip: 'Refresh map',
-            ),
-          ),
-        ],
       ),
       body: Stack(
         children: [
@@ -1918,15 +1839,15 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   }
 
   void _showGenerateMusicDialog(WeatherData weatherData, String flagId) {
-    // 重置每次对话框打开时的选择状态
+    // Reset selection state when dialog opens
     _selectedVibe = null;
     _selectedGenre = null;
     
-    // 使用 StatefulBuilder 允许在对话框内部使用 setState
+    // Use StatefulBuilder to allow setState inside the dialog
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        // 获取屏幕尺寸
+        // Get screen size
         final screenHeight = MediaQuery.of(context).size.height;
         final screenWidth = MediaQuery.of(context).size.width;
         
@@ -2049,9 +1970,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                               
                               const SizedBox(height: 20),
                               
-                              // Vibe 选择部分
+                              // Vibe
                               Text(
-                                '选择氛围:',
+                                'Select Vibe:',
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
@@ -2083,9 +2004,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                               
                               const SizedBox(height: 20),
                               
-                              // Genre 选择部分
+                              // Genre
                               Text(
-                                '选择风格:',
+                                'Select Style:',
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
@@ -2143,7 +2064,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                                 foregroundColor: PixelTheme.text,
                               ),
                               child: Text(
-                                '取消',
+                                'Cancel',
                                 style: TextStyle(
                                   fontFamily: 'DMMono',
                                   fontSize: 14,
@@ -2173,7 +2094,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                                 foregroundColor: Colors.white,
                               ),
                               child: Text(
-                                '生成音乐',
+                                'Generate Music',
                                 style: TextStyle(
                                   fontFamily: 'DMMono',
                                   fontSize: 14,

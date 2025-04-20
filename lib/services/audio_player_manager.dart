@@ -72,6 +72,22 @@ class AudioPlayerManager extends ChangeNotifier {
     print('Player is now hidden');
   }
   
+  // Add locking time record
+  DateTime? _playNextLockTime;
+  
+  // Add prevent duplicate call flag
+  bool _isHandlingCompletion = false;
+  
+  // 添加调试模式标志
+  bool _debugMode = true;
+  
+  // 封装日志方法
+  void _log(String message) {
+    if (_debugMode) {
+      print("[AudioPlayerManager] $message");
+    }
+  }
+  
   // Internal constructor
   AudioPlayerManager._internal() {
     // Configure the player
@@ -90,7 +106,7 @@ class AudioPlayerManager extends ChangeNotifier {
     _player.playerStateStream.listen((state) {
       print("PlayerState: playing=${state.playing}, state=${state.processingState}");
       if (state.processingState == ProcessingState.completed) {
-        print("Method 2 detected playback completion");
+        print("Detected playback completion from playerStateStream");
         _handlePlaybackCompletion();
       }
       notifyListeners();
@@ -107,12 +123,7 @@ class AudioPlayerManager extends ChangeNotifier {
     
     // Position listener, used to update the progress bar
     _player.positionStream.listen((position) {
-      // Check if it is approaching the end
-      Duration? duration = _player.duration;
-      if (duration != null && position >= duration - const Duration(milliseconds: 500)) {
-        print("Detected approaching end position: $position / $duration");
-      }
-      notifyListeners();
+      notifyListeners();  // 只用于UI更新，不检测播放完成
     });
   }
   
@@ -120,17 +131,31 @@ class AudioPlayerManager extends ChangeNotifier {
   void _handlePlaybackCompletion() {
     print("Begin to handle playback completion event");
     
+    // If already handling, return
+    if (_isHandlingCompletion) {
+      print("Already handling completion, skipping duplicate call");
+      return;
+    }
+    
+    _isHandlingCompletion = true;
+    
     // Ensure execution in the main thread and add a short delay
     Future.delayed(const Duration(milliseconds: 500), () {
-      if (_autoPlayEnabled && hasNext) {
-        print("Auto play next song: current index=$_currentIndex, list length=${_playlist.length}");
-        playNext().then((success) {
-          print("Play next song result: $success");
-        }).catchError((error) {
-          print("Play next song error: $error");
-        });
-      } else {
-        print("Auto play is disabled or there is no next song: autoPlay=$_autoPlayEnabled, hasNext=$hasNext");
+      try {
+        if (_autoPlayEnabled && hasNext) {
+          print("Auto play next song: current index=$_currentIndex, list length=${_playlist.length}");
+          // Ensure mutex lock is reset before calling playNext
+          _isPlayNextExecuting = false;
+          playNext().then((success) {
+            print("Play next song result: $success");
+          }).catchError((error) {
+            print("Play next song error: $error");
+          });
+        } else {
+          print("Auto play is disabled or there is no next song: autoPlay=$_autoPlayEnabled, hasNext=$hasNext");
+        }
+      } finally {
+        _isHandlingCompletion = false;
       }
     });
   }
@@ -166,17 +191,11 @@ class AudioPlayerManager extends ChangeNotifier {
     
     // Create a new subscription
     _durationSubscription = _player.positionStream.listen((position) {
+      // 只记录日志，不触发自动播放
       Duration? totalDuration = _player.duration;
       if (totalDuration != null) {
-        // Check if it has reached the end position (close to total duration)
         if (position >= totalDuration - const Duration(milliseconds: 200) && position > Duration.zero) {
-          print("Detected song playback completion through position: $position / $totalDuration");
-          
-          // Try to play the next song directly (delayed execution to avoid state conflicts)
-          if (_player.processingState != ProcessingState.loading && 
-              _player.processingState != ProcessingState.buffering) {
-            _handlePlaybackCompletion();
-          }
+          print("Position approaching end: $position / $totalDuration");
         }
       }
     });
@@ -250,6 +269,9 @@ class AudioPlayerManager extends ChangeNotifier {
       print("Playback started successfully");
     } catch (e) {
       print('Failed to play music: $e');
+      // 确保在发生错误时也释放资源
+      _isPlayNextExecuting = false;
+      _isHandlingCompletion = false;
       notifyListeners();
       rethrow;
     }
@@ -286,14 +308,22 @@ class AudioPlayerManager extends ChangeNotifier {
   
   // Play next song
   Future<bool> playNext() async {
-    // If it is executing, return
+    // If it is executing, check if it is timed out
     if (_isPlayNextExecuting) {
-      print("playNext is executing, skip duplicate call");
-      return false;
+      if (_playNextLockTime != null && 
+          DateTime.now().difference(_playNextLockTime!).inSeconds > 5) {
+        // If locked for more than 5 seconds, force reset
+        print("Play next locked for too long (${DateTime.now().difference(_playNextLockTime!).inSeconds}s), force reset");
+        _isPlayNextExecuting = false;
+      } else {
+        print("playNext is executing, skip duplicate call");
+        return false;
+      }
     }
     
-    // Set mutex lock
+    // Set mutex lock and record time
     _isPlayNextExecuting = true;
+    _playNextLockTime = DateTime.now();
     
     try {
       // Check if there is a next song
@@ -333,6 +363,7 @@ class AudioPlayerManager extends ChangeNotifier {
     } finally {
       // Release mutex lock
       _isPlayNextExecuting = false;
+      _playNextLockTime = null;
     }
   }
   
@@ -413,4 +444,10 @@ class AudioPlayerManager extends ChangeNotifier {
   
   // Add this getter to expose the audioPlayer
   AudioPlayer get audioPlayer => _player;
+  
+  // Add this method to reset the playNext mutex
+  void resetPlayNextMutex() {
+    _isPlayNextExecuting = false;
+    print("Play next mutex reset");
+  }
 } 

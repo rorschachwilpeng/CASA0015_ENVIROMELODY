@@ -10,6 +10,7 @@ import 'widgets/music_visualizer_player.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'services/firebase_service.dart';
+import 'theme/pixel_theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -121,39 +122,98 @@ class _MainScreenState extends State<MainScreen> {
           // 使用我们的音乐可视化播放器代替 MiniPlayer
           const MusicVisualizerPlayer(),
           
-          // 底部导航栏
-          BottomNavigationBar(
-            currentIndex: _currentIndex,
-            onTap: (index) {
-              setState(() {
-                _currentIndex = index;
-              });
-            },
-            backgroundColor: Colors.black,
-            selectedItemColor: Colors.blue,
-            unselectedItemColor: Colors.grey,
-            selectedIconTheme: const IconThemeData(color: Colors.blue),
-            unselectedIconTheme: const IconThemeData(color: Colors.grey),
-            selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold),
-            unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.normal),
-            items: const [
-              BottomNavigationBarItem(
-                icon: Icon(Icons.home),
-                label: 'Home',
+          // 像素风格的底部导航栏
+          Container(
+            decoration: BoxDecoration(
+              color: PixelTheme.surface,
+              border: Border(
+                top: BorderSide(color: PixelTheme.text, width: 2),
               ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.add),
-                label: 'Create',
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _buildPixelNavItem(
+                    icon: Icons.home,
+                    label: 'Home',
+                    isSelected: _currentIndex == 0,
+                    onTap: () => setState(() { _currentIndex = 0; }),
+                  ),
+                  _buildPixelNavItem(
+                    icon: Icons.add,
+                    label: 'Create',
+                    isSelected: _currentIndex == 1,
+                    onTap: () => setState(() { _currentIndex = 1; }),
+                  ),
+                  _buildPixelNavItem(
+                    icon: Icons.library_music,
+                    label: 'Library',
+                    isSelected: _currentIndex == 2,
+                    onTap: () => setState(() { _currentIndex = 2; }),
+                  ),
+                  _buildPixelNavItem(
+                    icon: Icons.person,
+                    label: 'Settings',
+                    isSelected: _currentIndex == 3,
+                    onTap: () => setState(() { _currentIndex = 3; }),
+                  ),
+                ],
               ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.library_music),
-                label: 'Library',
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 添加这个辅助方法来构建像素风格的导航项
+  Widget _buildPixelNavItem({
+    required IconData icon,
+    required String label,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              border: Border.all(
+                color: isSelected ? PixelTheme.primary : PixelTheme.text,
+                width: isSelected ? 2 : 1,
               ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.person),
-                label: 'Settings',
+              color: isSelected ? PixelTheme.primary.withOpacity(0.2) : PixelTheme.surface,
+              boxShadow: isSelected ? [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.2),
+                  offset: const Offset(2, 2),
+                  blurRadius: 0,
+                ),
+              ] : null,
+            ),
+            child: Center(
+              child: Icon(
+                icon,
+                color: isSelected ? PixelTheme.primary : PixelTheme.textLight,
+                size: 20,
               ),
-            ],
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 10,
+              fontFamily: 'DMMono',
+              color: isSelected ? PixelTheme.primary : PixelTheme.textLight,
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+            ),
           ),
         ],
       ),
