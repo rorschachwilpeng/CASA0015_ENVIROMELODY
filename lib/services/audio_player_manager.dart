@@ -5,6 +5,11 @@ import 'dart:math' as math;
 import 'dart:developer' as developer;
 import '../models/music_item.dart';
 
+enum PlayMode {
+  sequence,  // 列表顺序播放
+  singleLoop, // B单曲循环
+}
+
 class AudioPlayerManager extends ChangeNotifier {
   // Singleton instance
   static final AudioPlayerManager _instance = AudioPlayerManager._internal();
@@ -87,6 +92,36 @@ class AudioPlayerManager extends ChangeNotifier {
     }
   }
   
+  // 添加播放模式变量
+  PlayMode _playMode = PlayMode.sequence;
+  
+  // 添加播放模式的 getter 和 setter
+  PlayMode get playMode => _playMode;
+  
+  // 设置播放模式
+  void setPlayMode(PlayMode mode) {
+    _playMode = mode;
+    
+    // 根据播放模式设置 JustAudio 的循环模式
+    if (_playMode == PlayMode.singleLoop) {
+      _player.setLoopMode(LoopMode.one);
+    } else {
+      _player.setLoopMode(LoopMode.off);
+    }
+    
+    notifyListeners();
+    print('Play mode set to: $_playMode');
+  }
+  
+  // 切换播放模式
+  void togglePlayMode() {
+    if (_playMode == PlayMode.sequence) {
+      setPlayMode(PlayMode.singleLoop);
+    } else {
+      setPlayMode(PlayMode.sequence);
+    }
+  }
+  
   // Internal constructor
   AudioPlayerManager._internal() {
     // Configure the player
@@ -141,6 +176,13 @@ class AudioPlayerManager extends ChangeNotifier {
     // Ensure execution in the main thread and add a short delay
     Future.delayed(const Duration(milliseconds: 500), () {
       try {
+        // 如果是单曲循环模式，则直接返回，让 JustAudio 的循环功能来处理
+        if (_playMode == PlayMode.singleLoop) {
+          print("Single loop mode, let JustAudio handle the looping");
+          return;
+        }
+        
+        // 顺序播放模式下，如果启用了自动播放并且有下一首歌曲，则播放下一首
         if (_autoPlayEnabled && hasNext) {
           print("Auto play next song: current index=$_currentIndex, list length=${_playlist.length}");
           // Ensure mutex lock is reset before calling playNext
@@ -163,7 +205,8 @@ class AudioPlayerManager extends ChangeNotifier {
   void _configurePlayer() {
     // Set audio session configuration
     try {
-      _player.setLoopMode(LoopMode.off); // Disable loop playback of a single song
+      // 根据当前播放模式设置循环模式
+      _player.setLoopMode(_playMode == PlayMode.singleLoop ? LoopMode.one : LoopMode.off);
       _player.setAutomaticallyWaitsToMinimizeStalling(true); // Minimize stalling
       
       // Add player error listener

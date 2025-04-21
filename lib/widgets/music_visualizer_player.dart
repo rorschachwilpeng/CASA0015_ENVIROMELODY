@@ -472,84 +472,117 @@ class _MusicVisualizerPlayerState extends State<MusicVisualizerPlayer> {
           // Key part: Control buttons, ensure correct function calls
           Padding(
             padding: const EdgeInsets.fromLTRB(0, 0, 0, 8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                // Add debug logs to track click events
-                IconButton(
-                  icon: Icon(
-                    Icons.skip_previous,
-                    color: _audioPlayerManager.hasPrevious ? PixelTheme.primary : PixelTheme.textLight,
-                  ),
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                  iconSize: 24,
-                  onPressed: _audioPlayerManager.hasPrevious ? _playPreviousSong : null,
-                ),
-                const SizedBox(width: 16),
-                StreamBuilder<PlayerState>(
-                  stream: _audioPlayerManager.audioPlayer.playerStateStream,
-                  builder: (context, snapshot) {
-                    final isPlaying = snapshot.data?.playing ?? false;
-                    final processingState = snapshot.data?.processingState;
-                    print("Player state update: playing=$isPlaying, state=$processingState");
-                    
-                    return Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        border: Border.all(color: PixelTheme.text, width: 2),
-                        color: PixelTheme.primary.withOpacity(0.2),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.2),
-                            offset: const Offset(2, 2),
-                            blurRadius: 0,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 32),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  // Add debug logs to track click events
+                  IconButton(
+                    icon: Icon(
+                      _audioPlayerManager.playMode == PlayMode.singleLoop 
+                          ? Icons.repeat_one
+                          : Icons.repeat,
+                      color: PixelTheme.primary,
+                    ),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                    iconSize: 24,
+                    onPressed: () {
+                      _audioPlayerManager.togglePlayMode();
+                      
+                      // Show prompt information
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            _audioPlayerManager.playMode == PlayMode.singleLoop
+                                ? 'Single Loop Mode'
+                                : 'Sequence Mode'
                           ),
-                        ],
-                      ),
-                      child: IconButton(
+                          duration: const Duration(seconds: 1),
+                        ),
+                      );
+                    },
+                  ),
+                  Row(
+                    children: [
+                      IconButton(
                         icon: Icon(
-                          isPlaying ? Icons.pause : Icons.play_arrow,
-                          size: 24,
-                          color: PixelTheme.primary,
+                          Icons.skip_previous,
+                          color: _audioPlayerManager.hasPrevious ? PixelTheme.primary : PixelTheme.textLight,
                         ),
                         padding: EdgeInsets.zero,
                         constraints: const BoxConstraints(),
+                        iconSize: 24,
+                        onPressed: _audioPlayerManager.hasPrevious ? _playPreviousSong : null,
+                      ),
+                      const SizedBox(width: 20),
+                      StreamBuilder<PlayerState>(
+                        stream: _audioPlayerManager.audioPlayer.playerStateStream,
+                        builder: (context, snapshot) {
+                          final isPlaying = snapshot.data?.playing ?? false;
+                          final processingState = snapshot.data?.processingState;
+                          print("Player state update: playing=$isPlaying, state=$processingState");
+                          
+                          return Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              border: Border.all(color: PixelTheme.text, width: 2),
+                              color: PixelTheme.primary.withOpacity(0.2),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.2),
+                                  offset: const Offset(2, 2),
+                                  blurRadius: 0,
+                                ),
+                              ],
+                            ),
+                            child: IconButton(
+                              icon: Icon(
+                                isPlaying ? Icons.pause : Icons.play_arrow,
+                                size: 24,
+                                color: PixelTheme.primary,
+                              ),
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
+                              onPressed: () {
+                                print("Play/Pause button clicked - current state: $isPlaying");
+                                if (isPlaying) {
+                                  _audioPlayerManager.pauseMusic();
+                                } else {
+                                  _audioPlayerManager.resumeMusic();
+                                }
+                              },
+                            ),
+                          );
+                        },
+                      ),
+                      const SizedBox(width: 20),
+                      IconButton(
+                        icon: Icon(
+                          Icons.skip_next,
+                          color: _audioPlayerManager.hasNext ? PixelTheme.primary : PixelTheme.textLight,
+                        ),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        iconSize: 24,
                         onPressed: () {
-                          print("Play/Pause button clicked - current state: $isPlaying");
-                          if (isPlaying) {
-                            _audioPlayerManager.pauseMusic();
+                          _checkPlaylistStatus(); 
+                          if (_audioPlayerManager.hasNext) {
+                            _playNextSong();
                           } else {
-                            _audioPlayerManager.resumeMusic();
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('No next song (from button check)')),
+                            );
                           }
                         },
                       ),
-                    );
-                  },
-                ),
-                const SizedBox(width: 16),
-                // Modify the next song button code
-                IconButton(
-                  icon: Icon(
-                    Icons.skip_next,
-                    color: _audioPlayerManager.hasNext ? PixelTheme.primary : PixelTheme.textLight,
+                    ],
                   ),
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                  iconSize: 24,
-                  onPressed: () {
-                    _checkPlaylistStatus(); 
-                    if (_audioPlayerManager.hasNext) {
-                      _playNextSong();
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('No next song (from button check)')),
-                      );
-                    }
-                  },
-                ),
-              ],
+                  SizedBox(width: 24),
+                ],
+              ),
             ),
           ),
         ],

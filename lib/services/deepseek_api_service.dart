@@ -110,10 +110,11 @@ class DeepSeekApiService {
     String? cityName,
     String? vibeName,
     String? genreName,
+    String? sceneName,
   }) async {
     _logger.i('Starting to generate music prompt');
     _logger.i('Weather: $weatherDescription, Temperature: $temperature°C, Humidity: $humidity%, Wind Speed: $windSpeed m/s');
-    _logger.i('City: ${cityName ?? "Unknown"}, Vibe: ${vibeName ?? "Not selected"}, Genre: ${genreName ?? "Not selected"}');
+    _logger.i('City: ${cityName ?? "Unknown"}, Vibe: ${vibeName ?? "Not selected"}, Genre: ${genreName ?? "Not selected"}, Scene: ${sceneName ?? "Not selected"}');
     
     try {
       // Build system prompt
@@ -125,6 +126,7 @@ You should consider the following factors:
 1. How weather conditions (temperature, humidity, wind speed, weather description) affect music mood and atmosphere
 2. User's selected music vibe and genre
 3. Location information (if provided)
+4. The specific music usage scenario/scene (if provided) - tailor the music to be perfect for this scenario
 
 Ensure your prompt is:
 - Specific and vivid
@@ -132,6 +134,7 @@ Ensure your prompt is:
 - Moderate length (about 100-150 words)
 - Stylistically consistent
 - Suitable for AI music generation systems
+- Optimized for the specified scenario (e.g., meditation music should be calming, focus music should minimize distractions)
 
 The output format should be a coherent paragraph without titles or sections. Don't explain your creative process, just provide the final prompt text.
 ''';
@@ -156,6 +159,34 @@ Wind speed: $windSpeed m/s
       
       if (genreName != null && genreName.isNotEmpty) {
         userPrompt += 'Music genre: $genreName\n';
+      }
+
+      if (sceneName != null && sceneName.isNotEmpty) {
+        userPrompt += 'Music usage scenario: $sceneName\n';
+        
+        switch(sceneName.toLowerCase()) {
+          case 'meditation':
+            userPrompt += 'Note: This music will be used for meditation sessions. Create a peaceful, calming composition that helps with mindfulness and relaxation.\n';
+            break;
+          case 'deep work':
+            userPrompt += 'Note: This music will be used for focused deep work. Create a non-distracting composition that enhances concentration without being intrusive.\n';
+            break;
+          case 'relaxation':
+            userPrompt += 'Note: This music will be used for relaxation. Create a gentle, soothing composition that helps relieve stress and anxiety.\n';
+            break;
+          case 'sleep':
+            userPrompt += 'Note: This music will be used for aiding sleep. Create a very gentle, slow-paced composition with minimal dynamics and gradual transitions.\n';
+            break;
+          case 'exercise':
+            userPrompt += 'Note: This music will be used during exercise. Create an energetic, rhythmic composition that maintains motivation and energy levels.\n';
+            break;
+          case 'study':
+            userPrompt += 'Note: This music will be used for studying. Create a balanced composition that maintains alertness while not distracting from cognitive tasks.\n';
+            break;
+          case 'creativity':
+            userPrompt += 'Note: This music will be used to enhance creativity. Create an inspiring composition that evokes imagination and creative thinking.\n';
+            break;
+        }
       }
       
       userPrompt += '\nPlease create a concise and powerful music generation prompt, output the final text directly without any explanation or formatting.';
@@ -201,6 +232,7 @@ Wind speed: $windSpeed m/s
           vibeName: vibeName,
           genreName: genreName,
           cityName: cityName,
+          sceneName: sceneName,
         );
       }
     } catch (e) {
@@ -213,6 +245,7 @@ Wind speed: $windSpeed m/s
         vibeName: vibeName,
         genreName: genreName,
         cityName: cityName,
+        sceneName: sceneName,
       );
     }
   }
@@ -224,6 +257,7 @@ Wind speed: $windSpeed m/s
     String? vibeName,
     String? genreName,
     String? cityName,
+    String? sceneName,
   }) {
     _logger.i('Using fallback method to generate music prompt');
     
@@ -267,8 +301,46 @@ Wind speed: $windSpeed m/s
       prompt += 'in the style of $genreName, ';
     }
     
+    if (sceneName != null && sceneName.isNotEmpty) {
+      String sceneDescription = '';
+      
+      switch(sceneName.toLowerCase()) {
+        case 'meditation':
+          sceneDescription = 'suitable for meditation and mindfulness practices';
+          break;
+        case 'deep work':
+          sceneDescription = 'perfect for focused deep work and concentration';
+          break;
+        case 'relaxation':
+          sceneDescription = 'ideal for relaxation and unwinding';
+          break;
+        case 'sleep':
+          sceneDescription = 'gentle enough to aid falling asleep and maintaining sleep';
+          break;
+        case 'exercise':
+          sceneDescription = 'energetic and motivating for physical activities';
+          break;
+        case 'study':
+          sceneDescription = 'balanced for studying and learning';
+          break;
+        case 'creativity':
+          sceneDescription = 'inspiring for creative thinking and artistic activities';
+          break;
+        default:
+          sceneDescription = 'suitable for $sceneName';
+      }
+      
+      prompt += 'that is $sceneDescription, ';
+    }
+    
     prompt += 'inspired by the $weatherDescription weather in ${cityName ?? "the city"}, with a temperature of ${temperature.toStringAsFixed(1)}°C. ';
-    prompt += 'The music should reflect the feelings and emotions evoked by this weather.';
+    prompt += 'The music should reflect the feelings and emotions evoked by this weather';
+    
+    if (sceneName != null && sceneName.isNotEmpty) {
+      prompt += ' while being perfectly suited for ${sceneName.toLowerCase()}';
+    }
+    
+    prompt += '.';
     
     _logger.i('Fallback prompt: $prompt');
     return prompt;
