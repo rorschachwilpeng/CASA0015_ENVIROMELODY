@@ -8,6 +8,7 @@ import 'dart:developer' as developer;
 import 'package:flutter/foundation.dart';
 import '../screens/home_screen.dart'; //Import FlagInfo class
 import '../services/music_library_manager.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 // Move to class external 
 typedef ZoomChangedCallback = void Function(double zoom);
@@ -19,8 +20,8 @@ class FlutterMapService extends ChangeNotifier {
   factory FlutterMapService() => _instance;
   FlutterMapService._internal();
   
-  // Default location: London (latitude 51.5074, longitude -0.1278)
-  final LatLng _defaultLocation = const LatLng(51.5074, -0.1278);
+  // Default location: Beijing (latitude 39.9042, longitude 116.4074)
+  final LatLng _defaultLocation = const LatLng(39.9042, 116.4074);
   
   // Location Service
   final Location _locationService = Location();
@@ -90,77 +91,129 @@ class FlutterMapService extends ChangeNotifier {
     PermissionStatus permissionStatus;
     
     try {
-      // Check if location service is enabled
+      // 检查位置服务是否启用
       serviceEnabled = await _locationService.serviceEnabled();
       if (!serviceEnabled) {
+        print("DEBUG: Location service not enabled, requesting service");
         serviceEnabled = await _locationService.requestService();
         if (!serviceEnabled) {
-          developer.log('Location services are disabled', name: 'FlutterMapService');
+          print("DEBUG: User denied enabling location service");
           return false;
         }
       }
       
-      // Check location permission
+      // 检查位置权限
       permissionStatus = await _locationService.hasPermission();
+      print("DEBUG: Current permission status: $permissionStatus");
+      
       if (permissionStatus == PermissionStatus.denied) {
+        print("DEBUG: Permission denied, requesting permission");
         permissionStatus = await _locationService.requestPermission();
-        if (permissionStatus != PermissionStatus.granted) {
-          developer.log('Location permissions are denied', name: 'FlutterMapService');
+        print("DEBUG: After request, permission status: $permissionStatus");
+        
+        if (permissionStatus != PermissionStatus.granted && 
+            permissionStatus != PermissionStatus.grantedLimited) {
+          print("DEBUG: User denied location permission");
           return false;
         }
       }
       
-      // Get current location
-      await getCurrentLocation();
-      
-      // Only move when _autoMoveToCurrentLocation is true
-      if (_autoMoveToCurrentLocation && _mapController != null) {
-        await moveToCurrentLocation();
-      }
-      
+      print("DEBUG: Location permission granted: $permissionStatus");
       return true;
     } catch (e) {
-      developer.log('Error checking location permission: $e', name: 'FlutterMapService');
+      print("DEBUG: Error checking location permission: $e");
       return false;
+    }
+  }
+  
+  // Add this method to detect whether the app is running on an emulator
+  Future<bool> _isRunningOnEmulator() async {
+    try {
+      // This is a simple check, more complex detection might require platform-specific code
+      final locationData = await _locationService.getLocation()
+          .timeout(const Duration(seconds: 3), onTimeout: () {
+        return LocationData.fromMap({
+          'latitude': 0,
+          'longitude': 0,
+          'accuracy': 0,
+          'altitude': 0,
+          'speed': 0,
+          'speed_accuracy': 0,
+          'heading': 0,
+          'time': DateTime.now().millisecondsSinceEpoch.toDouble(),
+        });
+      });
+      
+      // If the location is always 0,0 or cannot be quickly obtained, it's likely on an emulator
+      if (locationData.latitude == 0 && locationData.longitude == 0) {
+        return true;
+      }
+      
+      return false;
+    } catch (e) {
+      print("DEBUG: Error detecting emulator: $e");
+      return true; // If there's an error, assume on an emulator
     }
   }
   
   // Get current location
   Future<void> getCurrentLocation() async {
     try {
-      // Ensure a reasonable default value is set even if there is a timeout
-      final locationData = await _locationService.getLocation()
-          .timeout(const Duration(seconds: 5), onTimeout: () {
-        print("DEBUG: Get location timeout");
+      print("DEBUG: Starting to get location...");
+      
+      // Check permission
+      bool permissionGranted = await checkLocationPermission();
+      if (!permissionGranted) {
+        print("DEBUG: Location permission not granted");
+        _useDefaultLocation();
+        return;
+      }
+      
+      print("DEBUG: Attempting to get location...");
+      
+      // Detect whether running on an emulator
+      bool isEmulator = await _isRunningOnEmulator();
+      
+      if (isEmulator) {
+        print("DEBUG: Detected possible emulator, using simulated location");
+        // Use London coordinates as simulated location
         _currentLocation = LocationData.fromMap({
-          'latitude': _defaultLocation.latitude,
-          'longitude': _defaultLocation.longitude,
-          'accuracy': 0.0,
+          'latitude': 51.5074,
+          'longitude': -0.1278,
+          'accuracy': 10.0,
           'altitude': 0.0,
           'speed': 0.0,
           'speed_accuracy': 0.0,
           'heading': 0.0,
           'time': DateTime.now().millisecondsSinceEpoch.toDouble(),
         });
-        return _currentLocation!;
-      });
+        
+        print("DEBUG: Simulated location set - London (51.5074, -0.1278)");
+        return;
+      }
       
-      _currentLocation = locationData;
-      developer.log('Current location: ${locationData.latitude}, ${locationData.longitude}', 
-                  name: 'FlutterMapService');
+      // Try to get real location on a device
+      try {
+        final locationData = await _locationService.getLocation()
+            .timeout(const Duration(seconds: 10), onTimeout: () {
+          print("DEBUG: Get location timeout");
+          throw TimeoutException('Get location timeout');
+        });
+        
+        if (locationData.latitude != null && locationData.longitude != null) {
+          print("DEBUG: Location obtained - lat: ${locationData.latitude}, lng: ${locationData.longitude}");
+          _currentLocation = locationData;
+        } else {
+          print("DEBUG: Invalid location data obtained");
+          _useDefaultLocation();
+        }
+      } catch (e) {
+        print("DEBUG: Error getting location: $e");
+        _useDefaultLocation();
+      }
     } catch (e) {
-      // Ensure a default value is set even if there is an error
-      _currentLocation = LocationData.fromMap({
-        'latitude': _defaultLocation.latitude,
-        'longitude': _defaultLocation.longitude,
-        'accuracy': 0.0,
-        'altitude': 0.0,
-        'speed': 0.0,
-        'speed_accuracy': 0.0,
-        'heading': 0.0,
-        'time': DateTime.now().millisecondsSinceEpoch.toDouble(),
-      });
-      print("DEBUG: Error getting location: $e");
+      print("DEBUG: getCurrentLocation overall error: $e");
+      _useDefaultLocation();
     }
   }
   
@@ -572,5 +625,147 @@ class FlutterMapService extends ChangeNotifier {
     } else {
       print('No associated flags found to delete');
     }
+  }
+  
+  // 检查位置权限 - 添加这个公共方法
+  Future<bool> checkLocationPermission() async {
+    return await _checkLocationPermission();
+  }
+  
+  // 请求位置权限 - 添加这个公共方法
+  Future<bool> requestLocationPermission() async {
+    bool serviceEnabled;
+    PermissionStatus permissionStatus;
+    
+    try {
+      // 检查位置服务是否启用
+      serviceEnabled = await _locationService.serviceEnabled();
+      if (!serviceEnabled) {
+        print("DEBUG: 位置服务未启用，请求启用服务");
+        serviceEnabled = await _locationService.requestService();
+        if (!serviceEnabled) {
+          print("DEBUG: 用户拒绝启用位置服务");
+          return false;
+        }
+      }
+      
+      // 检查位置权限
+      permissionStatus = await _locationService.hasPermission();
+      print("DEBUG: 当前权限状态: $permissionStatus");
+      
+      if (permissionStatus == PermissionStatus.denied) {
+        print("DEBUG: 权限被拒绝，请求权限");
+        permissionStatus = await _locationService.requestPermission();
+        print("DEBUG: 请求后，权限状态: $permissionStatus");
+        
+        if (permissionStatus != PermissionStatus.granted && 
+            permissionStatus != PermissionStatus.grantedLimited) {
+          print("DEBUG: 用户拒绝位置权限");
+          return false;
+        }
+      }
+      
+      print("DEBUG: 位置权限已授予: $permissionStatus");
+      return true;
+    } catch (e) {
+      print("DEBUG: 检查/请求位置权限时出错: $e");
+      return false;
+    }
+  }
+  
+  // 获取当前权限状态的详细信息
+  Future<PermissionStatus> getCurrentPermissionStatus() async {
+    try {
+      return await _locationService.hasPermission();
+    } catch (e) {
+      print('Error getting permission status: $e');
+      return PermissionStatus.denied;
+    }
+  }
+  
+  // 公开请求位置权限的方法，返回详细的权限状态结果
+  Future<PermissionStatus> requestLocationPermissionDetailed() async {
+    bool serviceEnabled;
+    PermissionStatus permissionStatus;
+    
+    try {
+      // 检查位置服务是否启用
+      serviceEnabled = await _locationService.serviceEnabled();
+      if (!serviceEnabled) {
+        serviceEnabled = await _locationService.requestService();
+        if (!serviceEnabled) {
+          print('Location services are disabled');
+          return PermissionStatus.denied;
+        }
+      }
+      
+      // 检查位置权限
+      permissionStatus = await _locationService.hasPermission();
+      if (permissionStatus == PermissionStatus.denied) {
+        permissionStatus = await _locationService.requestPermission();
+      }
+      
+      return permissionStatus;
+    } catch (e) {
+      print('Error requesting location permission: $e');
+      return PermissionStatus.denied;
+    }
+  }
+  
+  // 保存权限状态
+  Future<void> savePermissionStatus(PermissionStatus status) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      
+      // 将权限状态保存为字符串
+      await prefs.setString('location_permission_status', status.toString());
+      
+      // 记录是否已请求过权限
+      await prefs.setBool('location_permission_asked', true);
+      
+      print('Saved permission status: $status');
+    } catch (e) {
+      print('Error saving permission status: $e');
+    }
+  }
+  
+  // 检查是否需要再次请求权限
+  Future<bool> shouldRequestPermissionAgain() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      
+      // 如果从未请求过权限，则需要请求
+      bool permissionAsked = prefs.getBool('location_permission_asked') ?? false;
+      if (!permissionAsked) {
+        return true;
+      }
+      
+      // 获取保存的权限状态
+      String? permissionStatusStr = prefs.getString('location_permission_status');
+      if (permissionStatusStr == null) {
+        return true;
+      }
+      
+      // 如果权限状态是"仅限一次"或"拒绝"，则需要再次请求
+      return permissionStatusStr == 'PermissionStatus.grantedLimited' || 
+             permissionStatusStr == 'PermissionStatus.denied';
+    } catch (e) {
+      print('Error checking if permission should be requested again: $e');
+      return true;
+    }
+  }
+  
+  // Add this method to use the default location
+  void _useDefaultLocation() {
+    _currentLocation = LocationData.fromMap({
+      'latitude': _defaultLocation.latitude,
+      'longitude': _defaultLocation.longitude,
+      'accuracy': 0.0,
+      'altitude': 0.0,
+      'speed': 0.0,
+      'speed_accuracy': 0.0,
+      'heading': 0.0,
+      'time': DateTime.now().millisecondsSinceEpoch.toDouble(),
+    });
   }
 }

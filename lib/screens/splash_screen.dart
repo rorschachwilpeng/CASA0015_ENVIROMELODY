@@ -55,21 +55,23 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     _controller.forward();
     
     // Automatically navigate to the main interface after 5 seconds
-    Timer(const Duration(milliseconds: 5000), () {
-      if (mounted) {
-        Navigator.of(context).pushReplacement(
-          PageRouteBuilder(
-            pageBuilder: (context, animation, secondaryAnimation) => widget.nextScreen,
-            transitionsBuilder: (context, animation, secondaryAnimation, child) {
-              return FadeTransition(opacity: animation, child: child);
-            },
-            transitionDuration: const Duration(milliseconds: 500),
-          ),
-        );
-        
-        if (widget.onSplashComplete != null) {
-          widget.onSplashComplete!();
-        }
+    _controller.addStatusListener((status) {
+      if (status == AnimationStatus.completed && mounted) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          Navigator.of(context).pushReplacement(
+            PageRouteBuilder(
+              pageBuilder: (context, animation, secondaryAnimation) => widget.nextScreen,
+              transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                return FadeTransition(opacity: animation, child: child);
+              },
+              transitionDuration: const Duration(milliseconds: 500),
+            ),
+          );
+          
+          if (widget.onSplashComplete != null) {
+            widget.onSplashComplete!();
+          }
+        });
       }
     });
   }

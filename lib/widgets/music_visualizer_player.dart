@@ -177,7 +177,7 @@ class _MusicVisualizerPlayerState extends State<MusicVisualizerPlayer> {
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 13,
-                          fontFamily: 'DMMono',
+                          //fontFamily: 'DMMono',
                           color: PixelTheme.text,
                         ),
                         maxLines: 1,
@@ -196,7 +196,7 @@ class _MusicVisualizerPlayerState extends State<MusicVisualizerPlayer> {
                                 '${_formatDuration(position)} / ${_formatDuration(duration)}',
                                 style: TextStyle(
                                   fontSize: 10, 
-                                  fontFamily: 'DMMono',
+                                  //fontFamily: 'DMMono',
                                   color: PixelTheme.textLight,
                                 ),
                               );
@@ -305,7 +305,7 @@ class _MusicVisualizerPlayerState extends State<MusicVisualizerPlayer> {
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 13,
-                      fontFamily: 'DMMono',
+                      //fontFamily: 'DMMono',
                       color: PixelTheme.text,
                     ),
                     maxLines: 1,
@@ -446,7 +446,7 @@ class _MusicVisualizerPlayerState extends State<MusicVisualizerPlayer> {
                                 _formatDuration(position),
                                 style: TextStyle(
                                   fontSize: 10,
-                                  fontFamily: 'DMMono',
+                                  //fontFamily: 'DMMono',
                                   color: PixelTheme.textLight,
                                 ),
                               ),
@@ -454,7 +454,7 @@ class _MusicVisualizerPlayerState extends State<MusicVisualizerPlayer> {
                                 _formatDuration(duration),
                                 style: TextStyle(
                                   fontSize: 10,
-                                  fontFamily: 'DMMono',
+                                  //fontFamily: 'DMMono',
                                   color: PixelTheme.textLight,
                                 ),
                               ),

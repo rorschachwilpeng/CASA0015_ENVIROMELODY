@@ -46,20 +46,20 @@ class PixelTheme {
   
   // Monospaced font style
   static TextStyle get titleStyle => TextStyle(
-    fontFamily: 'DMMono', 
+    //fontFamily: 'DMMono', 
     fontSize: fontSizeLarge,
     fontWeight: FontWeight.bold,
     color: text,
   );
   
   static TextStyle get bodyStyle => TextStyle(
-    fontFamily: 'DMMono',
+    //fontFamily: 'DMMono',
     fontSize: fontSizeMedium,
     color: text,
   );
   
   static TextStyle get labelStyle => TextStyle(
-    fontFamily: 'DMMono',
+    //fontFamily: 'DMMono',
     fontSize: fontSizeSmall,
     color: textLight,
   );

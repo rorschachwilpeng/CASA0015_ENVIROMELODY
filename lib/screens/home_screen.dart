@@ -20,6 +20,8 @@ import '../services/deepseek_api_service.dart';
 import '../services/event_bus.dart';
 import '../services/geocoding_service.dart';
 import '../theme/pixel_theme.dart';
+import 'package:location/location.dart';
+import 'package:flutter/foundation.dart';
 
 // Define FlagInfo class (put at the top of the file, all classes outside)
 class FlagInfo {
@@ -132,10 +134,14 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
-    // Add page lifecycle observer
+    
+    // 初始化地图控制器
+    _mapController = MapController();
+    
+    // 添加页面生命周期观察者
     WidgetsBinding.instance.addObserver(this);
     
-    // Initialize map state
+    // 初始化地图状态
     _mapState = MapState(
       center: _mapService.getDefaultLocation(),
       zoom: COUNTRY_ZOOM_LEVEL,
@@ -143,11 +149,13 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     
     _initMapService();
     
-    // Asynchronous initialization
+    // 异步初始化 - 不改变现有结构
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _initLocationService();
       _loadPersistentFlags();
     });
+    
+    // 其他现有代码保持不变...
     
     // Listen to map zoom and move events
     _mapController.mapEventStream.listen((event) {
@@ -242,6 +250,23 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     _mapService.initMap(_mapController, autoMoveToCurrentLocation: !_hasInitializedOnce);
   }
   
+  Future<void> _checkInitialLocationPermission() async {
+    try {
+      final hasPermission = await _mapService.checkLocationPermission();
+      if (!hasPermission && mounted) {
+        // If there is no permission, show the permission request dialog
+        _showLocationPermissionDialog();
+      } else {
+        // If there is already permission, initialize the location service
+        _initLocationService();
+      }
+    } catch (e) {
+      print("DEBUG: Error checking initial permission: $e");
+      // If there is an error, also initialize the location service
+      _initLocationService();
+    }
+  }
+  
   Future<void> _initLocationService() async {
     try {
       setState(() {
@@ -294,51 +319,138 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   
   // When the map is ready
   void _onMapReady() {
-    print("DEBUG: The map is ready");
+    print("DEBUG: Map is ready");
+    
     setState(() {
       _mapState.isReady = true;
       _isMapReady = true;
     });
     
-    // Only move to the current location when it is the first load and _hasInitializedOnce is false
+    // Only execute when it is the first load
     if (_isFirstLoad && !_hasInitializedOnce) {
       _goToCurrentLocation();
       _isFirstLoad = false;
       _hasInitializedOnce = true;
     } else {
-      // If it is not the first load, restore to the last saved position
+      // If it is not the first load, try to restore the last saved position
       try {
         _mapController.move(_lastMapCenter, _lastMapZoom);
+        print("DEBUG: Successfully restored map position");
       } catch (e) {
-        print('Error restoring map position: $e');
+        print('DEBUG: Error restoring map position: $e');
       }
     }
   }
   
   // Go to current location
   Future<void> _goToCurrentLocation() async {
-    if (!_isMapReady || _mapController == null) return;
+    if (!_isMapReady || _mapController == null) {
+      print("DEBUG: Map is not ready, trying again later");
+      
+      // If the map is not ready, delay execution
+      Future.delayed(Duration(seconds: 1), () {
+        if (mounted && _isMapReady) {
+          _goToCurrentLocation();
+        }
+      });
+      return;
+    }
     
-    // Show pixel-style loading dialog
-    showPixelLoadingDialog(context, 'Getting your location...');
+    setState(() {
+      _isLoadingLocation = true;
+    });
+    
+    // Use SchedulerBinding.addPostFrameCallback to safely display SnackBar
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Getting your location...'))
+        );
+      }
+    });
     
     try {
-      await _mapService.moveToCurrentLocation();
+      // Add timeout mechanism
+      bool locationObtained = false;
+      Timer? timeoutTimer = Timer(const Duration(seconds: 15), () {
+        if (!locationObtained && mounted) {
+          print("DEBUG: Get location timeout (15 seconds)");
+          setState(() {
+            _isLoadingLocation = false;
+          });
+          
+          // Safely display information
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Get location timeout, using default location.'))
+              );
+            }
+          });
+        }
+      });
       
-      // Close loading dialog after success
-      if (mounted && Navigator.canPop(context)) {
-        Navigator.pop(context);
+      // Get location permission first  
+      bool hasPermission = await _mapService.requestLocationPermission();
+      if (!hasPermission) {
+        print("DEBUG: No location permission, showing permission request dialog");
+        timeoutTimer.cancel();
+        
+        if (mounted) {
+          setState(() {
+            _isLoadingLocation = false;
+          });
+          
+          // Show permission request dialog
+          _showLocationPermissionDialog();
+        }
+        return;
+      }
+      
+      print("DEBUG: Getting current location");
+      await _mapService.getCurrentLocation();
+      
+      if (_isMapReady && mounted) {
+        print("DEBUG: Moving map to current locationp to current location");
+        await _mapService.moveToCurrentLocation();
+        locationObtained = true;
+        timeoutTimer.cancel();
+        
+        // After getting the current location, display detailed information
+        final currentPos = _mapService.currentLatLng;
+        print("DEBUG: Current location - Latitude: ${currentPos?.latitude}, Longitude: ${currentPos?.longitude}");
+        
+        // Show location information
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('当前位置: ${currentPos?.latitude.toStringAsFixed(4)}, ${currentPos?.longitude.toStringAsFixed(4)}'),
+                duration: Duration(seconds: 4),
+              )
+            );
+          }
+        });
       }
     } catch (e) {
-      print('Error moving to current location: $e');
+      print('DEBUG: Error getting location: $e');
       
-      // Close loading dialog when error occurs
-      if (mounted && Navigator.canPop(context)) {
-        Navigator.pop(context);
-        
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Cannot access your location')),
-        );
+      if (mounted) {
+        // Use addPostFrameCallback to display error information
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Cannot access your location: $e'))
+            );
+          }
+        });
+      }
+    } finally {
+      // Ensure status update
+      if (mounted) {
+        setState(() {
+          _isLoadingLocation = false;
+        });
       }
     }
   }
@@ -638,7 +750,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         title: Text(
           'ENVIROMELODY',
           style: TextStyle(
-            fontFamily: 'DMMono', // Use monospaced font
+            ////fontFamily: 'DMMono', // Use monospaced font
             fontSize: 20,
             fontWeight: FontWeight.bold,
             letterSpacing: 1.5, // Increase letter spacing
@@ -704,7 +816,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                 decoration: InputDecoration(
                   hintText: 'Search location...',
                   hintStyle: TextStyle(
-                    fontFamily: 'DMMono',
+                    ////fontFamily: 'DMMono',
                     fontSize: 14,
                     color: PixelTheme.textLight,
                   ),
@@ -941,13 +1053,34 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                       style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
-                        fontFamily: 'DMMono',
+                        //fontFamily: 'DMMono',
                       ),
                     ),
                   ],
                 ),
               ),
             ),
+          // if (kDebugMode) // 导入 package:flutter/foundation.dart 来使用 kDebugMode
+          //   Positioned(
+          //     top: 120,
+          //     right: 16,
+          //     child: Container(
+          //       width: 40,
+          //       height: 40,
+          //       decoration: BoxDecoration(
+          //         color: Colors.red.withOpacity(0.7),
+          //         borderRadius: BorderRadius.circular(20),
+          //       ),
+          //       child: IconButton(
+          //         icon: Icon(Icons.location_searching, color: Colors.white, size: 20),
+          //         onPressed: () {
+          //           // 直接显示权限对话框
+          //           _showLocationPermissionDialog();
+          //         },
+          //         tooltip: '请求位置权限',
+          //       ),
+          //     ),
+          //   ),
         ],
       ),
     );
@@ -990,7 +1123,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      fontFamily: 'DMMono',
+                      //fontFamily: 'DMMono',
                     ),
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -1053,7 +1186,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                         style: TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
-                          fontFamily: 'DMMono',
+                          //fontFamily: 'DMMono',
                         ),
                       ),
                     ],
@@ -1072,7 +1205,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
-                          fontFamily: 'DMMono',
+                          //fontFamily: 'DMMono',
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -1133,7 +1266,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                         'Generate music based on weather',
                         style: TextStyle(
                           fontSize: 14,
-                          fontFamily: 'DMMono',
+                          //fontFamily: 'DMMono',
                           color: PixelTheme.primary,
                           fontWeight: FontWeight.bold,
                         ),
@@ -1167,7 +1300,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           '$label: ',
           style: TextStyle(
             fontSize: 12,
-            fontFamily: 'DMMono',
+            //fontFamily: 'DMMono',
             color: PixelTheme.textLight,
           ),
         ),
@@ -1175,7 +1308,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           value,
           style: TextStyle(
             fontSize: 12,
-            fontFamily: 'DMMono',
+            //fontFamily: 'DMMono',
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -1830,7 +1963,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           label,
           style: TextStyle(
             fontSize: 11,
-            fontFamily: 'DMMono',
+            //fontFamily: 'DMMono',
             color: PixelTheme.text,
           ),
         ),
@@ -1893,7 +2026,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
-                                fontFamily: 'DMMono',
+                                //fontFamily: 'DMMono',
                               ),
                             ),
                           ),
@@ -1951,14 +2084,14 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                                             style: TextStyle(
                                               fontSize: 16,
                                               fontWeight: FontWeight.bold,
-                                              fontFamily: 'DMMono',
+                                              //fontFamily: 'DMMono',
                                             ),
                                           ),
                                           Text(
                                             '${weatherData.weatherDescription}, ${weatherData.temperature.toStringAsFixed(1)}°C',
                                             style: TextStyle(
                                               fontSize: 14,
-                                              fontFamily: 'DMMono',
+                                              //fontFamily: 'DMMono',
                                             ),
                                           ),
                                         ],
@@ -1976,7 +2109,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
-                                  fontFamily: 'DMMono',
+                                  //fontFamily: 'DMMono',
                                 ),
                               ),
                               const SizedBox(height: 8),
@@ -2010,7 +2143,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
-                                  fontFamily: 'DMMono',
+                                  //fontFamily: 'DMMono',
                                 ),
                               ),
                               const SizedBox(height: 8),
@@ -2066,7 +2199,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                               child: Text(
                                 'Cancel',
                                 style: TextStyle(
-                                  fontFamily: 'DMMono',
+                                  //fontFamily: 'DMMono',
                                   fontSize: 14,
                                 ),
                               ),
@@ -2096,7 +2229,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                               child: Text(
                                 'Generate Music',
                                 style: TextStyle(
-                                  fontFamily: 'DMMono',
+                                  //fontFamily: 'DMMono',
                                   fontSize: 14,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -2145,7 +2278,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           style: TextStyle(
             color: selected ? Colors.white : PixelTheme.text,
             fontSize: 12,
-            fontFamily: 'DMMono',
+            //fontFamily: 'DMMono',
             fontWeight: selected ? FontWeight.bold : FontWeight.normal,
           ),
         ),
@@ -2370,7 +2503,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                   message,
                   style: TextStyle(
                     fontSize: 16,
-                    fontFamily: 'DMMono',
+                    //fontFamily: 'DMMono',
                     color: PixelTheme.text,
                   ),
                 ),
@@ -2381,5 +2514,160 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         );
       },
     );
+  }
+
+  // Modify _showLocationPermissionDialog method
+  void _showLocationPermissionDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: PixelTheme.surface,
+            border: Border.all(color: PixelTheme.text, width: 2),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.3),
+                offset: const Offset(4, 4),
+                blurRadius: 0,
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Location Access',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: PixelTheme.text,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'EnviroMelody needs access to your location to create music based on your surroundings. Allow access to location information?',
+                style: TextStyle(
+                  color: PixelTheme.text,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(color: PixelTheme.text, width: 2),
+                    ),
+                    child: TextButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        // Use default location
+                        _safelyMoveMap(_mapService.getDefaultLocation(), COUNTRY_ZOOM_LEVEL);
+                      },
+                      style: TextButton.styleFrom(
+                        backgroundColor: PixelTheme.surface,
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      ),
+                      child: Text(
+                        'Not now',
+                        style: TextStyle(
+                          color: PixelTheme.textLight,
+                        ),
+                      ),
+                    ),
+                  ),
+                  
+                  Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(color: PixelTheme.primary, width: 2),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.3),
+                          offset: const Offset(2, 2),
+                          blurRadius: 0,
+                        ),
+                      ],
+                    ),
+                    child: TextButton(
+                      onPressed: () async {
+                        Navigator.pop(context);
+                        // Request location permission
+                        final permissionStatus = await _mapService.requestLocationPermissionDetailed();
+  
+                        // Save permission status
+                        await _mapService.savePermissionStatus(permissionStatus);
+                        
+                        // Handle permission status
+                        if (permissionStatus == PermissionStatus.granted || 
+                            permissionStatus == PermissionStatus.grantedLimited) {
+                          // Granted permission, get location
+                          _initLocationService();
+                        } else {
+                          // Show prompt
+                          WidgetsBinding.instance.addPostFrameCallback((_) {
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Location access denied, using default location.'))
+                              );
+                            }
+                          });
+                          
+                          // Use default location
+                          _safelyMoveMap(_mapService.getDefaultLocation(), COUNTRY_ZOOM_LEVEL);
+                        }
+                      },
+                      style: TextButton.styleFrom(
+                        backgroundColor: PixelTheme.primary,
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      ),
+                      child: const Text(
+                        'Allow',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _checkMapControllerReady() {
+    // If the map is ready, return immediately
+    if (_isMapReady) return;
+    
+    // Check if the map controller is ready
+    if (isMapControllerReady()) {
+      print("DEBUG: Map controller is ready");
+      setState(() {
+        _isMapReady = true;
+        _mapState.isReady = true;
+      });
+      
+      if (_isFirstLoad && !_hasInitializedOnce) {
+        _goToCurrentLocation();
+        _isFirstLoad = false;
+        _hasInitializedOnce = true;
+      }
+    } else {
+      // If not ready, delay checking
+      Future.delayed(Duration(milliseconds: 500), () {
+        if (mounted) {
+          _checkMapControllerReady();
+        }
+      });
+    }
   }
 } 

@@ -84,7 +84,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
     return MaterialApp(
       title: 'EnviroMelody',
       theme: ThemeData(
-        fontFamily: 'DMMono',
+        // //fontFamily: 'DMMono',
         primaryColor: PixelTheme.primary,
         primarySwatch: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,
@@ -208,7 +208,7 @@ class _MainScreenState extends State<MainScreen> {
             label,
             style: TextStyle(
               fontSize: 10,
-              fontFamily: 'DMMono',
+              ////fontFamily: 'DMMono',
               color: isSelected ? PixelTheme.primary : PixelTheme.textLight,
               fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
             ),

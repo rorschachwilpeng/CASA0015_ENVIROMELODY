@@ -310,8 +310,8 @@ class AudioPlayerManager extends ChangeNotifier {
     // If it is executing, check if it is timed out
     if (_isPlayNextExecuting) {
       if (_playNextLockTime != null && 
-          DateTime.now().difference(_playNextLockTime!).inSeconds > 5) {
-        // If locked for more than 5 seconds, force reset
+          DateTime.now().difference(_playNextLockTime!).inSeconds > 2) {
+        // If locked for more than 2 seconds, force reset
         print("Play next locked for too long (${DateTime.now().difference(_playNextLockTime!).inSeconds}s), force reset");
         _isPlayNextExecuting = false;
       } else {

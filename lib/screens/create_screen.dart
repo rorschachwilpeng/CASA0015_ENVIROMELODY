@@ -1052,7 +1052,7 @@ class _CreateScreenState extends State<CreateScreen> {
                   style: TextStyle(
                     fontSize: 18, 
                     fontWeight: FontWeight.bold,
-                    fontFamily: 'DMMono',
+                    ////fontFamily: 'DMMono',
                     color: PixelTheme.primary,
                   ),
                 ),
@@ -1076,7 +1076,7 @@ class _CreateScreenState extends State<CreateScreen> {
                     title: Text('Generate Settings', 
                       style: TextStyle(
                         fontSize: 16,
-                        fontFamily: 'DMMono',
+                        ////fontFamily: 'DMMono',
                         fontWeight: FontWeight.bold,
                         color: PixelTheme.text,
                       ),
@@ -1117,7 +1117,7 @@ class _CreateScreenState extends State<CreateScreen> {
                           child: Text(
                             '$_durationSeconds', 
                             style: TextStyle(
-                              fontFamily: 'DMMono',
+                              ////fontFamily: 'DMMono',
                               fontWeight: FontWeight.bold,
                               color: PixelTheme.text,
                             ),
@@ -1172,7 +1172,7 @@ class _CreateScreenState extends State<CreateScreen> {
                       fontSize: 15.0,
                     ),
                     labelStyle: TextStyle(
-                      fontFamily: 'DMMono',
+                      ////fontFamily: 'DMMono',
                       fontSize: 16.0,
                       color: PixelTheme.text,
                     ),

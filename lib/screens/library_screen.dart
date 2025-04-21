@@ -576,9 +576,9 @@ class _LibraryScreenState extends State<LibraryScreen> {
                     ? _searchQuery.isNotEmpty
                         ? _buildPixelEmptySearchResultView()
                         : _buildPixelEmptyLibraryView()
-                    : ListView.builder( // 改用builder而非separated，便于定制间距
+                    : ListView.builder( // Use builder instead of separated,便于定制间距
                         padding: EdgeInsets.only(
-                          bottom: 80, // 为底部播放器留出空间
+                          bottom: 80, // Leave space for the bottom player
                           left: 12,
                           right: 12,
                           top: 8,
