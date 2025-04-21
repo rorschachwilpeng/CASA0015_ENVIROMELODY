@@ -4,12 +4,14 @@ import '../models/music_preference.dart';
 class MusicPreferenceSelector extends StatefulWidget {
   final MusicVibe? initialVibe;
   final MusicGenre? initialGenre;
-  final Function(MusicVibe?, MusicGenre?) onPreferencesChanged;
+  final MusicScene? initialScene;
+  final Function(MusicVibe?, MusicGenre?, MusicScene?) onPreferencesChanged;
   
   const MusicPreferenceSelector({
     Key? key,
     this.initialVibe,
     this.initialGenre,
+    this.initialScene,
     required this.onPreferencesChanged,
   }) : super(key: key);
   
@@ -20,12 +22,14 @@ class MusicPreferenceSelector extends StatefulWidget {
 class _MusicPreferenceSelectorState extends State<MusicPreferenceSelector> {
   MusicVibe? _selectedVibe;
   MusicGenre? _selectedGenre;
+  MusicScene? _selectedScene;
   
   @override
   void initState() {
     super.initState();
     _selectedVibe = widget.initialVibe;
     _selectedGenre = widget.initialGenre;
+    _selectedScene = widget.initialScene;
   }
   
   @override
@@ -47,13 +51,16 @@ class _MusicPreferenceSelectorState extends State<MusicPreferenceSelector> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Vibe selection section
+          _buildSectionTitle('Select Scene (Scene)'),
+          _buildSceneSelector(),
+          
+          const SizedBox(height: 16),
+          
           _buildSectionTitle('Select Vibe (Vibe)'),
           _buildVibeSelector(),
           
           const SizedBox(height: 16),
           
-          // Genre selection section
           _buildSectionTitle('Select Genre (Genre)'),
           _buildGenreSelector(),
         ],
@@ -61,7 +68,6 @@ class _MusicPreferenceSelectorState extends State<MusicPreferenceSelector> {
     );
   }
   
-  // Build section title
   Widget _buildSectionTitle(String title) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8.0, left: 4.0),
@@ -76,59 +82,82 @@ class _MusicPreferenceSelectorState extends State<MusicPreferenceSelector> {
     );
   }
   
-  // Build vibe selector
+  Widget _buildSceneSelector() {
+    return Wrap(
+      spacing: 8.0,
+      runSpacing: 8.0,
+      children: MusicScene.values.map((scene) {
+        final isSelected = _selectedScene == scene;
+        return _buildOptionCard(
+          label: scene.name,
+          icon: scene.icon,
+          isSelected: isSelected,
+          onTap: () {
+            setState(() {
+              if (isSelected) {
+                _selectedScene = null;
+              } else {
+                _selectedScene = scene;
+                final prefs = scene.preferences;
+                _selectedVibe = prefs['vibe'];
+                _selectedGenre = prefs['genre'];
+              }
+            });
+            widget.onPreferencesChanged(_selectedVibe, _selectedGenre, _selectedScene);
+          },
+        );
+      }).toList(),
+    );
+  }
+  
   Widget _buildVibeSelector() {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: MusicVibe.values.map((vibe) {
-          final isSelected = _selectedVibe == vibe;
-          return Padding(
-            padding: const EdgeInsets.only(right: 8.0),
-            child: _buildOptionCard(
-              label: vibe.name,
-              icon: vibe.icon,
-              isSelected: isSelected,
-              onTap: () {
-                setState(() {
-                  _selectedVibe = isSelected ? null : vibe;
-                });
-                widget.onPreferencesChanged(_selectedVibe, _selectedGenre);
-              },
-            ),
-          );
-        }).toList(),
-      ),
+    return Wrap(
+      spacing: 8.0,
+      runSpacing: 8.0,
+      children: MusicVibe.values.map((vibe) {
+        final isSelected = _selectedVibe == vibe;
+        return _buildOptionCard(
+          label: vibe.name,
+          icon: vibe.icon,
+          isSelected: isSelected,
+          onTap: () {
+            setState(() {
+              _selectedVibe = isSelected ? null : vibe;
+              if (_selectedScene != null) {
+                _selectedScene = null;
+              }
+            });
+            widget.onPreferencesChanged(_selectedVibe, _selectedGenre, _selectedScene);
+          },
+        );
+      }).toList(),
     );
   }
   
-  // Build genre selector
   Widget _buildGenreSelector() {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: MusicGenre.values.map((genre) {
-          final isSelected = _selectedGenre == genre;
-          return Padding(
-            padding: const EdgeInsets.only(right: 8.0),
-            child: _buildOptionCard(
-              label: genre.name,
-              icon: genre.icon,
-              isSelected: isSelected,
-              onTap: () {
-                setState(() {
-                  _selectedGenre = isSelected ? null : genre;
-                });
-                widget.onPreferencesChanged(_selectedVibe, _selectedGenre);
-              },
-            ),
-          );
-        }).toList(),
-      ),
+    return Wrap(
+      spacing: 8.0,
+      runSpacing: 8.0,
+      children: MusicGenre.values.map((genre) {
+        final isSelected = _selectedGenre == genre;
+        return _buildOptionCard(
+          label: genre.name,
+          icon: genre.icon,
+          isSelected: isSelected,
+          onTap: () {
+            setState(() {
+              _selectedGenre = isSelected ? null : genre;
+              if (_selectedScene != null) {
+                _selectedScene = null;
+              }
+            });
+            widget.onPreferencesChanged(_selectedVibe, _selectedGenre, _selectedScene);
+          },
+        );
+      }).toList(),
     );
   }
   
-  // Build option card
   Widget _buildOptionCard({
     required String label,
     required IconData icon,

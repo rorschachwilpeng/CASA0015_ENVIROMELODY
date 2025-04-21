@@ -1975,6 +1975,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     // Reset selection state when dialog opens
     _selectedVibe = null;
     _selectedGenre = null;
+    MusicScene? _selectedScene = null;   
     
     // Use StatefulBuilder to allow setState inside the dialog
     showDialog(
@@ -1992,7 +1993,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               child: Container(
                 width: screenWidth * 0.9,
                 constraints: BoxConstraints(
-                  maxHeight: screenHeight * 0.7,
+                  maxHeight: screenHeight * 0.8,   
                 ),
                 decoration: BoxDecoration(
                   color: PixelTheme.surface,
@@ -2026,7 +2027,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
-                                //fontFamily: 'DMMono',
                               ),
                             ),
                           ),
@@ -2084,14 +2084,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                                             style: TextStyle(
                                               fontSize: 16,
                                               fontWeight: FontWeight.bold,
-                                              //fontFamily: 'DMMono',
                                             ),
                                           ),
                                           Text(
                                             '${weatherData.weatherDescription}, ${weatherData.temperature.toStringAsFixed(1)}°C',
                                             style: TextStyle(
                                               fontSize: 14,
-                                              //fontFamily: 'DMMono',
                                             ),
                                           ),
                                         ],
@@ -2103,13 +2101,53 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                               
                               const SizedBox(height: 20),
                               
-                              // Vibe
+                              // Scene selection
+                              Text(
+                                'Select Scene:',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  border: Border.all(color: PixelTheme.text.withOpacity(0.3), width: 1),
+                                ),
+                                child: Wrap(
+                                  spacing: 8,
+                                  runSpacing: 8,
+                                  children: MusicScene.values.map((scene) {
+                                    return _buildPixelChoiceChip(
+                                      label: scene.name,
+                                      selected: _selectedScene == scene,
+                                      onSelected: (selected) {
+                                        setState(() {
+                                          if (selected) {
+                                            _selectedScene = scene;
+                                            // 根据场景自动设置 vibe 和 genre
+                                            final prefs = scene.preferences;
+                                            _selectedVibe = prefs['vibe'];
+                                            _selectedGenre = prefs['genre'];
+                                          } else {
+                                            _selectedScene = null;
+                                          }
+                                        });
+                                      },
+                                    );
+                                  }).toList(),
+                                ),
+                              ),
+                              
+                              const SizedBox(height: 20),
+                              
+                              // Vibe selection
                               Text(
                                 'Select Vibe:',
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
-                                  //fontFamily: 'DMMono',
                                 ),
                               ),
                               const SizedBox(height: 8),
@@ -2128,6 +2166,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                                       onSelected: (selected) {
                                         setState(() {
                                           _selectedVibe = selected ? vibe : null;
+                                          // When manually selecting vibe, clear scene selection
+                                          if (_selectedScene != null) {
+                                            _selectedScene = null;
+                                          }
                                         });
                                       },
                                     );
@@ -2137,13 +2179,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                               
                               const SizedBox(height: 20),
                               
-                              // Genre
+                              // Genre selection
                               Text(
                                 'Select Style:',
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
-                                  //fontFamily: 'DMMono',
                                 ),
                               ),
                               const SizedBox(height: 8),
@@ -2162,6 +2203,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                                       onSelected: (selected) {
                                         setState(() {
                                           _selectedGenre = selected ? genre : null;
+                                          // When manually selecting genre, clear scene selection
+                                          if (_selectedScene != null) {
+                                            _selectedScene = null;
+                                          }
                                         });
                                       },
                                     );
@@ -2199,7 +2244,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                               child: Text(
                                 'Cancel',
                                 style: TextStyle(
-                                  //fontFamily: 'DMMono',
                                   fontSize: 14,
                                 ),
                               ),
@@ -2219,7 +2263,13 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                             child: TextButton(
                               onPressed: () {
                                 Navigator.pop(context);
-                                _generateMusicAndUpdateFlag(weatherData, flagId);
+                                // Pass _selectedScene?.name as additional information
+                                _generateMusicAndUpdateFlag(
+                                  weatherData, 
+                                  flagId, 
+                                  null, // Keep original parameter structure
+                                  _selectedScene?.name // Optional: pass scene name
+                                );
                               },
                               style: TextButton.styleFrom(
                                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -2229,7 +2279,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                               child: Text(
                                 'Generate Music',
                                 style: TextStyle(
-                                  //fontFamily: 'DMMono',
                                   fontSize: 14,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -2286,7 +2335,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     );
   }
 
-  Future<void> _generateMusicAndUpdateFlag(WeatherData weatherData, String flagId, [String? customPrompt]) async {
+  Future<void> _generateMusicAndUpdateFlag(WeatherData weatherData, String flagId, [String? customPrompt, String? sceneName]) async {
     // Show pixel-style loading dialog
     showPixelLoadingDialog(context, 'Generating music...');
     

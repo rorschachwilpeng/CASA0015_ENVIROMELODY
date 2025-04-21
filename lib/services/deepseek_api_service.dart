@@ -217,7 +217,7 @@ Wind speed: $windSpeed m/s
     }
   }
 
-  // Fallback prompt generation method (used when API call fails)
+  // 增强的 fallback 提示生成方法
   String _generateFallbackPrompt({
     required String weatherDescription,
     required double temperature,
@@ -228,6 +228,7 @@ Wind speed: $windSpeed m/s
     _logger.i('Using fallback method to generate music prompt');
     
     String mood = 'calm';
+    // 根据天气描述推断情绪
     if (weatherDescription.contains('雨') || weatherDescription.contains('rain')) {
       mood = 'melancholic';
     } else if (weatherDescription.contains('晴') || weatherDescription.contains('clear')) {
@@ -236,9 +237,27 @@ Wind speed: $windSpeed m/s
       mood = 'contemplative';
     } else if (weatherDescription.contains('雪') || weatherDescription.contains('snow')) {
       mood = 'dreamy';
+    } else if (weatherDescription.contains('雾') || weatherDescription.contains('fog') || weatherDescription.contains('mist')) {
+      mood = 'mystical';
+    } else if (weatherDescription.contains('风') || weatherDescription.contains('wind')) {
+      mood = 'dynamic';
     }
     
-    String prompt = 'Create a $mood piece of music, ';
+    // 根据温度调整情绪
+    String tempMood = '';
+    if (temperature < 0) {
+      tempMood = 'cold and stark';
+    } else if (temperature < 10) {
+      tempMood = 'cool and refreshing';
+    } else if (temperature < 20) {
+      tempMood = 'mild and pleasant';
+    } else if (temperature < 30) {
+      tempMood = 'warm and relaxing';
+    } else {
+      tempMood = 'hot and intense';
+    }
+    
+    String prompt = 'Create a $mood, $tempMood piece of music, ';
     
     if (vibeName != null && vibeName.isNotEmpty) {
       prompt += 'with a $vibeName atmosphere, ';
