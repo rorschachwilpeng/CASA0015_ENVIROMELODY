@@ -1,6 +1,6 @@
 # EnviroMelody  
 <div align="center">
-<img src="landing_page/lp_img/logo.png" width="400" height="400"/>
+<img src="docs/lp_img/logo.png" width="400" height="400"/>
 </div>
 
 **Let your environment play the music.**  
