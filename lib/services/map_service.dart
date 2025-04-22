@@ -121,7 +121,7 @@ class MapService {
     }
   }
   
-  // 移动到当前位置
+  // Move to current location
   Future<void> moveToCurrentLocation() async {
     try {
       print("DEBUG: moveToCurrentLocation started");

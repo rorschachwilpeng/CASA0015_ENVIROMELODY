@@ -425,7 +425,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('当前位置: ${currentPos?.latitude.toStringAsFixed(4)}, ${currentPos?.longitude.toStringAsFixed(4)}'),
+                content: Text('Current Location: ${currentPos?.latitude.toStringAsFixed(4)}, ${currentPos?.longitude.toStringAsFixed(4)}'),
                 duration: Duration(seconds: 4),
               )
             );

@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EnviroMelody - Transform your environment into music</title>
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <!-- Google Fonts-->   
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #34C6CD;
+            --secondary: #F19953;
+            --surface: #F8F4E3;
+            --background: #FCFAF2;
+            --text: #333333;
+            --text-light: #666666;
+            --accent: #8BD8BD;
+            --dark-accent: #256D85;
+            --error: #F44336;
+            --pixel-border: 2px solid var(--text);
+            --pixel-shadow: 4px 4px 0px var(--text);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            color: var(--text);
+            background-color: var(--background);
+            line-height: 1.6;
+        }
+
+        h1, h2, h3, h4, .pixel-text {
+            font-family: 'Press Start 2P', 'DM Sans', sans-serif;
+            line-height: 1.3;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Navigation bar */
+        .navbar {
+            background-color: var(--surface);
+            border-bottom: var(--pixel-border);
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .navbar .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo img {
+            height: 40px;
+            border: var(--pixel-border);
+            box-shadow: 2px 2px 0px var(--text);
+        }
+
+        .logo h1 {
+            font-size: 20px;
+            color: var(--primary);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 32px;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--text);
+            font-weight: 500;
+            position: relative;
+            padding: 5px 0;
+        }
+
+        .nav-links a:hover {
+            color: var(--primary);
+        }
+
+        .nav-links a:hover::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: var(--primary);
+        }
+
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        /* Hero section */
+        .hero {
+            padding: 160px 0 80px;
+            background: linear-gradient(135deg, var(--background) 0%, var(--surface) 100%);
+            text-align: center;
+        }
+
+        .hero h1 {
+            font-size: 42px;
+            margin-bottom: 20px;
+            color: var(--text);
+        }
+
+        .hero p {
+            font-size: 20px;
+            max-width: 800px;
+            margin: 0 auto 40px;
+            color: var(--text-light);
+        }
+
+        .cta-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin-bottom: 60px;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 16px 32px;
+            border: var(--pixel-border);
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 16px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+            box-shadow: var(--pixel-shadow);
+        }
+
+        .btn-primary:hover {
+            transform: translate(2px, 2px);
+            box-shadow: 2px 2px 0px var(--text);
+        }
+
+        .btn-secondary {
+            background-color: var(--surface);
+            color: var(--text);
+            box-shadow: var(--pixel-shadow);
+        }
+
+        .btn-secondary:hover {
+            transform: translate(2px, 2px);
+            box-shadow: 2px 2px 0px var(--text);
+        }
+
+        .hero-image {
+            max-width: 100%;
+            margin: 0 auto;
+            display: block;
+            border: var(--pixel-border);
+            box-shadow: var(--pixel-shadow);
+        }
+
+        /* Features section */
+        .features {
+            padding: 100px 0;
+            background-color: var(--background);
+        }
+
+        .section-title {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .section-title h2 {
+            font-size: 32px;
+            margin-bottom: 16px;
+            color: var(--text);
+        }
+
+        .section-title p {
+            font-size: 18px;
+            max-width: 600px;
+            margin: 0 auto;
+            color: var(--text-light);
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 40px;
+        }
+
+        .feature-card {
+            background-color: var(--surface);
+            border: var(--pixel-border);
+            box-shadow: var(--pixel-shadow);
+            padding: 30px;
+            transition: transform 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .feature-icon {
+            width: 60px;
+            height: 60px;
+            margin-bottom: 24px;
+            border: var(--pixel-border);
+            padding: 10px;
+            background-color: var(--accent);
+        }
+
+        .feature-card h3 {
+            font-size: 20px;
+            margin-bottom: 16px;
+        }
+
+        .feature-card p {
+            font-size: 16px;
+            color: var(--text-light);
+        }
+
+        /* How it works section */
+        .how-it-works {
+            padding: 100px 0;
+            background-color: var(--surface);
+        }
+
+        .steps {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+            margin-top: 60px;
+        }
+
+        .step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        .step-number {
+            background-color: var(--primary);
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 0;
+            border: var(--pixel-border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 20px;
+            margin-bottom: 24px;
+        }
+
+        .step h3 {
+            font-size: 20px;
+            margin-bottom: 16px;
+        }
+
+        .step p {
+            font-size: 16px;
+            color: var(--text-light);
+        }
+
+        /* Application screenshot showcase */
+        .showcase {
+            padding: 100px 0;
+            background-color: var(--background);
+        }
+
+        .showcase-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 24px;
+            margin-top: 60px;
+        }
+
+        .showcase-item {
+            border: var(--pixel-border);
+            box-shadow: var(--pixel-shadow);
+            overflow: hidden;
+            transition: transform 0.3s ease;
+        }
+
+        .showcase-item:hover {
+            transform: scale(1.02);
+        }
+
+        .showcase-item img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        /* User testimonials */
+        .testimonials {
+            padding: 100px 0;
+            background-color: var(--surface);
+        }
+
+        .testimonials-slider {
+            max-width: 800px;
+            margin: 60px auto 0;
+            text-align: center;
+        }
+
+        .testimonial {
+            background-color: var(--background);
+            border: var(--pixel-border);
+            box-shadow: var(--pixel-shadow);
+            padding: 40px;
+            margin: 0 20px;
+        }
+
+        .testimonial-text {
+            font-size: 18px;
+            line-height: 1.8;
+            margin-bottom: 20px;
+            font-style: italic;
+        }
+
+        .testimonial-author {
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        /* Download section */
+        .download {
+            padding: 100px 0;
+            background: linear-gradient(135deg, #256D85 0%, #34C6CD 100%);
+            color: white;
+            text-align: center;
+        }
+
+        .download h2 {
+            font-size: 32px;
+            margin-bottom: 20px;
+        }
+
+        .download p {
+            font-size: 18px;
+            max-width: 600px;
+            margin: 0 auto 40px;
+            opacity: 0.9;
+        }
+
+        .store-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .store-btn {
+            display: flex;
+            align-items: center;
+            background-color: white;
+            color: var(--text);
+            border: var(--pixel-border);
+            box-shadow: var(--pixel-shadow);
+            padding: 12px 24px;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+        .store-btn:hover {
+            transform: translate(2px, 2px);
+            box-shadow: 2px 2px 0px var(--text);
+        }
+
+        .store-btn img {
+            height: 24px;
+            margin-right: 10px;
+        }
+
+        /* Footer */
+        .footer {
+            background-color: var(--text);
+            color: white;
+            padding: 60px 0 30px;
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+
+        .footer-column h3 {
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+
+        .footer-column ul {
+            list-style: none;
+        }
+
+        .footer-column ul li {
+            margin-bottom: 10px;
+        }
+
+        .footer-column a {
+            color: white;
+            opacity: 0.8;
+            text-decoration: none;
+        }
+
+        .footer-column a:hover {
+            opacity: 1;
+        }
+
+        .social-icons {
+            display: flex;
+            gap: 16px;
+            margin-top: 20px;
+        }
+
+        .social-icons a {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 0;
+            transition: background-color 0.2s ease;
+        }
+
+        .social-icons a:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .copyright {
+            text-align: center;
+            padding-top: 30px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 14px;
+            opacity: 0.7;
+        }
+
+        /* Responsive adaptation */
+        @media (max-width: 768px) {
+            .hero {
+                padding: 140px 0 60px;
+            }
+
+            .hero h1 {
+                font-size: 32px;
+            }
+
+            .hero p {
+                font-size: 18px;
+            }
+
+            .nav-links {
+                display: none;
+            }
+
+            .mobile-menu-btn {
+                display: block;
+            }
+            
+            .cta-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .btn {
+                width: 100%;
+                max-width: 280px;
+            }
+            
+            .section-title h2 {
+                font-size: 28px;
+            }
+        }
+
+        /* Pixel style decoration */
+        .pixel-decoration {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background-color: var(--secondary);
+            border: var(--pixel-border);
+        }
+        
+        .pixel-decoration.top-left {
+            top: 40px;
+            left: 40px;
+        }
+        
+        .pixel-decoration.top-right {
+            top: 40px;
+            right: 40px;
+        }
+        
+        .pixel-decoration.bottom-left {
+            bottom: 40px;
+            left: 40px;
+        }
+        
+        .pixel-decoration.bottom-right {
+            bottom: 40px;
+            right: 40px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation bar -->
+    <nav class="navbar">
+        <div class="container">
+            <a href="#" class="logo">
+                <img src="lp_img/logo.png" alt="EnviroMelody Logo">
+                <h1>EnviroMelody</h1>
+            </a>
+            <div class="nav-links">
+                <a href="#features">Features</a>
+                <a href="#how-it-works">How it works</a>
+                <a href="#showcase">Application showcase</a>
+                <a href="#download">Download</a>
+            </div>
+            <button class="mobile-menu-btn">☰</button>
+        </div>
+    </nav>
+
+    <!-- Hero section -->
+    <section class="hero">
+        <div class="container">
+            <h1>Transform your environment into music</h1>
+            <p>EnviroMelody combines real-time environmental data with personal emotional preferences to create unique music experiences. Feel the sounds of your surroundings, explore the wonderful connection between data and music.</p>
+            <div class="cta-buttons">
+                <a href="#download" class="btn btn-primary">Download</a>
+                <a href="#how-it-works" class="btn btn-secondary">Learn more</a>
+            </div>
+            <img src="lp_img/app.png" alt="EnviroMelody application screenshot" class="hero-image">
+        </div>
+        <!-- Pixel style decoration -->
+        <div class="pixel-decoration top-left"></div>
+        <div class="pixel-decoration top-right"></div>
+        <div class="pixel-decoration bottom-left"></div>
+        <div class="pixel-decoration bottom-right"></div>
+    </section>
+
+    <!-- Features section -->
+    <section class="features" id="features">
+        <div class="container">
+            <div class="section-title">
+                <h2>Explore EnviroMelody features</h2>
+                <p>Discover how EnviroMelody creates personalized music experiences through environmental data</p>
+            </div>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <img src="map-icon.png" alt="Interactive map" class="feature-icon">
+                    <h3>Interactive map experience</h3>
+                    <p>Explore the world, detect your location or choose any location, mark environmental data, and save your favorite locations.</p>
+                </div>
+                <div class="feature-card">
+                    <img src="weather-icon.png" alt="Environment data" class="feature-icon">
+                    <h3>Real-time environmental data</h3>
+                    <p>Get detailed weather information, including temperature, humidity, wind speed, and weather conditions, updated in real-time.</p>
+                </div>
+                <div class="feature-card">
+                    <img src="music-icon.png" alt="AI 音乐生成" class="feature-icon">
+                    <h3>AI environment music generation</h3>
+                    <p>Create personalized music based on environmental data, customize music style and atmosphere, optimize for specific scenarios (such as meditation, learning).</p>
+                </div>
+                <div class="feature-card">
+                    <img src="library-icon.png" alt="Music library" class="feature-icon">
+                    <h3>Music library management</h3>
+                    <p>Save and organize generated music, with environmental data and generation parameters, for easy查找和回顾。</p>
+                </div>
+                <div class="feature-card">
+                    <img src="visual-icon.png" alt="Music visualization" class="feature-icon">
+                    <h3>Music visualization</h3>
+                    <p>Immersive music experience, convert audio into dynamic visual effects, enhance the connection between environment and music.</p>
+                </div>
+                <div class="feature-card">
+                    <img src="map-music-icon.png" alt="Global music map" class="feature-icon">
+                    <h3>Global music map</h3>
+                    <p>Explore environmental music generated by users around the world, discover unique sounds from different regions.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How it works section -->
+    <section class="how-it-works" id="how-it-works">
+        <div class="container">
+            <div class="section-title">
+                <h2>How EnviroMelody works</h2>
+                <p>Simple four steps, turn your environment into a unique music experience</p>
+            </div>
+            <div class="steps">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <h3>Select location</h3>
+                    <p>Use the interactive map to detect your current location, or choose any location in the world.</p>
+                </div>
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <h3>Collect environmental data</h3>
+                    <p>The application automatically obtains real-time weather data for the selected location, including temperature, humidity, wind speed, etc.</p>
+                </div>
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <h3>Customize music preferences</h3>
+                    <p>Choose music style, atmosphere and scenario, personalize your music experience.</p>
+                </div>
+                <div class="step">
+                    <div class="step-number">4</div>
+                    <h3>Generate unique music</h3>
+                    <p>AI converts environmental data and your preferences into unique music, which can be saved and shared.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Application screenshot showcase -->
+    <section class="showcase" id="showcase">
+        <div class="container">
+            <div class="section-title">
+                <h2>Application showcase</h2>
+                <p>Explore the user interface and features of EnviroMelody</p>
+            </div>
+            <div class="showcase-grid">
+                <div class="showcase-item">
+                    <img src="screenshot1.png" alt="EnviroMelody map interface">
+                </div>
+                <div class="showcase-item">
+                    <img src="screenshot2.png" alt="Environmental data display">
+                </div>
+                <div class="showcase-item">
+                    <img src="screenshot3.png" alt="Music generation interface">
+                </div>
+                <div class="showcase-item">
+                    <img src="screenshot4.png" alt="Music player">
+                </div>
+                <div class="showcase-item">
+                    <img src="screenshot5.png" alt="Music library">
+                </div>
+                <div class="showcase-item">
+                    <img src="screenshot6.png" alt="Music visualization">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- User testimonials -->
+    <section class="testimonials">
+        <div class="container">
+            <div class="section-title">
+                <h2>User testimonials</h2>
+                <p>Listen to what users say about EnviroMelody</p>
+            </div>
+            <div class="testimonials-slider">
+                <div class="testimonial">
+                    <p class="testimonial-text">"EnviroMelody completely transformed my meditation experience. Now I can listen to music that perfectly matches my surroundings, making meditation more profound and meaningful."</p>
+                    <p class="testimonial-author">- Zhang Ming, Meditation Enthusiast</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Download section -->
+    <section class="download" id="download">
+        <div class="container">
+            <h2>Experience EnviroMelody now</h2>
+            <p>Download the application to start exploring the wonderful connection between environment and music. Available on iOS and Android devices.</p>
+            <div class="store-buttons">
+                <a href="#" class="store-btn">
+                    <img src="app-store-icon.png" alt="App Store">
+                    <span>Download from App Store</span>
+                </a>
+                <a href="#" class="store-btn">
+                    <img src="play-store-icon.png" alt="Google Play">
+                    <span>Download from Google Play</span>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-column">
+                    <h3>EnviroMelody</h3>
+                    <p>Transform environmental data into personalized music, create unique auditory experiences.</p>
+                    <div class="social-icons">
+                        <a href="#"><img src="twitter-icon.png" alt="Twitter"></a>
+                        <a href="#"><img src="instagram-icon.png" alt="Instagram"></a>
+                        <a href="#"><img src="facebook-icon.png" alt="Facebook"></a>
+                    </div>
+                </div>
+                <div class="footer-column">
+                    <h3>Navigation</h3>
+                    <ul>
+                        <li><a href="#">Home</a></li>
+                        <li><a href="#features">Features</a></li>
+                        <li><a href="#how-it-works">How it works</a></li>
+                        <li><a href="#showcase">Application showcase</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h3>Resources</h3>
+                    <ul>
+                        <li><a href="#">Help center</a></li>
+                        <li><a href="#">Frequently asked questions</a></li>
+                        <li><a href="#">User guide</a></li>
+                        <li><a href="#">Privacy policy</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h3>Contact us</h3>
+                    <ul>
+                        <li><a href="mailto:contact@enviromelody.com">contact@enviromelody.com</a></li>
+                        <li><a href="#">Support team</a></li>
+                        <li><a href="#">Collaboration consultation</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="copyright">
+                <p>&copy; 2023 EnviroMelody. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript code (simple navigation menu and scroll effect) -->
+    <script>
+        // Mobile menu toggle
+        const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
+        const navLinks = document.querySelector('.nav-links');
+        
+        mobileMenuBtn.addEventListener('click', () => {
+            navLinks.style.display = navLinks.style.display === 'flex' ? 'none' : 'flex';
+        });
+        
+        // Smooth scroll
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+                
+                // If mobile menu is open, click to close
+                if (window.innerWidth <= 768) {
+                    navLinks.style.display = 'none';
+                }
+            });
+        });
+    </script>
+</body>
+</html>

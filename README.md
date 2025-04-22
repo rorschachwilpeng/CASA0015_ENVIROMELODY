@@ -1,5 +1,11 @@
-# 🎧 EnviroMelody  
+# EnviroMelody  
+![Logo](img/logo.png)
 **Let your environment play the music.**  
+
+## 🌐 Experience Now
+[![Access EnviroMelody's Website](https://img.shields.io/badge/Official_Website-EnviroMelody-%2334C6CD?style=for-the-badge)](https://rorschachwilpeng.github.io/langding_page/landingPage.html)
+
+Discover our [Offical Website](https://rorschachwilpeng.github.io/CASA0015_ENVIROMELODY/landingPage.html)，know more how EnviroMelody transform environment into personized music experience.
 
 ---
 

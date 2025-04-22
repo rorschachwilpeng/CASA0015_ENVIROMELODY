@@ -382,8 +382,8 @@ class _LibraryScreenState extends State<LibraryScreen> {
     return Scaffold(
       backgroundColor: Color(0xFFF8F4E3), 
       appBar: AppBar(
-        title: _isSearching
-            ? _buildSearchBar()
+        title: _isSearching 
+            ? _buildSearchBar() 
             : Padding(
                 padding: const EdgeInsets.only(left: 8.0),
                 child: Text(
@@ -409,13 +409,13 @@ class _LibraryScreenState extends State<LibraryScreen> {
                 child: IconButton(
                   icon: Icon(Icons.arrow_back, color: PixelTheme.text, size: 18),
                   padding: EdgeInsets.zero,
-                  onPressed: () {
-                    setState(() {
+              onPressed: () {
+                setState(() {
                       _isSearching = false;
                       _searchController.clear();
                       _filterAndSortMusic();
-                    });
-                  },
+                });
+              },
                 ),
               )
             : null,
@@ -489,7 +489,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                   ),
                 ),
                 child: Row(
-                  children: [
+                    children: [
                     Icon(Icons.sort, size: 14, color: PixelTheme.text),
                     const SizedBox(width: 8),
                     Text(
@@ -526,9 +526,9 @@ class _LibraryScreenState extends State<LibraryScreen> {
                             ),
                           ),
                           Icon(Icons.arrow_drop_down, size: 14, color: PixelTheme.text),
-                        ],
-                      ),
-                    ),
+                    ],
+                  ),
+          ),
                     Expanded(child: Container()),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -558,7 +558,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
             bottom: 0,
             child: _isLoading
                 ? Center(
-                    child: Container(
+                child: Container(
                       width: 40,
                       height: 40,
                       padding: const EdgeInsets.all(8),
@@ -856,7 +856,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
               color: PixelTheme.surface,
             ),
             child: Icon(
-              Icons.search_off,
+            Icons.search_off,
               size: 60,
               color: PixelTheme.textLight,
             ),
@@ -884,7 +884,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                 'Clear search',
                 style: PixelTheme.bodyStyle.copyWith(color: Colors.white),
               ),
-              onPressed: _clearSearch,
+            onPressed: _clearSearch,
               style: TextButton.styleFrom(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 backgroundColor: PixelTheme.primary,
@@ -1011,160 +1011,196 @@ class _LibraryScreenState extends State<LibraryScreen> {
 
   // List item for regular mode
   Widget _buildEnhancedRegularListItem(MusicItem music, bool isPlaying, int index) {
-    return Dismissible(
+    return GestureDetector(
+      onLongPress: () => _showMusicDetails(music),
+      child: Dismissible(
       key: Key(music.id),
       background: Container(
-        color: PixelTheme.error,
+          color: PixelTheme.error,
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.only(right: 16.0),
-        child: Icon(Icons.delete, color: Colors.white, size: 20),
+          child: Icon(Icons.delete, color: Colors.white, size: 20),
       ),
       direction: DismissDirection.endToStart,
       confirmDismiss: (direction) async {
         return await showDialog<bool>(
           context: context,
-          builder: (context) => _buildPixelDialog(
-            title: 'Confirm delete',
-            content: 'Are you sure you want to delete this music file?',
+            builder: (context) => _buildPixelDialog(
+              title: 'Confirm delete',
+              content: 'Are you sure you want to delete this music file?',
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(context).pop(false),
-                child: Text('Cancel', style: PixelTheme.bodyStyle),
+                  child: Text('Cancel', style: PixelTheme.bodyStyle),
               ),
               TextButton(
                 onPressed: () => Navigator.of(context).pop(true),
-                child: Text('Delete', style: PixelTheme.bodyStyle.copyWith(color: PixelTheme.error)),
+                  child: Text('Delete', style: PixelTheme.bodyStyle.copyWith(color: PixelTheme.error)),
               ),
             ],
           ),
-        ) ?? false;
-      },
-      onDismissed: (direction) {
-        if (mounted) {
-          setState(() {
-            _filteredMusicList.removeWhere((item) => item.id == music.id);
-          });
-        }
-        
-        if (_audioPlayerManager.currentMusicId == music.id && _audioPlayerManager.isPlaying) {
-          _audioPlayerManager.stopMusic();
-        }
-        
-        _libraryManager.removeMusic(music.id);
-      },
-      child: Container(
-        decoration: BoxDecoration(
-          color: PixelTheme.surface,
-          border: Border.all(
-            color: isPlaying ? PixelTheme.primary : PixelTheme.text.withOpacity(0.3), 
-            width: isPlaying ? 2 : 1
+          ) ?? false;
+        },
+        onDismissed: (direction) {
+          if (mounted) {
+            setState(() {
+              _filteredMusicList.removeWhere((item) => item.id == music.id);
+            });
+          }
+          
+          if (_audioPlayerManager.currentMusicId == music.id && _audioPlayerManager.isPlaying) {
+            _audioPlayerManager.stopMusic();
+          }
+          
+          _libraryManager.removeMusic(music.id);
+        },
+        child: Container(
+          decoration: BoxDecoration(
+            color: PixelTheme.surface,
+            border: Border.all(
+              color: isPlaying ? PixelTheme.primary : PixelTheme.text.withOpacity(0.3), 
+              width: isPlaying ? 2 : 1
+            ),
+            boxShadow: isPlaying 
+                ? [BoxShadow(
+                    color: PixelTheme.primary.withOpacity(0.15),
+                    offset: Offset(2, 2),
+                    blurRadius: 0,
+                  )]
+                : null,
           ),
-          boxShadow: isPlaying 
-              ? [BoxShadow(
-                  color: PixelTheme.primary.withOpacity(0.15),
-                  offset: Offset(2, 2),
-                  blurRadius: 0,
-                )]
-              : null,
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 50,
-              height: 50,
-              decoration: BoxDecoration(
-                border: Border(
-                  right: BorderSide(
-                    color: isPlaying ? PixelTheme.primary.withOpacity(0.3) : PixelTheme.text.withOpacity(0.1), 
-                    width: 1
+          child: InkWell(
+            onTap: () => _showMusicDetails(music),
+            child: Row(
+              children: [
+                Container(
+                  width: 50,
+                  height: 50,
+                  decoration: BoxDecoration(
+                    border: Border(
+                      right: BorderSide(
+                        color: isPlaying ? PixelTheme.primary.withOpacity(0.3) : PixelTheme.text.withOpacity(0.1), 
+                        width: 1
+                      ),
+                    ),
+                    color: isPlaying
+                        ? PixelTheme.primary.withOpacity(0.1)
+                        : PixelTheme.surface,
+                  ),
+                  child: Center(
+                    child: Icon(
+                      Icons.music_note, 
+                      color: isPlaying ? PixelTheme.primary : PixelTheme.text.withOpacity(0.7), 
+                      size: 22
+                    ),
                   ),
                 ),
-                color: isPlaying
-                    ? PixelTheme.primary.withOpacity(0.1)
-                    : PixelTheme.surface,
-              ),
-              child: Center(
-                child: Icon(
-                  Icons.music_note, 
-                  color: isPlaying ? PixelTheme.primary : PixelTheme.text.withOpacity(0.7), 
-                  size: 22
-                ),
-              ),
+                
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+                        Text(
+                          music.title.isEmpty ? 'No title music' : music.title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                          style: PixelTheme.bodyStyle.copyWith(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                            color: isPlaying ? PixelTheme.primary : PixelTheme.text,
+                          ),
+                        ),
+                        SizedBox(height: 3),
+                        Text(
+                    music.prompt.isEmpty ? 'No prompt' : music.prompt,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: PixelTheme.labelStyle.copyWith(
+                            fontSize: 11,
+                            color: PixelTheme.textLight,
+                          ),
+                        ),
+                        SizedBox(height: 3),
+            Text(
+              music.createdAt.toString().substring(0, 16),
+                          style: PixelTheme.labelStyle.copyWith(
+                            fontSize: 10,
+                            color: PixelTheme.textLight.withOpacity(0.7),
+                          ),
             ),
-            
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+          ],
+        ),
+                  ),
+                ),
+                
+                Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
-                      music.title.isEmpty ? 'No title music' : music.title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: PixelTheme.bodyStyle.copyWith(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 13,
-                        color: isPlaying ? PixelTheme.primary : PixelTheme.text,
+                    Container(
+                      width: 44,
+                      height: 44,
+                      margin: EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                          color: isPlaying ? PixelTheme.primary.withOpacity(0.7) : PixelTheme.text.withOpacity(0.2), 
+                          width: 1
+                        ),
+                        color: isPlaying
+                            ? PixelTheme.primary.withOpacity(0.1)
+                            : PixelTheme.surface,
+                      ),
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: () {
+            if (isPlaying) {
+              _pauseMusic();
+            } else {
+              _playMusic(music);
+            }
+          },
+                          child: Center(
+                            child: Icon(
+                              isPlaying ? Icons.pause : Icons.play_arrow,
+                              color: isPlaying ? PixelTheme.primary : PixelTheme.text,
+                              size: 22,
+                            ),
+                          ),
+                        ),
                       ),
                     ),
-                    SizedBox(height: 3),
-                    Text(
-                      music.prompt.isEmpty ? 'No prompt' : music.prompt,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: PixelTheme.labelStyle.copyWith(
-                        fontSize: 11,
-                        color: PixelTheme.textLight,
+                    Container(
+                      width: 44,
+                      height: 44,
+                      margin: EdgeInsets.only(right: 4, top: 4, bottom: 4),
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                          color: PixelTheme.text.withOpacity(0.2), 
+                          width: 1
+                        ),
+                        color: PixelTheme.surface,
                       ),
-                    ),
-                    SizedBox(height: 3),
-                    Text(
-                      music.createdAt.toString().substring(0, 16),
-                      style: PixelTheme.labelStyle.copyWith(
-                        fontSize: 10,
-                        color: PixelTheme.textLight.withOpacity(0.7),
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: () => _showMusicDetails(music),
+                          child: Center(
+                            child: Icon(
+                              Icons.info_outline,
+                              color: PixelTheme.text,
+                              size: 20,
+                            ),
+                          ),
+                        ),
                       ),
                     ),
                   ],
                 ),
-              ),
+              ],
             ),
-            
-            Container(
-              width: 44,
-              height: 44,
-              margin: EdgeInsets.all(4),
-              decoration: BoxDecoration(
-                border: Border.all(
-                  color: isPlaying ? PixelTheme.primary.withOpacity(0.7) : PixelTheme.text.withOpacity(0.2), 
-                  width: 1
-                ),
-                color: isPlaying
-                    ? PixelTheme.primary.withOpacity(0.1)
-                    : PixelTheme.surface,
-              ),
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: () {
-                    if (isPlaying) {
-                      _pauseMusic();
-                    } else {
-                      _playMusic(music);
-                    }
-                  },
-                  child: Center(
-                    child: Icon(
-                      isPlaying ? Icons.pause : Icons.play_arrow,
-                      color: isPlaying ? PixelTheme.primary : PixelTheme.text,
-                      size: 22,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -1197,8 +1233,8 @@ class _LibraryScreenState extends State<LibraryScreen> {
               child: TextButton.icon(
                 icon: Icon(Icons.clear, size: 14, color: PixelTheme.text),
                 label: Text('Clear', style: PixelTheme.labelStyle),
-                onPressed: _clearSearch,
-                style: TextButton.styleFrom(
+              onPressed: _clearSearch,
+              style: TextButton.styleFrom(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   minimumSize: const Size(50, 28),
                   backgroundColor: PixelTheme.surface,
@@ -1447,7 +1483,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
       trailing: Checkbox(
         value: isSelected,
         onChanged: (value) {
-          setState(() {
+        setState(() {
             if (value == true) {
               _selectedMusicIds.add(music.id);
             } else {
@@ -1494,6 +1530,179 @@ class _LibraryScreenState extends State<LibraryScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  // 修改音乐详情对话框，解决提示词溢出问题
+  void _showMusicDetails(MusicItem music) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+        child: Container(
+          width: double.infinity,
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * 0.7, // 限制对话框最大高度
+          ),
+          decoration: BoxDecoration(
+            color: PixelTheme.surface,
+            border: PixelTheme.pixelBorder,
+            boxShadow: PixelTheme.cardShadow,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  border: Border(bottom: BorderSide(color: PixelTheme.text, width: 2)),
+                  color: PixelTheme.primary.withOpacity(0.1),
+                ),
+                child: Text(
+                  'Music Details',
+                  style: PixelTheme.titleStyle,
+                  textAlign: TextAlign.center,
+                ),
+              ),
+              Flexible(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildDetailRow('Title', music.title.isEmpty ? 'No Title' : music.title),
+                      const SizedBox(height: 12),
+                      _buildDetailRow('Created Time', music.createdAt.toString().substring(0, 16)),
+                      const SizedBox(height: 12),
+                      _buildDetailRow('Music ID', music.id),
+                      const SizedBox(height: 12),
+                      _buildPromptDetailRow('Prompt', music.prompt.isEmpty ? 'No Prompt' : music.prompt),
+                      
+                      const SizedBox(height: 16),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            decoration: BoxDecoration(
+                              border: Border.all(color: PixelTheme.primary, width: 2),
+                              color: PixelTheme.primary,
+                            ),
+                            child: TextButton.icon(
+                              icon: Icon(Icons.play_arrow, color: Colors.white, size: 18),
+                              label: Text(
+                                'Play',
+                                style: PixelTheme.bodyStyle.copyWith(color: Colors.white),
+                              ),
+                              onPressed: () {
+                                Navigator.pop(context);
+                                _playMusic(music);
+                              },
+                              style: TextButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                backgroundColor: PixelTheme.primary,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Container(
+                            decoration: BoxDecoration(
+                              border: Border.all(color: PixelTheme.text, width: 2),
+                              color: PixelTheme.surface,
+                            ),
+                            child: TextButton.icon(
+                              icon: Icon(Icons.close, color: PixelTheme.text, size: 18),
+                              label: Text(
+                                'Close',
+                                style: PixelTheme.bodyStyle,
+                              ),
+                              onPressed: () => Navigator.pop(context),
+                              style: TextButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                backgroundColor: PixelTheme.surface,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // 添加专门针对提示词的详情行方法，防止溢出
+  Widget _buildPromptDetailRow(String label, String value) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label + ':',
+          style: PixelTheme.labelStyle.copyWith(
+            color: PixelTheme.textLight,
+            fontSize: 12,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Container(
+          width: double.infinity,
+          constraints: BoxConstraints(
+            maxHeight: 120, // 限制提示词区域最大高度
+          ),
+          decoration: BoxDecoration(
+            border: Border.all(color: PixelTheme.text.withOpacity(0.2), width: 1),
+            color: PixelTheme.background.withOpacity(0.3),
+          ),
+          child: Scrollbar(
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: SelectableText(
+                  value,
+                  style: PixelTheme.bodyStyle.copyWith(fontSize: 13),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // 添加缺失的 _buildDetailRow 方法
+  Widget _buildDetailRow(String label, String value) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label + ':',
+          style: PixelTheme.labelStyle.copyWith(
+            color: PixelTheme.textLight,
+            fontSize: 12,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            border: Border.all(color: PixelTheme.text.withOpacity(0.2), width: 1),
+            color: PixelTheme.background.withOpacity(0.3),
+          ),
+          child: SelectableText(
+            value,
+            style: PixelTheme.bodyStyle.copyWith(fontSize: 13),
+          ),
+        ),
+      ],
     );
   }
 
