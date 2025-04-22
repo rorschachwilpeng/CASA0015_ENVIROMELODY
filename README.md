@@ -20,11 +20,22 @@ Whether you're working, relaxing, or exploring, it creates adaptive audio that f
 ---
 
 ## 🧠 Why Use It?  
+
 - 📊 **Tired of charts?** Hear your environment instead.  
 - 🎵 **Music apps guess your mood.** We read your surroundings.  
 - 🖼️ **You remember sights.** We help you remember how a place *sounded*.
 
+
+<div align="center">
+<img src="img/storyboard.png" width="400" height="400"/>
+</div>
+
+
 EnviroMelody bridges the gap between raw data and real emotion.
+
+
+
+
 
 ---
 
@@ -49,11 +60,11 @@ EnviroMelody bridges the gap between raw data and real emotion.
 ---
 
 ## 🔉 Who's Using It?  
-| User            | Use Case                             |  
-|-----------------|--------------------------------------|  
-| Digital Nomad   | *Collects soundtracks from travels*  |  
-| Café Owner      | *Plays adaptive beats in shop*       |  
-| Student         | *Listens to focus music shaped by current weather*  |  
+<div align="center">
+<img src="img/target_users.png" width="400" height="400"/>
+</div>
+
+
 
 ---
 
