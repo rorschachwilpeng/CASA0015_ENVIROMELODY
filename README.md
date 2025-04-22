@@ -8,7 +8,7 @@
 ## 🌐 Experience Now
 [![Access EnviroMelody's Website](https://img.shields.io/badge/Official_Website-EnviroMelody-%2334C6CD?style=for-the-badge)](https://rorschachwilpeng.github.io/CASA0015_ENVIROMELODY/)
 
-Discover our [Offical Website](https://rorschachwilpeng.github.io/CASA0015_ENVIROMELODY/landing_page/index.html)，know more how EnviroMelody transform environment into personized music experience.
+Discover our [Offical Website](https://rorschachwilpeng.github.io/CASA0015_ENVIROMELODY/)，know more how EnviroMelody transform environment into personized music experience.
 
 ---
 
