@@ -6,7 +6,7 @@
 **Let your environment play the music.**  
 
 ## 🌐 Experience Now
-[![Access EnviroMelody's Website](https://img.shields.io/badge/Official_Website-EnviroMelody-%2334C6CD?style=for-the-badge)](https://rorschachwilpeng.github.io/CASA0015_ENVIROMELODY/landing_page/index.html)
+[![Access EnviroMelody's Website](https://img.shields.io/badge/Official_Website-EnviroMelody-%2334C6CD?style=for-the-badge)](https://rorschachwilpeng.github.io/CASA0015_ENVIROMELODY/)
 
 Discover our [Offical Website](https://rorschachwilpeng.github.io/CASA0015_ENVIROMELODY/landing_page/index.html)，know more how EnviroMelody transform environment into personized music experience.
 
@@ -31,18 +31,18 @@ EnviroMelody bridges the gap between raw data and real emotion.
 ## ✨ Key Experiences  
 
 ### 🌇 **City Wanderer Mode**  
-> “I walked through Berlin. It turned into synth.”  
+> "I walked through Berlin. It turned into synth."  
 - Auto-detect location  
 - Cultural vibe blending  
 - Save and revisit your audio souvenirs  
 
 ### 🧘 **Zen Studio Mode**  
-> “The weather outside made my room hum with calm piano.”  
+> "The weather outside made my room hum with calm piano."  
 - Generates ambient tracks from local weather  
 - Perfect for meditation, journaling, or deep focus  
 
 ### ⚡ **Storm Chaser Mode**  
-> “The thunderstorm became a cinematic soundtrack.”  
+> "The thunderstorm became a cinematic soundtrack."  
 - Turns extreme weather into layered, dramatic scores  
 - Great for creative work or storytelling  
 
