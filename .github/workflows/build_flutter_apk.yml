@@ -3,7 +3,7 @@ name: Build Flutter APK
 on:
   push:
     branches:
-      - main   # List of branches to listen to
+      - main
 
 jobs:
   build-apk:
@@ -16,7 +16,7 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: "3.13.0"  # <<< Change to the actual Flutter version you are using
+          flutter-version: "3.13.0"
 
       - name: Install dependencies
         run: flutter pub get
@@ -25,7 +25,7 @@ jobs:
         run: flutter build apk --release
 
       - name: Upload APK
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3 
         with:
           name: app-release-apk
           path: build/app/outputs/flutter-apk/app-release.apk
