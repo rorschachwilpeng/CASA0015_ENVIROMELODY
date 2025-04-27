@@ -11,7 +11,7 @@ import 'dart:async'; // Add timer support
 import '../widgets/audio_visualizer.dart';
 import '../widgets/music_player_card.dart';
 import '../services/playlist_manager.dart';
-import '../theme/pixel_theme.dart'; // 导入像素主题
+import '../theme/pixel_theme.dart'; // Import Pixel Theme
 
 // Define the sort option enum
 enum SortOption {
@@ -420,7 +420,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
               )
             : null,
         actions: [
-          // 搜索按钮 - 复古风格
+          // Search Button
           if (!_isSearching)
             Container(
               margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
@@ -442,7 +442,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                 },
               ),
             ),
-          // 排序按钮 - 复古风格
+          // Sort button
           if (!_isSearching)
             Container(
               margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
@@ -576,7 +576,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                     ? _searchQuery.isNotEmpty
                         ? _buildPixelEmptySearchResultView()
                         : _buildPixelEmptyLibraryView()
-                    : ListView.builder( // Use builder instead of separated,便于定制间距
+                    : ListView.builder( // Use builder instead of separated
                         padding: EdgeInsets.only(
                           bottom: 80, // Leave space for the bottom player
                           left: 12,
@@ -1533,7 +1533,6 @@ class _LibraryScreenState extends State<LibraryScreen> {
     );
   }
 
-  // 修改音乐详情对话框，解决提示词溢出问题
   void _showMusicDetails(MusicItem music) {
     showDialog(
       context: context,
@@ -1544,7 +1543,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
         child: Container(
           width: double.infinity,
           constraints: BoxConstraints(
-            maxHeight: MediaQuery.of(context).size.height * 0.7, // 限制对话框最大高度
+            maxHeight: MediaQuery.of(context).size.height * 0.7, 
           ),
           decoration: BoxDecoration(
             color: PixelTheme.surface,
@@ -1639,7 +1638,6 @@ class _LibraryScreenState extends State<LibraryScreen> {
     );
   }
 
-  // 添加专门针对提示词的详情行方法，防止溢出
   Widget _buildPromptDetailRow(String label, String value) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1655,7 +1653,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
         Container(
           width: double.infinity,
           constraints: BoxConstraints(
-            maxHeight: 120, // 限制提示词区域最大高度
+            maxHeight: 120,
           ),
           decoration: BoxDecoration(
             border: Border.all(color: PixelTheme.text.withOpacity(0.2), width: 1),
@@ -1677,7 +1675,6 @@ class _LibraryScreenState extends State<LibraryScreen> {
     );
   }
 
-  // 添加缺失的 _buildDetailRow 方法
   Widget _buildDetailRow(String label, String value) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

@@ -250,7 +250,7 @@ Wind speed: $windSpeed m/s
     }
   }
 
-  // 增强的 fallback 提示生成方法
+  // Enhanced fallback prompt generation method
   String _generateFallbackPrompt({
     required String weatherDescription,
     required double temperature,
@@ -262,7 +262,7 @@ Wind speed: $windSpeed m/s
     _logger.i('Using fallback method to generate music prompt');
     
     String mood = 'calm';
-    // 根据天气描述推断情绪
+    // Predict mood based on weather
     if (weatherDescription.contains('雨') || weatherDescription.contains('rain')) {
       mood = 'melancholic';
     } else if (weatherDescription.contains('晴') || weatherDescription.contains('clear')) {
@@ -277,7 +277,7 @@ Wind speed: $windSpeed m/s
       mood = 'dynamic';
     }
     
-    // 根据温度调整情绪
+    // Adjust mood based on temperature
     String tempMood = '';
     if (temperature < 0) {
       tempMood = 'cold and stark';

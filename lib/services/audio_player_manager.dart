@@ -6,8 +6,8 @@ import 'dart:developer' as developer;
 import '../models/music_item.dart';
 
 enum PlayMode {
-  sequence,  // 列表顺序播放
-  singleLoop, // B单曲循环
+  sequence,  // Playlist sequence mode
+  singleLoop, // Single Song Mode
 }
 
 class AudioPlayerManager extends ChangeNotifier {
@@ -92,17 +92,13 @@ class AudioPlayerManager extends ChangeNotifier {
     }
   }
   
-  // 添加播放模式变量
   PlayMode _playMode = PlayMode.sequence;
   
-  // 添加播放模式的 getter 和 setter
   PlayMode get playMode => _playMode;
   
-  // 设置播放模式
   void setPlayMode(PlayMode mode) {
     _playMode = mode;
     
-    // 根据播放模式设置 JustAudio 的循环模式
     if (_playMode == PlayMode.singleLoop) {
       _player.setLoopMode(LoopMode.one);
     } else {
@@ -113,7 +109,6 @@ class AudioPlayerManager extends ChangeNotifier {
     print('Play mode set to: $_playMode');
   }
   
-  // 切换播放模式
   void togglePlayMode() {
     if (_playMode == PlayMode.sequence) {
       setPlayMode(PlayMode.singleLoop);
@@ -157,7 +152,7 @@ class AudioPlayerManager extends ChangeNotifier {
     
     // Position listener, used to update the progress bar
     _player.positionStream.listen((position) {
-      notifyListeners();  // 只用于UI更新，不检测播放完成
+      notifyListeners();  
     });
   }
   
@@ -176,13 +171,13 @@ class AudioPlayerManager extends ChangeNotifier {
     // Ensure execution in the main thread and add a short delay
     Future.delayed(const Duration(milliseconds: 500), () {
       try {
-        // 如果是单曲循环模式，则直接返回，让 JustAudio 的循环功能来处理
+        
         if (_playMode == PlayMode.singleLoop) {
           print("Single loop mode, let JustAudio handle the looping");
           return;
         }
         
-        // 顺序播放模式下，如果启用了自动播放并且有下一首歌曲，则播放下一首
+       
         if (_autoPlayEnabled && hasNext) {
           print("Auto play next song: current index=$_currentIndex, list length=${_playlist.length}");
           // Ensure mutex lock is reset before calling playNext
@@ -205,7 +200,7 @@ class AudioPlayerManager extends ChangeNotifier {
   void _configurePlayer() {
     // Set audio session configuration
     try {
-      // 根据当前播放模式设置循环模式
+ 
       _player.setLoopMode(_playMode == PlayMode.singleLoop ? LoopMode.one : LoopMode.off);
       _player.setAutomaticallyWaitsToMinimizeStalling(true); // Minimize stalling
       
@@ -233,7 +228,6 @@ class AudioPlayerManager extends ChangeNotifier {
     
     // Create a new subscription
     _durationSubscription = _player.positionStream.listen((position) {
-      // 只记录日志，不触发自动播放
       Duration? totalDuration = _player.duration;
       if (totalDuration != null) {
         if (position >= totalDuration - const Duration(milliseconds: 200) && position > Duration.zero) {
@@ -311,7 +305,6 @@ class AudioPlayerManager extends ChangeNotifier {
       print("Playback started successfully");
     } catch (e) {
       print('Failed to play music: $e');
-      // 确保在发生错误时也释放资源
       _isPlayNextExecuting = false;
       _isHandlingCompletion = false;
       notifyListeners();

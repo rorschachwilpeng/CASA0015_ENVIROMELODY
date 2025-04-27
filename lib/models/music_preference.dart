@@ -29,7 +29,6 @@ enum MusicGenre {
   // Add more as needed
 }
 
-// 新增：音乐场景枚举
 enum MusicScene {
   meditation,        // Meditation
   deepWork,          // Deep Work

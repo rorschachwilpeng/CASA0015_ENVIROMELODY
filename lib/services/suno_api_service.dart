@@ -89,7 +89,7 @@ class SunoApiService {
       
       final requestBody = {
         'prompt': prompt,
-        'wait_audio': true  // 关键修改：设置为true，使用同步模式
+        'wait_audio': true  // Key modification: Set to true, use synchronous mode
       };
       
       _logger.i('Request body: ${json.encode(requestBody)}');

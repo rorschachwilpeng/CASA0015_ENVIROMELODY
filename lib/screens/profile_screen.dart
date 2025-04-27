@@ -588,7 +588,6 @@ class ProfileScreen extends StatelessWidget {
     return '${time.hour}:${time.minute.toString().padLeft(2, '0')}:${time.second.toString().padLeft(2, '0')}';
   }
 
-  // 新增方法：构建测试启动页按钮部分
   Widget _buildTestSplashSection(BuildContext context) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12, top: 12),
@@ -601,7 +600,6 @@ class ProfileScreen extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           onTap: () {
-            // 显示启动页面
             Navigator.push(
               context,
               PageRouteBuilder(
@@ -611,7 +609,6 @@ class ProfileScreen extends StatelessWidget {
                       ? const Material(child: Center(child: Text('Back to Profile')))
                       : const Material(child: Center(child: Text('Error'))),
                     onSplashComplete: () {
-                      // 启动页面完成后返回Profile页面
                       Future.delayed(Duration.zero, () {
                         if (Navigator.of(context).canPop()) {
                           Navigator.of(context).pop();
@@ -629,7 +626,7 @@ class ProfileScreen extends StatelessWidget {
             padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
             child: Row(
               children: [
-                // 按钮图标
+                // Button Icon
                 Container(
                   width: 36,
                   height: 36,
@@ -645,7 +642,7 @@ class ProfileScreen extends StatelessWidget {
                 ),
                 const SizedBox(width: 16),
                 
-                // 按钮文本
+                // BUtton text
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -666,7 +663,6 @@ class ProfileScreen extends StatelessWidget {
                   ),
                 ),
                 
-                // 箭头图标
                 Icon(
                   Icons.arrow_forward_ios,
                   size: 16,

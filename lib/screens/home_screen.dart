@@ -135,13 +135,13 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     
-    // 初始化地图控制器
+    // Initanize Map Controller
     _mapController = MapController();
     
-    // 添加页面生命周期观察者
+    // Add Page LifeCycle Observer
     WidgetsBinding.instance.addObserver(this);
     
-    // 初始化地图状态
+    // Init map status 
     _mapState = MapState(
       center: _mapService.getDefaultLocation(),
       zoom: COUNTRY_ZOOM_LEVEL,
@@ -149,13 +149,11 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     
     _initMapService();
     
-    // 异步初始化 - 不改变现有结构
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _initLocationService();
       _loadPersistentFlags();
     });
     
-    // 其他现有代码保持不变...
     
     // Listen to map zoom and move events
     _mapController.mapEventStream.listen((event) {
@@ -510,9 +508,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
   // Modify _updateFlagMarkerTapEvent method
   void _updateFlagMarkerTapEvent(String flagId, WeatherData weatherData) {
-    // This method needs to be modified to support FlutterMapService
-    // If FlutterMapService does not support updating the event of existing markers
-    // You can consider removing and adding the marker again
     
     // Convert LocationData to LatLng
     LatLng latLng = LatLng(
@@ -2126,7 +2121,6 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                                         setState(() {
                                           if (selected) {
                                             _selectedScene = scene;
-                                            // 根据场景自动设置 vibe 和 genre
                                             final prefs = scene.preferences;
                                             _selectedVibe = prefs['vibe'];
                                             _selectedGenre = prefs['genre'];

@@ -627,53 +627,53 @@ class FlutterMapService extends ChangeNotifier {
     }
   }
   
-  // 检查位置权限 - 添加这个公共方法
+  // Check location permission - add this public method
   Future<bool> checkLocationPermission() async {
     return await _checkLocationPermission();
   }
   
-  // 请求位置权限 - 添加这个公共方法
+  // Request location permission - add this public method
   Future<bool> requestLocationPermission() async {
     bool serviceEnabled;
     PermissionStatus permissionStatus;
     
     try {
-      // 检查位置服务是否启用
+      // Check if location service is enabled
       serviceEnabled = await _locationService.serviceEnabled();
       if (!serviceEnabled) {
-        print("DEBUG: 位置服务未启用，请求启用服务");
+        print("DEBUG: Location service not enabled, requesting to enable service");
         serviceEnabled = await _locationService.requestService();
         if (!serviceEnabled) {
-          print("DEBUG: 用户拒绝启用位置服务");
+          print("DEBUG: User denied to enable location service");
           return false;
         }
       }
       
-      // 检查位置权限
+      // Check location permission
       permissionStatus = await _locationService.hasPermission();
-      print("DEBUG: 当前权限状态: $permissionStatus");
+      print("DEBUG: Current permission status: $permissionStatus");
       
       if (permissionStatus == PermissionStatus.denied) {
-        print("DEBUG: 权限被拒绝，请求权限");
+        print("DEBUG: Permission denied, requesting permission");
         permissionStatus = await _locationService.requestPermission();
-        print("DEBUG: 请求后，权限状态: $permissionStatus");
+        print("DEBUG: After requesting, permission status: $permissionStatus");
         
         if (permissionStatus != PermissionStatus.granted && 
             permissionStatus != PermissionStatus.grantedLimited) {
-          print("DEBUG: 用户拒绝位置权限");
+          print("DEBUG: User denied location permission");
           return false;
         }
       }
       
-      print("DEBUG: 位置权限已授予: $permissionStatus");
+      print("DEBUG: Location permission granted: $permissionStatus");
       return true;
     } catch (e) {
-      print("DEBUG: 检查/请求位置权限时出错: $e");
+      print("DEBUG: Error checking/requesting location permission: $e");
       return false;
     }
   }
   
-  // 获取当前权限状态的详细信息
+  // Get detailed information about the current permission status
   Future<PermissionStatus> getCurrentPermissionStatus() async {
     try {
       return await _locationService.hasPermission();
@@ -683,13 +683,13 @@ class FlutterMapService extends ChangeNotifier {
     }
   }
   
-  // 公开请求位置权限的方法，返回详细的权限状态结果
+  // Public method to request location permission, return detailed permission status results
   Future<PermissionStatus> requestLocationPermissionDetailed() async {
     bool serviceEnabled;
     PermissionStatus permissionStatus;
     
     try {
-      // 检查位置服务是否启用
+      // Check if location service is enabled
       serviceEnabled = await _locationService.serviceEnabled();
       if (!serviceEnabled) {
         serviceEnabled = await _locationService.requestService();
@@ -699,7 +699,7 @@ class FlutterMapService extends ChangeNotifier {
         }
       }
       
-      // 检查位置权限
+      // Check location permission
       permissionStatus = await _locationService.hasPermission();
       if (permissionStatus == PermissionStatus.denied) {
         permissionStatus = await _locationService.requestPermission();
@@ -712,15 +712,15 @@ class FlutterMapService extends ChangeNotifier {
     }
   }
   
-  // 保存权限状态
+  // Save permission status
   Future<void> savePermissionStatus(PermissionStatus status) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       
-      // 将权限状态保存为字符串
+      // Save permission status as a string
       await prefs.setString('location_permission_status', status.toString());
       
-      // 记录是否已请求过权限
+      // Record if permission has been requested
       await prefs.setBool('location_permission_asked', true);
       
       print('Saved permission status: $status');
@@ -729,24 +729,24 @@ class FlutterMapService extends ChangeNotifier {
     }
   }
   
-  // 检查是否需要再次请求权限
+  // Check if permission should be requested again
   Future<bool> shouldRequestPermissionAgain() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       
-      // 如果从未请求过权限，则需要请求
+      // If permission has never been requested, request it
       bool permissionAsked = prefs.getBool('location_permission_asked') ?? false;
       if (!permissionAsked) {
         return true;
       }
       
-      // 获取保存的权限状态
+      // Get saved permission status
       String? permissionStatusStr = prefs.getString('location_permission_status');
       if (permissionStatusStr == null) {
         return true;
       }
       
-      // 如果权限状态是"仅限一次"或"拒绝"，则需要再次请求
+      // If permission status is "limited" or "denied", request it again
       return permissionStatusStr == 'PermissionStatus.grantedLimited' || 
              permissionStatusStr == 'PermissionStatus.denied';
     } catch (e) {

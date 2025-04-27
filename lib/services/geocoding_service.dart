@@ -6,24 +6,24 @@ class GeocodingService {
   // OpenStreetMap的Nominatim API
   static const String _baseUrl = 'https://nominatim.openstreetmap.org/search';
   
-  // 搜索地点并返回经纬度坐标
+  // Search for places and return latitude and longitude coordinates
   Future<List<GeocodingResult>> searchPlaces(String query) async {
     if (query.isEmpty) {
       return [];
     }
     
-    // 准备请求参数
+    // Prepare request parameters
     final params = {
       'q': query,
       'format': 'json',
-      'limit': '5', // 限制结果数量
+      'limit': '5', // Limit result count
       'addressdetails': '1',
     };
     
     try {
       final uri = Uri.parse(_baseUrl).replace(queryParameters: params);
       
-      // 添加合适的用户代理头部，这是Nominatim API的要求
+      // Add a suitable user agent header, this is a requirement for the Nominatim API
       final response = await http.get(uri, headers: {
         'User-Agent': 'SoundscapeApp/1.0',
       });
@@ -40,11 +40,11 @@ class GeocodingService {
             Address.fromJson(item['address']) : null,
         )).toList();
       } else {
-        print('搜索地点失败: ${response.statusCode}');
+        print('Search for places failed: ${response.statusCode}');
         return [];
       }
     } catch (e) {
-      print('搜索地点时出错: $e');
+      print('Error searching for places: $e');
       return [];
     }
   }

@@ -397,7 +397,7 @@ class ForecastData {
     required this.pop,
   });
   
-  /// 从OpenWeather API JSON响应创建ForecastData对象
+  /// Create ForecastData Object from OpenWeather API based on JSON responding
   factory ForecastData.fromJson(Map<String, dynamic> json) {
     final weather = json['weather'][0];
     final main = json['main'];
@@ -422,12 +422,12 @@ class ForecastData {
     );
   }
   
-  /// 获取天气图标URL
+  /// Get Weather Icon URL
   String getIconUrl() {
     return 'https://openweathermap.org/img/wn/$weatherIcon@2x.png';
   }
   
-  /// 获取格式化的时间字符串 (HH:MM)
+  /// Obtain Time
   String getFormattedTime() {
     return '${timestamp.hour.toString().padLeft(2, '0')}:${timestamp.minute.toString().padLeft(2, '0')}';
   }
