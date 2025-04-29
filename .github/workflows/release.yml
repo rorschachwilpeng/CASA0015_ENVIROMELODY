@@ -1,0 +1,78 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*' # 当推送带v前缀的标签时触发，例如v1.0.0
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      # 检出代码
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      
+      # 设置Java环境（使用Java 17避免兼容性问题）
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+      
+      # 设置Flutter环境
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.x'
+          channel: 'stable'
+      
+      # 获取依赖
+      - name: Install dependencies
+        run: flutter pub get
+      
+      # 修复Android Gradle插件版本（解决之前的构建错误）
+      - name: Update Gradle version
+        run: |
+          sed -i 's/com.android.tools.build:gradle:7.*/com.android.tools.build:gradle:8.2.1/g' android/build.gradle || echo "Gradle version pattern not found"
+      
+      # 构建Android APK
+      - name: Build APK
+        run: flutter build apk --release
+      
+      # 构建Android App Bundle
+      - name: Build App Bundle
+        run: flutter build appbundle
+      
+      # 构建Web版本
+      - name: Build Web
+        run: flutter build web --release
+      
+      # 压缩Web文件夹
+      - name: Zip Web Build
+        run: cd build && zip -r web-release.zip web/
+      
+      # 创建GitHub Release
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            build/app/outputs/flutter-apk/app-release.apk
+            build/app/outputs/bundle/release/app-release.aab
+            build/web-release.zip
+          name: Release ${{ github.ref_name }}
+          body: |
+            ## EnviroMelody ${{ github.ref_name }}
+            
+            ### 下载选项:
+            - **Android APK**: 直接安装到Android设备
+            - **Android App Bundle**: 用于上传到Google Play
+            - **Web版本**: 解压后可部署到网络服务器
+            
+            ---
+            自动构建于 ${{ github.event.repository.updated_at }}
+          draft: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
