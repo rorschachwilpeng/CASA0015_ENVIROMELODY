@@ -31,7 +31,7 @@ jobs:
       
       # Modify pubspec.yaml for compatibility
       - name: Modify pubspec.yaml for compatibility
-        run: sed -i 's|flutter_lints: \^5.0.0|flutter_lints: \^2.0.0|g' pubspec.yaml
+        run: sed -i "s/flutter_lints\\: \\^5.0.0/flutter_lints\\: \\^2.0.0/g" pubspec.yaml
       
       # Get dependencies
       - name: Install dependencies
