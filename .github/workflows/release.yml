@@ -35,17 +35,23 @@ jobs:
       - name: Flutter doctor
         run: flutter doctor -v
       
-      # 修复gradlew权限
-      - name: Fix Gradle wrapper
+      # 修复Android项目结构（替换了原来的步骤）
+      - name: Fix Android structure
         run: |
-          cd android
-          if [ -f "./gradlew" ]; then
-            chmod +x ./gradlew
-          else
-            echo "Creating Gradle wrapper..."
-            flutter build apk --debug
-            chmod +x ./gradlew
-          fi
+          # 备份重要文件
+          mkdir -p temp_backup
+          cp -r lib temp_backup/
+          cp -r assets temp_backup/
+          cp pubspec.yaml temp_backup/
+          
+          # 删除老的android目录
+          rm -rf android
+          
+          # 重新创建项目结构
+          flutter create --org com.enviromelody --project-name enviromelody .
+          
+          # 确保gradlew有执行权限
+          chmod +x android/gradlew
       
       # 尝试构建APK
       - name: Build APK
