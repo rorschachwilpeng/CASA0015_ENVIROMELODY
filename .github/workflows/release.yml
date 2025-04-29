@@ -3,7 +3,7 @@ name: Build and Release
 on:
   push:
     tags:
-      - 'v*' # 当推送带v前缀的标签时触发，例如v1.0.0
+      - 'v*' # 当推送带v前缀的标签时触发，例如v1.0.0 
 
 jobs:
   build:
@@ -15,41 +15,42 @@ jobs:
         with:
           fetch-depth: 0
       
-      # 设置Java环境（使用Java 17避免兼容性问题）
+      # Set Java environment (use Java 17 to avoid compatibility issues)
       - name: Setup Java
         uses: actions/setup-java@v3
         with:
           distribution: 'zulu'
           java-version: '17'
       
-      # 设置Flutter环境
+      # Set Flutter environment
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.29.3'
+          #flutter-version: '3.29.3'
+          flutter-version: '3.10.0'
           channel: 'stable'
       
-      # 获取依赖
+      # Get dependencies
       - name: Install dependencies
         run: flutter pub get
       
-      # 构建Android APK
+      # Build Android APK
       - name: Build APK
         run: flutter build apk --release --no-shrink
       
-      # 构建Android App Bundle
+      # Build Android App Bundle
       - name: Build App Bundle
         run: flutter build appbundle
       
-      # 构建Web版本
+      # Build Web version
       # - name: Build Web
       #   run: flutter build web --release
       
-      # 压缩Web文件夹
+      # Compress Web folder
       # - name: Zip Web Build
       #   run: cd build && zip -r web-release.zip web/
       
-      # 创建GitHub Release
+      # Create GitHub Release
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
@@ -67,7 +68,7 @@ jobs:
             - **Web版本**: 解压后可部署到网络服务器
             
             ---
-            自动构建于 ${{ github.event.repository.updated_at }}
+            Automatically built at ${{ github.event.repository.updated_at }}
           draft: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
