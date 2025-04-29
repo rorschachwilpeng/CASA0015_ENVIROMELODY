@@ -472,39 +472,48 @@ class _MusicVisualizerPlayerState extends State<MusicVisualizerPlayer> {
           // Key part: Control buttons, ensure correct function calls
           Padding(
             padding: const EdgeInsets.fromLTRB(0, 0, 0, 8),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 32),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  // Add debug logs to track click events
-                  IconButton(
-                    icon: Icon(
-                      _audioPlayerManager.playMode == PlayMode.singleLoop 
-                          ? Icons.repeat_one
-                          : Icons.repeat,
-                      color: PixelTheme.primary,
-                    ),
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                    iconSize: 24,
-                    onPressed: () {
-                      _audioPlayerManager.togglePlayMode();
-                      
-                      // Show prompt information
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            _audioPlayerManager.playMode == PlayMode.singleLoop
-                                ? 'Single Loop Mode'
-                                : 'Sequence Mode'
-                          ),
-                          duration: const Duration(seconds: 1),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                Expanded(
+                  flex: 1,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      IconButton(
+                        icon: Icon(
+                          _audioPlayerManager.playMode == PlayMode.singleLoop 
+                              ? Icons.repeat_one
+                              : Icons.repeat,
+                          color: PixelTheme.primary,
                         ),
-                      );
-                    },
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        iconSize: 24,
+                        onPressed: () {
+                          _audioPlayerManager.togglePlayMode();
+                          
+                          // Show prompt information
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                _audioPlayerManager.playMode == PlayMode.singleLoop
+                                    ? '单曲循环已开启'
+                                    : '列表顺序播放已开启'
+                              ),
+                              duration: const Duration(seconds: 1),
+                            ),
+                          );
+                        },
+                      ),
+                    ],
                   ),
-                  Row(
+                ),
+                
+                Expanded(
+                  flex: 3,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       IconButton(
                         icon: Icon(
@@ -516,7 +525,7 @@ class _MusicVisualizerPlayerState extends State<MusicVisualizerPlayer> {
                         iconSize: 24,
                         onPressed: _audioPlayerManager.hasPrevious ? _playPreviousSong : null,
                       ),
-                      const SizedBox(width: 20),
+                      const SizedBox(width: 16),
                       StreamBuilder<PlayerState>(
                         stream: _audioPlayerManager.audioPlayer.playerStateStream,
                         builder: (context, snapshot) {
@@ -558,7 +567,7 @@ class _MusicVisualizerPlayerState extends State<MusicVisualizerPlayer> {
                           );
                         },
                       ),
-                      const SizedBox(width: 20),
+                      const SizedBox(width: 16),
                       IconButton(
                         icon: Icon(
                           Icons.skip_next,
@@ -580,9 +589,13 @@ class _MusicVisualizerPlayerState extends State<MusicVisualizerPlayer> {
                       ),
                     ],
                   ),
-                  SizedBox(width: 24),
-                ],
-              ),
+                ),
+                
+                Expanded(
+                  flex: 1,
+                  child: Container(),
+                ),
+              ],
             ),
           ),
         ],
