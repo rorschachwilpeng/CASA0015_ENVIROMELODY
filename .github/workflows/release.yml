@@ -33,11 +33,6 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
       
-      # 修复Android Gradle插件版本（解决之前的构建错误）
-      - name: Update Gradle version
-        run: |
-          sed -i 's/com.android.tools.build:gradle:7.*/com.android.tools.build:gradle:8.2.1/g' android/build.gradle || echo "Gradle version pattern not found"
-      
       # 构建Android APK
       - name: Build APK
         run: flutter build apk --release
