@@ -7,7 +7,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     steps:
       # 检出代码
       - name: Checkout
@@ -79,20 +79,15 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            build/app/outputs/flutter-apk/app-release.apk
-            build/app/outputs/bundle/release/app-release.aab
-            # build/web-release.zip  # 注释掉这行
+            build/ios/iphoneos/app.ipa  # iOS构建产物路径
           name: Release ${{ github.ref_name }}
           body: |
             ## EnviroMelody ${{ github.ref_name }}
             
             ### 下载选项:
-            - **Android APK**: 直接安装到Android设备
-            - **Android App Bundle**: 用于上传到Google Play
-            - **Web版本**: 解压后可部署到网络服务器
+            - **iOS App**: 需要通过Apple开发者账户签名后使用
             
             ---
             Automatically built at ${{ github.event.repository.updated_at }}
-          draft: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
