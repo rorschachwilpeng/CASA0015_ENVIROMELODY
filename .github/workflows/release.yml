@@ -35,9 +35,19 @@ jobs:
           sed -i 's/flutter_lints: \^5.0.0/flutter_lints: \^2.0.0/g' pubspec.yaml
           cat pubspec.yaml
       
-      # Get dependencies
-      - name: Install dependencies
-        run: flutter pub get
+      # Get dependencies and fix Gradle
+      - name: Install dependencies and fix Gradle
+        run: |
+          flutter pub get
+          flutter clean
+          cd android
+          if [ -f "./gradlew" ]; then
+            chmod +x ./gradlew
+          else
+            echo "Gradlew not found, creating a new project structure for build"
+            cd ..
+            flutter create --org com.example --project-name temp_build .
+          fi
       
       # Update Gradle configuration
       - name: Update Gradle configuration
