@@ -1,91 +1,77 @@
-name: Build and Release
+name: Build and Release Android
 
 on:
   push:
     tags:
-      - 'v*' # 当推送带v前缀的标签时触发，例如v1.0.0 
+      - 'v*'
 
 jobs:
-  build:
-    runs-on: macos-latest
+  build-android:
+    runs-on: ubuntu-latest
     steps:
       # 检出代码
       - name: Checkout
         uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
       
-      # Set Java environment (use Java 17 to avoid compatibility issues)
+      # 设置Java环境
       - name: Setup Java
         uses: actions/setup-java@v3
         with:
           distribution: 'zulu'
           java-version: '17'
       
-      # Set Flutter environment
+      # 设置Flutter环境
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.29.3'  # 使用最新版本
+          flutter-version: '3.10.0'  # 使用与项目兼容的版本
           channel: 'stable'
       
-      # Modify pubspec.yaml for compatibility
-      - name: Modify pubspec.yaml for compatibility
-        run: sed -i "s/flutter_lints\\: \\^5.0.0/flutter_lints\\: \\^2.0.0/g" pubspec.yaml
-      
-      # Get dependencies
-      - name: Install dependencies
+      # 获取依赖
+      - name: Get dependencies
         run: flutter pub get
       
-      # Update Gradle configuration
-      - name: Update Gradle configuration
-        run: |
-          cd android
-          ./gradlew wrapper --gradle-version 7.5 --distribution-type all
+      # 显示Flutter诊断信息
+      - name: Flutter doctor
+        run: flutter doctor -v
       
-      # Build Android APK
-      - name: Build APK
+      # 修复gradlew权限
+      - name: Fix Gradle wrapper
         run: |
-          # 忽略Gradle错误，直接尝试构建
           cd android
           if [ -f "./gradlew" ]; then
             chmod +x ./gradlew
-            ./gradlew clean
+          else
+            echo "Creating Gradle wrapper..."
+            flutter build apk --debug
+            chmod +x ./gradlew
           fi
-          cd ..
-          flutter build apk --release --no-shrink --no-pub
-        continue-on-error: true  # 即使有错误也继续执行后续步骤
       
-      # Build Android App Bundle
+      # 尝试构建APK
+      - name: Build APK
+        run: flutter build apk --release
+      
+      # 尝试构建App Bundle
       - name: Build App Bundle
         run: flutter build appbundle
       
-      # Build Web version
-      # - name: Build Web
-      #   run: flutter build web --release
-      
-      # Compress Web folder
-      # - name: Zip Web Build
-      #   run: cd build && zip -r web-release.zip web/
-      
-      # Build iOS version
-      - name: Build iOS
-        run: flutter build ios --release --no-codesign
-      
-      # Create GitHub Release
+      # 创建Release
       - name: Create Release
         uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
         with:
           files: |
-            build/ios/iphoneos/app.ipa  # iOS构建产物路径
+            build/app/outputs/flutter-apk/app-release.apk
+            build/app/outputs/bundle/release/app-release.aab
           name: Release ${{ github.ref_name }}
           body: |
             ## EnviroMelody ${{ github.ref_name }}
             
             ### 下载选项:
-            - **iOS App**: 需要通过Apple开发者账户签名后使用
+            - **Android APK**: 直接安装到Android设备
+            - **Android App Bundle**: 用于上传到Google Play
             
             ---
-            Automatically built at ${{ github.event.repository.updated_at }}
+            自动构建于 ${{ github.event.repository.updated_at }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
