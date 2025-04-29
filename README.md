@@ -163,3 +163,38 @@ EnviroMelody adopts a **pixel art-inspired** design, combining retro aesthetics 
 **#HearTheUnheard**  
 
 --- 
+## 🔧 Development and Deployment Guide
+
+### Configuration File Setup
+
+EnviroMelody requires specific API keys to access various services. For security reasons, these keys are not included in the code repository. If you want to run or modify this project, please follow these steps:
+
+1. **Create a configuration file**:
+   - Find the `config.template.dart` file in the `lib/utils` directory
+   - Copy and rename it to `config.dart`
+   - Replace the placeholders in the file with your own API keys
+
+2. **Obtain necessary API keys**:
+   - **Stability AI**: For audio generation, register at the [Stability AI platform](https://stability.ai/)
+   - **DeepSeek API**: For high-quality prompt structure generation, register at the [DeepSeek platform](https://deepseek.com/)
+   - **OpenWeatherMap API**: For weather data, register at [OpenWeatherMap](https://openweathermap.org/)
+
+3. **Keep your configuration file secure**:
+   - Ensure the `config.dart` file is added to `.gitignore`
+   - Never commit a configuration file containing real API keys to a public code repository
+
+> **Note**: If you are a project reviewer or teacher, please contact the project author to obtain a configuration file for testing purposes.
+
+### Local Development
+
+```bash
+# Get dependencies
+flutter pub get
+
+# Run the app (make sure config.dart is set up)
+flutter run
+```
+
+### GitHub Actions Build Notes
+
+Our GitHub Actions workflow creates a `config.dart` file with placeholder values in the CI/CD environment. Since these are placeholder values, applications built through CI/CD will not fully function without valid API keys. This is only used to validate the build process.

@@ -27,6 +27,54 @@ jobs:
           flutter-version: '3.10.0'  # 使用与项目兼容的版本
           channel: 'stable'
       
+      # 创建配置文件从模板
+      - name: Create config file from template
+        run: |
+          if [ -f "lib/utils/config.template.dart" ]; then
+            cp lib/utils/config.template.dart lib/utils/config.dart
+            # 替换占位符为CI环境中的安全值
+            sed -i 's/YOUR_STABILITY_API_KEY/CI_PLACEHOLDER_KEY/g' lib/utils/config.dart
+            sed -i 's/YOUR_DEEPSEEK_API_KEY/CI_PLACEHOLDER_KEY/g' lib/utils/config.dart
+            echo "Created config.dart from template"
+          else
+            echo "Warning: config.template.dart not found, creating minimal config file"
+            mkdir -p lib/utils
+            cat > lib/utils/config.dart << 'EOL'
+            class AppConfig {
+              // API 配置占位符
+              static const String stabilityApiKey = "CI_PLACEHOLDER_KEY";
+              static const String deepSeekApiKey = "CI_PLACEHOLDER_KEY";
+              
+              // API URLs
+              static const String sunoApiBaseUrl = 'http://localhost:3000/api';
+              static const String sunoApiBaseUrlBackup = 'http://127.0.0.1:3000/api';
+              static const String stabilityApiBaseUrl = "https://api.stability.ai";
+              static const String stabilityAudioEndpoint = "/v2beta/audio/generations";
+              static const String deepSeekApiEndpoint = "https://api.deepseek.com/v1/chat/completions";
+              
+              // 默认设置
+              static const int apiRequestTimeoutSeconds = 30;
+              static const int generateMusicTimeoutSeconds = 300;
+              static const int pollStatusIntervalSeconds = 3;
+              static const int maxPollAttempts = 60;
+              static const int defaultGenerationSteps = 30;
+              static const int defaultAudioDurationSeconds = 60;
+              static const String defaultAudioFormat = "mp3";
+              
+              // Helper methods
+              static bool isStabilityApiKeyValid() { return true; }
+              static bool isDeepSeekApiKeyValid() { return true; }
+              static String getStabilityApiKeyStatus() { return "CI build - using placeholder key"; }
+              static String getStabilityAudioUrl() { return "$stabilityApiBaseUrl$stabilityAudioEndpoint"; }
+              
+              // Diagnostic information
+              static Map<String, dynamic> getDiagnosticInfo() {
+                return {"note": "CI build with placeholder values"};
+              }
+            }
+            EOL
+          fi
+      
       # 获取依赖
       - name: Get dependencies
         run: flutter pub get
@@ -35,23 +83,17 @@ jobs:
       - name: Flutter doctor
         run: flutter doctor -v
       
-      # 修复Android项目结构（替换了原来的步骤）
-      - name: Fix Android structure
+      # 更新Kotlin版本
+      - name: Update Kotlin version
         run: |
-          # 备份重要文件
-          mkdir -p temp_backup
-          cp -r lib temp_backup/
-          cp -r assets temp_backup/
-          cp pubspec.yaml temp_backup/
-          
-          # 删除老的android目录
-          rm -rf android
-          
-          # 重新创建项目结构
-          flutter create --org com.enviromelody --project-name enviromelody .
-          
-          # 确保gradlew有执行权限
-          chmod +x android/gradlew
+          echo "ext.kotlin_version = '1.9.0'" > android/gradle.properties
+          echo "org.gradle.jvmargs=-Xmx1536M" >> android/gradle.properties
+          echo "android.useAndroidX=true" >> android/gradle.properties
+          echo "android.enableJetifier=true" >> android/gradle.properties
+      
+      # 确保gradlew有执行权限
+      - name: Set gradlew executable
+        run: chmod +x android/gradlew
       
       # 尝试构建APK
       - name: Build APK
@@ -76,6 +118,8 @@ jobs:
             ### 下载选项:
             - **Android APK**: 直接安装到Android设备
             - **Android App Bundle**: 用于上传到Google Play
+            
+            > **注意**: 此版本使用API密钥占位符构建，需要有效的API密钥才能完全运行。请参阅README.md了解设置说明。
             
             ---
             自动构建于 ${{ github.event.repository.updated_at }}
