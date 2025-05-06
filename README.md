@@ -188,6 +188,9 @@ EnviroMelody requires specific API keys to access various services. For security
 ### Local Development
 
 ```bash
+#Open Simulator (Development Environment Simulator: iPhone SE (3rd generation) - iOS 18.2)
+open -a Simulator
+
 # Get dependencies
 flutter pub get
 
