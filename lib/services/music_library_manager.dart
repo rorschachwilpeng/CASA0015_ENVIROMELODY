@@ -507,9 +507,15 @@ class MusicLibraryManager extends ChangeNotifier {
 
   // Monitor network connection status
   void _monitorConnectivity() {
-    Connectivity().onConnectivityChanged.listen((ConnectivityResult result) {
+    Connectivity().onConnectivityChanged.listen((List<ConnectivityResult> results) {
       final wasOnline = _isOnline;
-      _isOnline = result != ConnectivityResult.none;
+      // 检查results列表是否为空
+      if (results.isEmpty) {
+        _isOnline = false;
+      } else {
+        // 使用第一个结果，通常这是主要的连接
+        _isOnline = results.first != ConnectivityResult.none;
+      }
       
       // When offline changes to online, try to sync
       if (!wasOnline && _isOnline && _useFirebase) {
