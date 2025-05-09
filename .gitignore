@@ -126,4 +126,4 @@ lib/firebase_options.dart
 # 通用
 .DS_Store
 .idea/
-.vscode/
+.vscode/.dart_tool/
