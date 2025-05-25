@@ -72,7 +72,7 @@ node_modules/
 .dataconnect
 
 # 忽略配置文件
-lib/utils/config.dart
+#lib/utils/config.dart
 lib/firebase_options.dart
 
 

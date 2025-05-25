@@ -1,0 +1,2 @@
+/Users/pengyoutian/Desktop/彭祐天的Github/casa0015-ENVIROMELODY/android/app/.cxx/RelWithDebInfo/157129h6/x86_64/CMakeFiles/edit_cache.dir
+/Users/pengyoutian/Desktop/彭祐天的Github/casa0015-ENVIROMELODY/android/app/.cxx/RelWithDebInfo/157129h6/x86_64/CMakeFiles/rebuild_cache.dir
